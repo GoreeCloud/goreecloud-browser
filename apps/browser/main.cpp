@@ -2,13 +2,19 @@
 #include <memory>
 
 #include "goreecloud/browser/application.hpp"
+#include "goreecloud/browser/cef_process.hpp"
 #include "goreecloud/browser/development_engine.hpp"
 #include "goreecloud/browser/internal_pages.hpp"
 #include "goreecloud/browser/toolbar.hpp"
 #include "goreecloud/browser/unified_search_bar.hpp"
 
-int main() {
+int main(int argc, char** argv) {
   using namespace goreecloud::browser;
+
+  const int cef_exit_code = execute_cef_subprocess_if_needed(argc, argv);
+  if (cef_exit_code >= 0) {
+    return cef_exit_code;
+  }
 
   BrowserApplicationOptions options;
   options.initial_url = std::string{kNewTabUrl};
@@ -24,7 +30,12 @@ int main() {
   std::cout << "Toolbar controls: " << kDefaultToolbar.size() << "\n";
   std::cout << "Search authority: " << kSearchAuthority << "\n";
   std::cout << "Glaze UI: latest approved Stable baseline enforced by build\n";
-  std::cout << "Chromium rendering: not yet integrated\n";
+#if GOREECLOUD_ENABLE_CEF
+  std::cout << "CEF subprocess dispatch: enabled\n";
+#else
+  std::cout << "CEF subprocess dispatch: disabled\n";
+#endif
+  std::cout << "Chromium rendering: development integration in progress\n";
 
   browser.shutdown();
   return 0;
