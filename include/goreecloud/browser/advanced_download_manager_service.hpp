@@ -48,10 +48,6 @@ class AdvancedDownloadManagerService {
   virtual DownloadEnqueueResult enqueue(DownloadEnqueueRequest request) = 0;
 };
 
-// Browser-owned queue core for the first-party Advanced Download Manager.
-// This layer owns download identity and queue state. Network transfer,
-// segmentation, resume, scheduling and persistence workers attach below this
-// interface and must not be falsely implied by queue acceptance alone.
 class InProcessAdvancedDownloadManagerService final
     : public AdvancedDownloadManagerService {
  public:
@@ -91,7 +87,52 @@ class InProcessAdvancedDownloadManagerService final
     return std::nullopt;
   }
 
+  bool start(std::string_view download_id) {
+    return transition(download_id,
+                      {DownloadState::queued, DownloadState::paused, DownloadState::failed},
+                      DownloadState::running);
+  }
+
+  bool pause(std::string_view download_id) {
+    return transition(download_id, {DownloadState::running}, DownloadState::paused);
+  }
+
+  bool resume(std::string_view download_id) {
+    return transition(download_id, {DownloadState::paused, DownloadState::failed},
+                      DownloadState::running);
+  }
+
+  bool cancel(std::string_view download_id) {
+    return transition(download_id,
+                      {DownloadState::queued, DownloadState::running, DownloadState::paused,
+                       DownloadState::failed},
+                      DownloadState::cancelled);
+  }
+
+  bool restart(std::string_view download_id) {
+    return transition(download_id,
+                      {DownloadState::completed, DownloadState::failed, DownloadState::cancelled},
+                      DownloadState::queued);
+  }
+
  private:
+  bool transition(std::string_view download_id,
+                  std::initializer_list<DownloadState> allowed,
+                  DownloadState next) {
+    std::scoped_lock lock(mutex_);
+    for (auto& record : queue_) {
+      if (record.download_id != download_id) continue;
+      for (const auto state : allowed) {
+        if (record.state == state) {
+          record.state = next;
+          return true;
+        }
+      }
+      return false;
+    }
+    return false;
+  }
+
   [[nodiscard]] std::string next_id() {
     const auto value = next_id_.fetch_add(1, std::memory_order_relaxed);
     return "download-" + std::to_string(value);
