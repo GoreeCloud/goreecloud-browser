@@ -10,6 +10,10 @@
 #include <utility>
 #include <vector>
 
+#if GOREECLOUD_ENABLE_CEF
+#include "goreecloud/browser/cef_runtime.hpp"
+#endif
+
 namespace goreecloud::browser {
 namespace {
 
@@ -169,9 +173,7 @@ class ScaffoldRuntimeDelegate final : public ChromiumRuntimeDelegate {
     return std::make_unique<ScaffoldRuntimeContext>(options);
   }
 
-  void do_message_loop_work() override {
-    // Intentionally empty until a concrete Chromium/CEF message pump lands.
-  }
+  void do_message_loop_work() override {}
 
   [[nodiscard]] std::string_view runtime_version() const noexcept override {
     return "runtime-delegate-scaffold";
@@ -186,7 +188,20 @@ class ScaffoldRuntimeDelegate final : public ChromiumRuntimeDelegate {
 
 std::unique_ptr<ChromiumRuntimeDelegate> create_chromium_runtime_delegate(
     const ChromiumAdapterOptions& options) {
+#if GOREECLOUD_ENABLE_CEF
+  CefRuntimeOptions cef;
+  cef.root = options.runtime_root;
+  cef.subprocess_path = options.subprocess_path;
+  cef.resources_path = options.resources_path;
+  cef.locales_path = options.locales_path;
+  cef.cache_root = options.runtime_root / "profile-cache";
+  cef.enable_gpu = options.enable_gpu;
+  cef.enable_sandbox = options.enable_sandbox;
+  cef.external_message_pump = true;
+  return create_cef_runtime_delegate(std::move(cef));
+#else
   return std::make_unique<ScaffoldRuntimeDelegate>(options);
+#endif
 }
 
 }  // namespace goreecloud::browser
