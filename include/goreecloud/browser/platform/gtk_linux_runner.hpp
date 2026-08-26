@@ -50,7 +50,7 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
         if (auto* tab = window->active_tab()) host.attach_engine_view(tab->engine_view());
       },
       [&](std::string_view url) {
-        (void)window->new_tab(url);
+        (void)window->new_tab(std::string{url});
       },
       [&](std::string_view text) { return host.copy_text_to_clipboard(text); },
       [&](const MediaTarget& target) {
