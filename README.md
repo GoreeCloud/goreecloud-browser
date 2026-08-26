@@ -2,6 +2,12 @@
 
 GoreeCloud Browser is GoreeCloud's first-party native web browser. The browser product, user experience, data model, privacy controls, security services, synchronization behavior, session model, and GoreeCloud integrations are owned by GoreeCloud. A mature web engine is used underneath as an implementation dependency rather than as the identity of the product.
 
+## Beta status
+
+The repository is now on the **0.1.0-beta.1** development channel. This is the first build-tested GoreeCloud Browser **source and native-shell beta milestone**. The engine-independent core and the Linux GTK/X11 Glaze shell have CI build gates. The CEF/Chromium render-capable desktop path remains under integration and must pass the real-runtime gates in [`docs/BETA_0_1.md`](docs/BETA_0_1.md) before a desktop artifact is described as a render-capable beta.
+
+Beta does **not** mean production-approved. Stable release acceptance still requires real runtime, security, privacy, accessibility, packaging, signing, recovery, compatibility, and sustained-use evidence.
+
 ## Product identity
 
 GoreeCloud Browser is the sole normal user-facing Browser product identity. Upstream and third-party implementation technology may appear where technically, legally, operationally, diagnostically, or compliance-wise required, but it does not become GoreeCloud product branding.
@@ -77,16 +83,18 @@ browser/services/             GoreeCloud service contracts and adapters
 browser/storage/              GoreeCloud-owned browser data stores
 browser/ui/                   Current-Stable Glaze UI browser components
 include/goreecloud/browser/   Public C++ interfaces
-src/                          Initial implementation scaffolding
+src/                          Implementation and platform hosts
 docs/                         Architecture and engineering documentation
+packaging/                    Linux, Flatpak, Windows, and other packaging work
 ```
 
 ## Status
 
-GoreeCloud Browser is in active development. Unless explicitly identified as implemented, documented capabilities are product requirements or planned capabilities rather than claims of production readiness.
+GoreeCloud Browser **0.1.0-beta.1** is in active development and is not production-approved. The beta milestone establishes build-tested Browser-owned architecture and a visible Linux Glaze shell. Unless explicitly identified as implemented and validated, documented capabilities remain product requirements or planned capabilities rather than claims of production readiness.
 
 See:
 
+- [`docs/BETA_0_1.md`](docs/BETA_0_1.md) — beta scope, render-capable gates, deferred work, and promotion requirements.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architectural boundaries and ownership model.
 - [`docs/ENGINE_LAYER.md`](docs/ENGINE_LAYER.md) — Browser Engine Layer contracts.
 - [`docs/GLAZE_UI_ADOPTION.md`](docs/GLAZE_UI_ADOPTION.md) — current-Stable Glaze UI adoption and acceptance policy.
