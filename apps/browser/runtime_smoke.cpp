@@ -11,6 +11,7 @@
 #include "goreecloud/browser/internal_pages.hpp"
 #include "goreecloud/browser/media_hover.hpp"
 #include "goreecloud/browser/media_hover_controller.hpp"
+#include "goreecloud/browser/media_target_detector.hpp"
 #include "goreecloud/browser/omnibox_controller.hpp"
 #include "goreecloud/browser/toolbar.hpp"
 #include "goreecloud/browser/unified_search_bar.hpp"
@@ -29,6 +30,7 @@ int main() {
   static_assert(!kMediaHoverPassiveUploadAllowed);
   static_assert(!kMediaHoverPassiveAiAnalysisAllowed);
   static_assert(!kMediaHoverPassiveOcrAllowed);
+  static_assert(!kMediaDetectorMayOverrideProtectedMedia);
 
   {
     char executable[] = "goreecloud-browser";
@@ -50,6 +52,40 @@ int main() {
   const auto search_resolution = omnibox.resolve("goreecloud browser beta");
   assert(search_resolution.intent == OmniboxIntent::goreecloud_search);
   assert(search_resolution.value.find("https://search.goreecloud.test/search?q=") == 0);
+
+  {
+    EngineMediaHitTest hit;
+    hit.kind = EngineMediaElementKind::image;
+    hit.page_url = "https://example.com/gallery";
+    hit.page_title = "Gallery";
+    hit.media_url = "https://cdn.example.com/image.jpg";
+    hit.link_url = "https://example.com/destination";
+    hit.mime_type = "image/jpeg";
+    hit.alt_text = "Example image";
+    hit.intrinsic_width = 1920;
+    hit.intrinsic_height = 1080;
+    hit.displayed_width = 640;
+    hit.displayed_height = 360;
+    hit.secure_resource = true;
+    hit.downloadable = true;
+    hit.copyable = true;
+
+    const auto normalized = MediaTargetDetector::normalize(hit);
+    assert(normalized);
+    assert(normalized->kind == MediaKind::image);
+    assert(normalized->media_url == hit.media_url);
+    assert(normalized->link_url == hit.link_url);
+    assert(normalized->downloadable);
+    assert(normalized->copyable);
+
+    hit.drm_protected = true;
+    hit.capturable_frame = true;
+    const auto protected_target = MediaTargetDetector::normalize(hit);
+    assert(protected_target);
+    assert(protected_target->protected_media);
+    assert(!protected_target->downloadable);
+    assert(!protected_target->capturable_frame);
+  }
 
   {
     MediaTarget image;
