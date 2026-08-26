@@ -39,7 +39,10 @@ class FileDownloadQueueStore final : public DownloadQueueStore {
              << (record.request.private_session ? 1 : 0) << '\t'
              << static_cast<int>(record.state) << '\t'
              << record.segment_limit << '\t'
-             << (record.resumable ? 1 : 0) << '\n';
+             << (record.resumable ? 1 : 0) << '\t'
+             << (record.request.scheduled_start_unix_seconds
+                     ? std::to_string(*record.request.scheduled_start_unix_seconds)
+                     : std::string{}) << '\n';
     }
     stream.flush();
     if (!stream.good()) return false;
@@ -62,7 +65,7 @@ class FileDownloadQueueStore final : public DownloadQueueStore {
     std::string line;
     while (std::getline(stream, line)) {
       const auto fields = split(line);
-      if (fields.size() != 8) continue;
+      if (fields.size() != 8 && fields.size() != 9) continue;
       DownloadRecord record;
       record.download_id = unescape(fields[0]);
       record.request.source_url = unescape(fields[1]);
@@ -73,6 +76,9 @@ class FileDownloadQueueStore final : public DownloadQueueStore {
       try {
         record.state = static_cast<DownloadState>(std::stoi(fields[5]));
         record.segment_limit = static_cast<std::size_t>(std::stoull(fields[6]));
+        if (fields.size() == 9 && !fields[8].empty()) {
+          record.request.scheduled_start_unix_seconds = std::stoll(fields[8]);
+        }
       } catch (...) {
         continue;
       }
