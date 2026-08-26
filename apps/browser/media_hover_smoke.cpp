@@ -3,7 +3,9 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
+#include "goreecloud/browser/advanced_download_transfer_engine.hpp"
 #include "goreecloud/browser/browser_media_action_backend.hpp"
 #include "goreecloud/browser/live_media_hover_coordinator.hpp"
 #include "goreecloud/browser/media_destination_service.hpp"
@@ -60,6 +62,47 @@ class FakeDestinations final : public goreecloud::browser::MediaDestinationServi
 
   bool persist{true};
   std::optional<goreecloud::browser::MediaDestinationRequest> last;
+};
+
+class FakeDownloadTransport final : public goreecloud::browser::DownloadTransport {
+ public:
+  std::optional<goreecloud::browser::DownloadResourceMetadata> inspect(
+      std::string_view,
+      std::string_view) override {
+    ++inspect_calls;
+    return goreecloud::browser::DownloadResourceMetadata{
+        .total_bytes = total_bytes,
+        .accepts_byte_ranges = accepts_ranges,
+        .resumable = true,
+        .etag = std::string{"etag-1"},
+        .last_modified = std::string{"Mon, 01 Jan 2026 00:00:00 GMT"},
+        .mime_type = std::string{"application/octet-stream"},
+    };
+  }
+
+  goreecloud::browser::DownloadTransportResult transfer(
+      const goreecloud::browser::DownloadTransportRequest& request) override {
+    requests.push_back(request);
+    const auto size = request.range.end_inclusive - request.range.begin + 1;
+    if (retry_first && requests.size() == 1) {
+      const auto partial = size / 2;
+      return {.completed = false,
+              .retryable = true,
+              .transferred_bytes = partial,
+              .message = "simulated interruption"};
+    }
+    const auto remaining = size - request.resume_offset;
+    return {.completed = true,
+            .retryable = false,
+            .transferred_bytes = remaining,
+            .message = "ok"};
+  }
+
+  std::uint64_t total_bytes{1600};
+  bool accepts_ranges{true};
+  bool retry_first{false};
+  int inspect_calls{0};
+  std::vector<goreecloud::browser::DownloadTransportRequest> requests;
 };
 
 }  // namespace
@@ -250,6 +293,62 @@ int main() {
   const auto open_result = executor.execute(open_request, policy);
   assert(open_result.disposition == MediaActionDisposition::completed);
   assert(opened == target.media_url);
+
+  InProcessAdvancedDownloadManagerService queue;
+  const auto queued = queue.enqueue({
+      .source_url = "https://example.test/large.bin",
+      .referrer_url = "https://example.test/",
+      .suggested_filename = std::string{"large.bin"},
+      .private_session = false,
+  });
+  assert(queued.accepted);
+  const auto record = queue.find(queued.download_id);
+  assert(record);
+
+  DownloadResourceMetadata metadata;
+  metadata.total_bytes = 1600;
+  metadata.accepts_byte_ranges = true;
+  metadata.resumable = true;
+  const auto plan = DownloadTransferPlanner::make_plan(*record, metadata);
+  assert(plan.segments.size() == 16);
+  assert(plan.segments.front().range.begin == 0);
+  assert(plan.segments.back().range.end_inclusive == 1599);
+
+  FakeDownloadTransport transport;
+  transport.retry_first = true;
+  DownloadTransferScheduler scheduler(transport);
+  assert(scheduler.queue(*record));
+  scheduler.pump();
+  assert(scheduler.active_count() == 1);
+  assert(!transport.requests.empty());
+  const auto first_transfer_size = transport.requests.front().range.end_inclusive -
+                                   transport.requests.front().range.begin + 1;
+  assert(first_transfer_size == 100);
+
+  scheduler.pump();
+  assert(transport.requests.size() >= 2);
+  assert(transport.requests[1].resume_offset == 50);
+
+  for (int i = 0; i < 32 && scheduler.completed_downloads().empty(); ++i) {
+    scheduler.pump();
+  }
+  assert(scheduler.completed_downloads().size() == 1);
+  assert(scheduler.completed_downloads().front() == queued.download_id);
+
+  FakeDownloadTransport concurrency_transport;
+  DownloadTransferScheduler concurrency_scheduler(concurrency_transport);
+  for (int i = 0; i < 7; ++i) {
+    DownloadRecord synthetic;
+    synthetic.download_id = "concurrent-" + std::to_string(i);
+    synthetic.request.source_url = "https://example.test/file-" + std::to_string(i);
+    synthetic.request.referrer_url = "https://example.test/";
+    synthetic.segment_limit = 1;
+    assert(concurrency_scheduler.queue(std::move(synthetic)));
+  }
+  concurrency_scheduler.pump();
+  assert(concurrency_scheduler.active_count() <=
+         DownloadTransferScheduler::kMaximumActiveDownloads);
+  assert(concurrency_scheduler.pending_count() >= 2);
 
   return 0;
 }
