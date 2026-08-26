@@ -5,12 +5,12 @@
 #include <string>
 #include <thread>
 
-#include "goreecloud/browser/advanced_download_manager_service.hpp"
 #include "goreecloud/browser/application.hpp"
 #include "goreecloud/browser/browser_media_action_backend.hpp"
 #include "goreecloud/browser/chrome_command_router.hpp"
 #include "goreecloud/browser/chrome_shell.hpp"
 #include "goreecloud/browser/configured_search_router.hpp"
+#include "goreecloud/browser/download_runtime_factory.hpp"
 #include "goreecloud/browser/internal_pages.hpp"
 #include "goreecloud/browser/media_action_executor.hpp"
 #include "goreecloud/browser/media_destination_service.hpp"
@@ -39,7 +39,8 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
   media_policy.allow_remote_processing = true;
   host.set_media_hover_policy(media_policy);
 
-  InProcessAdvancedDownloadManagerService downloads;
+  auto download_runtime = make_download_runtime();
+  auto& downloads = download_runtime->service();
   UnavailableMediaDestinationService media_destinations;
   BrowserMediaActionBackend media_backend(
       visual_search_router,
@@ -185,6 +186,7 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
   std::string last_url = current_url;
   while (host.pump_events()) {
     application.engine().pump_events();
+    download_runtime->pump();
 
     host.render_chrome(chrome.snapshot());
     if (auto* tab = window->active_tab()) {
