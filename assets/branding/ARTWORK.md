@@ -11,6 +11,7 @@ The following concepts were rejected during product review and must not be used 
 - **Aurora Window** — rejected.
 - **Borealis Lens** — rejected because its segmented circular composition reads too similarly to Google Chrome and risks looking like an imitation rather than an original GoreeCloud identity.
 - **Tidefold** — rejected because its abstract interlocking planes are not immediately legible and do not communicate a clear, memorable Browser identity at a glance.
+- **Waymark** — rejected because the location-pin silhouette reads primarily as GPS/maps/navigation rather than as a distinctive Browser identity.
 
 The existing canonical SVG paths are retained only as rejected design history until a replacement concept is approved. They must not be treated as release artwork, launcher identity, favicon identity, package artwork, or production branding.
 
@@ -31,7 +32,7 @@ It must satisfy these requirements:
 - strong light, dark, high-contrast, and reduced-transparency behavior;
 - no dependence on gradients, transparency, shadows, or tiny internal details for recognition;
 - deterministic derivative generation and SHA-256 provenance;
-- no false security, privacy, networking, or service symbolism.
+- no false security, privacy, networking, location, or service symbolism.
 
 ## Concept exclusions
 
@@ -41,6 +42,8 @@ Avoid making the primary identity a:
 
 - navigation ribbon;
 - compass;
+- map pin or location marker;
+- GPS/location-navigation symbol;
 - open portal/ring with forward path;
 - four-pane or generic window tile;
 - generic globe;
@@ -56,9 +59,9 @@ Avoid making the primary identity a:
 
 ## Recognition-first design rule
 
-The next candidate must pass a simple recognition test before any material polish is considered: shown without a label and at small size, the mark should still read as an intentional, coherent product identity rather than an abstract shape.
+The next candidate must pass a simple recognition test before any material polish is considered: shown without a label and at small size, the mark should still read as an intentional, coherent product identity rather than an abstract shape or an unrelated utility icon.
 
-The mark does not need to literally depict a web browser, but it must have one dominant, memorable silhouette and an obvious internal logic. If the identity requires a paragraph to explain what the viewer is seeing, it is not acceptable.
+The mark does not need to literally depict a web browser, but it must have one dominant, memorable silhouette and an obvious internal logic. If the identity requires a paragraph to explain what the viewer is seeing, or if its first reading is maps, GPS, cloud storage, security, or another unrelated product category, it is not acceptable.
 
 ## Glaze UI construction requirements
 
@@ -82,6 +85,7 @@ A future candidate is not official merely because an SVG is committed. Approval 
 - Android adaptive masks;
 - Linux launcher integration;
 - unlabeled recognizability and semantic clarity;
+- category confusion risk, including GPS/maps/location, cloud storage, security, networking, and other unrelated product classes;
 - similarity risk against Chrome, Chromium, Firefox, Opera, Edge, Safari, Brave, Vivaldi, Arc, and other major Browser identities;
 - consistency with current Stable Glaze UI.
 
