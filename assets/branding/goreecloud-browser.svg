@@ -1,16 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
-  <title id="title">GoreeCloud Browser — Waymark Candidate</title>
-  <desc id="desc">A clear location-pin silhouette containing a simplified web horizon, representing finding and reaching places on the web.</desc>
+  <title id="title">GoreeCloud Browser — Tabmark Candidate</title>
+  <desc id="desc">A compact stack of three offset browser tabs with a distinctive central cut, expressing browsing sessions and tabbed navigation.</desc>
   <defs>
-    <linearGradient id="foundation" x1="152" y1="112" x2="870" y2="912" gradientUnits="userSpaceOnUse">
+    <linearGradient id="foundation" x1="150" y1="108" x2="874" y2="916" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#081A36"/>
-      <stop offset="0.52" stop-color="#164A87"/>
-      <stop offset="1" stop-color="#47317F"/>
+      <stop offset="0.50" stop-color="#164A87"/>
+      <stop offset="1" stop-color="#49357E"/>
     </linearGradient>
-    <linearGradient id="mark" x1="352" y1="240" x2="650" y2="760" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#E8FCFF"/>
-      <stop offset="0.55" stop-color="#82DFFF"/>
-      <stop offset="1" stop-color="#A48BFF"/>
+    <linearGradient id="rear" x1="268" y1="262" x2="700" y2="700" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5BCBF5"/>
+      <stop offset="1" stop-color="#7068EE"/>
+    </linearGradient>
+    <linearGradient id="front" x1="336" y1="316" x2="730" y2="724" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E9FCFF"/>
+      <stop offset="0.54" stop-color="#A9E9FF"/>
+      <stop offset="1" stop-color="#B6A4FF"/>
     </linearGradient>
     <filter id="lift" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#020A18" flood-opacity="0.28"/>
@@ -18,10 +22,9 @@
   </defs>
   <rect x="64" y="64" width="896" height="896" rx="224" fill="url(#foundation)"/>
   <g filter="url(#lift)">
-    <path d="M512 190C348 190 216 322 216 486C216 694 512 846 512 846C512 846 808 694 808 486C808 322 676 190 512 190Z" fill="url(#mark)"/>
-    <circle cx="512" cy="472" r="174" fill="#0B2448"/>
-    <path d="M356 486C398 452 452 432 512 432C572 432 626 452 668 486C626 520 572 540 512 540C452 540 398 520 356 486Z" fill="#E8FCFF"/>
-    <path d="M390 410C424 386 466 372 512 372C558 372 600 386 634 410" fill="none" stroke="#E8FCFF" stroke-width="28" stroke-linecap="round"/>
-    <path d="M390 562C424 586 466 600 512 600C558 600 600 586 634 562" fill="none" stroke="#E8FCFF" stroke-width="28" stroke-linecap="round"/>
+    <path d="M230 296C230 262 256 236 290 236H642C676 236 702 262 702 296V376H750C784 376 810 402 810 436V690C810 724 784 750 750 750H334C300 750 274 724 274 690V610H230C196 610 170 584 170 550V356C170 322 196 296 230 296Z" fill="url(#rear)"/>
+    <path d="M306 360C306 326 332 300 366 300H718C752 300 778 326 778 360V646C778 680 752 706 718 706H366C332 706 306 680 306 646V360Z" fill="url(#front)"/>
+    <path d="M306 430H778" stroke="#0B2448" stroke-opacity="0.72" stroke-width="28"/>
+    <path d="M430 300H596L564 430H396L430 300Z" fill="#0B2448"/>
   </g>
 </svg>
