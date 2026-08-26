@@ -46,7 +46,7 @@ class MediaHoverViewModelBuilder {
                                                  std::string privacy_status = {},
                                                  std::string security_status = {}) {
     MediaHoverViewModel model;
-    model.visible = policy.mode != MediaHoverMode::disabled;
+    model.visible = policy.enabled;
     model.expanded = expanded;
     model.reduced_motion = reduced_motion;
     model.keyboard_focus_visible = keyboard_focus_visible;
