@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGOREECLOUD_ENABLE_CHROMIUM=OFF -DGOREECLOUD_ENABLE_CEF=OFF
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGOREECLOUD_ENABLE_CHROMIUM=OFF -DGOREECLOUD_ENABLE_CEF=OFF -DGOREECLOUD_ENABLE_LINUX_GTK_HOST=OFF
       - name: Build
         run: cmake --build build --parallel
       - name: Test
@@ -27,8 +27,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Configure
-        run: cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DGOREECLOUD_ENABLE_CHROMIUM=OFF -DGOREECLOUD_ENABLE_CEF=OFF
+        run: cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DGOREECLOUD_ENABLE_CHROMIUM=OFF -DGOREECLOUD_ENABLE_CEF=OFF -DGOREECLOUD_ENABLE_LINUX_GTK_HOST=OFF
       - name: Build
         run: cmake --build build-debug --parallel
       - name: Test
         run: ctest --test-dir build-debug --output-on-failure
+
+  linux-gtk-beta-shell:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install GTK/X11 development packages
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libx11-dev pkg-config
+      - name: Configure beta shell
+        run: cmake -S . -B build-gtk -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGOREECLOUD_ENABLE_CHROMIUM=OFF -DGOREECLOUD_ENABLE_CEF=OFF -DGOREECLOUD_ENABLE_LINUX_GTK_HOST=ON
+      - name: Build beta shell
+        run: cmake --build build-gtk --parallel
+      - name: Test engine-independent contracts
+        run: ctest --test-dir build-gtk --output-on-failure
