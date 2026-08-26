@@ -6,6 +6,7 @@
 
 #include "goreecloud/browser/advanced_download_manager_service.hpp"
 #include "goreecloud/browser/media_action_executor.hpp"
+#include "goreecloud/browser/media_destination_service.hpp"
 #include "goreecloud/browser/media_visual_search_router.hpp"
 
 namespace goreecloud::browser {
@@ -22,13 +23,15 @@ class BrowserMediaActionBackend final : public MediaActionBackend {
                             NavigateFn navigate,
                             OpenNewTabFn open_new_tab,
                             CopyTextFn copy_text,
-                            PreviewFn preview)
+                            PreviewFn preview,
+                            MediaDestinationService* destinations = nullptr)
       : visual_search_(visual_search),
         downloads_(downloads),
         navigate_(std::move(navigate)),
         open_new_tab_(std::move(open_new_tab)),
         copy_text_(std::move(copy_text)),
-        preview_(std::move(preview)) {}
+        preview_(std::move(preview)),
+        destinations_(destinations) {}
 
   MediaActionResult preview(const MediaActionRequest& request) override {
     if (!preview_) return unsupported("Media preview host is unavailable.");
@@ -48,9 +51,20 @@ class BrowserMediaActionBackend final : public MediaActionBackend {
   }
 
   MediaActionResult save(const MediaActionRequest& request) override {
-    if (!request.save_destination ||
-        *request.save_destination != MediaSaveDestination::local_device) {
-      return unsupported("This synchronized media destination is not connected yet.");
+    if (!request.save_destination) {
+      return failed("A media save destination was not selected.");
+    }
+    if (*request.save_destination != MediaSaveDestination::local_device) {
+      if (!destinations_) return unsupported("This synchronized media destination is not connected yet.");
+      const auto kind = destination_kind(*request.save_destination);
+      if (!kind) return unsupported("This media destination is not supported.");
+      return destination_result(destinations_->store({
+          .destination = *kind,
+          .target = request.target,
+          .user_annotation = std::nullopt,
+          .source_attribution_allowed = true,
+          .private_session = false,
+      }));
     }
     if (!request.target.can_download || request.target.protected_media) {
       return {MediaActionDisposition::denied,
@@ -106,11 +120,54 @@ class BrowserMediaActionBackend final : public MediaActionBackend {
     return unsupported("This processing adapter is not available yet.");
   }
 
-  MediaActionResult send_to_service(const MediaActionRequest&) override {
-    return unsupported("This GoreeCloud destination adapter is not available yet.");
+  MediaActionResult send_to_service(const MediaActionRequest& request) override {
+    if (!destinations_) return unsupported("This GoreeCloud destination adapter is not available yet.");
+    const auto destination = destination_kind(request.action);
+    if (!destination) return unsupported("This GoreeCloud destination is not supported.");
+    return destination_result(destinations_->store({
+        .destination = *destination,
+        .target = request.target,
+        .user_annotation = std::nullopt,
+        .source_attribution_allowed = true,
+        .private_session = false,
+    }));
   }
 
  private:
+  static std::optional<MediaDestinationKind> destination_kind(MediaSaveDestination destination) {
+    switch (destination) {
+      case MediaSaveDestination::goreecloud_drive: return MediaDestinationKind::drive;
+      case MediaSaveDestination::goreecloud_photos: return MediaDestinationKind::photos;
+      case MediaSaveDestination::goreecloud_video: return MediaDestinationKind::video;
+      case MediaSaveDestination::local_device: return std::nullopt;
+    }
+    return std::nullopt;
+  }
+
+  static std::optional<MediaDestinationKind> destination_kind(MediaAction action) {
+    switch (action) {
+      case MediaAction::save_to_drive: return MediaDestinationKind::drive;
+      case MediaAction::save_to_photos: return MediaDestinationKind::photos;
+      case MediaAction::save_to_video: return MediaDestinationKind::video;
+      case MediaAction::save_to_notes: return MediaDestinationKind::notes;
+      case MediaAction::save_to_memos: return MediaDestinationKind::memos;
+      case MediaAction::create_task: return MediaDestinationKind::tasks;
+      default: return std::nullopt;
+    }
+  }
+
+  static MediaActionResult destination_result(MediaDestinationResult result) {
+    if (!result.accepted) return failed(result.message);
+    if (!result.persisted) {
+      return failed(result.message.empty()
+                        ? "Destination accepted the request but did not confirm persistence."
+                        : result.message);
+    }
+    return {MediaActionDisposition::completed,
+            result.message.empty() ? "Media saved to GoreeCloud destination." : result.message,
+            true};
+  }
+
   static MediaActionResult completed(std::string message) {
     return {MediaActionDisposition::completed, std::move(message), true};
   }
@@ -127,6 +184,7 @@ class BrowserMediaActionBackend final : public MediaActionBackend {
   OpenNewTabFn open_new_tab_;
   CopyTextFn copy_text_;
   PreviewFn preview_;
+  MediaDestinationService* destinations_{nullptr};
 };
 
 }  // namespace goreecloud::browser
