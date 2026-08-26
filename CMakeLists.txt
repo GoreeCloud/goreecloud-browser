@@ -143,6 +143,7 @@ if(GOREECLOUD_ENABLE_LINUX_GTK_HOST)
   target_sources(goreecloud_browser PRIVATE
     src/platform/gtk_linux_glaze_host.cpp
     src/platform/gtk_media_hover_popover.cpp
+    src/platform/gtk_media_action_host.cpp
   )
   target_link_libraries(goreecloud_browser PRIVATE PkgConfig::GTK3)
   target_compile_definitions(goreecloud_browser PRIVATE GOREECLOUD_ENABLE_LINUX_GTK_HOST=1)
