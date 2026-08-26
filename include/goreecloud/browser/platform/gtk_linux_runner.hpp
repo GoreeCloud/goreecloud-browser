@@ -39,7 +39,7 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
   media_policy.allow_remote_processing = true;
   host.set_media_hover_policy(media_policy);
 
-  UnavailableAdvancedDownloadManagerService downloads;
+  InProcessAdvancedDownloadManagerService downloads;
   UnavailableMediaDestinationService media_destinations;
   BrowserMediaActionBackend media_backend(
       visual_search_router,
