@@ -11,7 +11,13 @@ int main() {
   std::error_code error;
   std::filesystem::remove_all(root, error);
 
-  FileSessionRecoveryStore store(root, {.max_checkpoints = 2});
+  SessionRecoveryProtectionBoundary development(
+      nullptr,
+      SessionRecoveryProtectionPolicy{
+          .require_authenticated_encryption = false,
+          .allow_unprotected_development_storage = true,
+      });
+  FileSessionRecoveryStore store(root, development, {.max_checkpoints = 2});
   SessionRecoveryCoordinator coordinator(store);
 
   SessionCheckpoint first;
