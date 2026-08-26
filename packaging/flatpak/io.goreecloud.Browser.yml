@@ -1,0 +1,26 @@
+app-id: io.goreecloud.Browser
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: goreecloud-browser
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --socket=pulseaudio
+  - --device=dri
+  - --filesystem=xdg-download
+  - --talk-name=org.freedesktop.portal.Desktop
+modules:
+  - name: goreecloud-browser
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+    sources:
+      - type: dir
+        path: ../..
+
+# Development scaffold only. Chromium runtime files, sandbox integration,
+# portals, codecs, desktop metadata, icons, signing, and production permission
+# review must be completed before this manifest is release-eligible.
