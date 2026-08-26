@@ -5,6 +5,7 @@
 #include <string>
 #include <string_view>
 
+#include "goreecloud/browser/media_hover.hpp"
 #include "goreecloud/browser/native_window_host.hpp"
 #include "goreecloud/browser/toolbar.hpp"
 
@@ -15,6 +16,7 @@ class GtkLinuxGlazeWindowHost final : public NativeWindowHost {
   using ToolbarHandler = std::function<void(ToolbarItem)>;
   using SearchHandler = std::function<void(std::string_view)>;
   using SearchControlHandler = std::function<void(UnifiedSearchBarControl)>;
+  using MediaHoverActionHandler = std::function<void(MediaAction, const MediaTarget&)>;
 
   GtkLinuxGlazeWindowHost();
   ~GtkLinuxGlazeWindowHost() override;
@@ -25,6 +27,8 @@ class GtkLinuxGlazeWindowHost final : public NativeWindowHost {
   void set_toolbar_handler(ToolbarHandler handler);
   void set_search_handler(SearchHandler handler);
   void set_search_control_handler(SearchControlHandler handler);
+  void set_media_hover_action_handler(MediaHoverActionHandler handler);
+  void set_media_hover_policy(MediaHoverSitePolicy policy);
   void set_private_window(bool private_window);
 
   bool create() override;
