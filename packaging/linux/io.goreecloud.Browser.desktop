@@ -1,0 +1,20 @@
+[Desktop Entry]
+Type=Application
+Name=GoreeCloud Browser
+Comment=GoreeCloud first-party web browser
+Exec=goreecloud-browser %U
+Icon=io.goreecloud.Browser
+Terminal=false
+Categories=Network;WebBrowser;
+MimeType=text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+StartupNotify=true
+StartupWMClass=GoreeCloud Browser
+Actions=NewWindow;NewPrivateWindow;
+
+[Desktop Action NewWindow]
+Name=New Window
+Exec=goreecloud-browser
+
+[Desktop Action NewPrivateWindow]
+Name=New Private Window
+Exec=goreecloud-browser --private
