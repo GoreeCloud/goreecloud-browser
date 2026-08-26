@@ -9,6 +9,7 @@
 #include "goreecloud/browser/chromium_runtime_delegate.hpp"
 #include "goreecloud/browser/chromium_runtime_factory.hpp"
 #include "goreecloud/browser/media_hit_test_provider.hpp"
+#include "goreecloud/browser/media_preview_provider.hpp"
 #include "goreecloud/browser/native_engine_surface.hpp"
 
 namespace goreecloud::browser {
@@ -53,7 +54,8 @@ EngineMediaHitTest to_engine_hit_test(const RawMediaHitTest& raw) {
 
 class ChromiumEngineView final : public EngineView,
                                  public NativeSurfaceAttachable,
-                                 public AsyncMediaHitTestProvider {
+                                 public AsyncMediaHitTestProvider,
+                                 public AsyncMediaPreviewProvider {
  public:
   explicit ChromiumEngineView(std::unique_ptr<ChromiumRuntimeView> runtime_view)
       : runtime_view_(std::move(runtime_view)) {
@@ -117,6 +119,15 @@ class ChromiumEngineView final : public EngineView,
           }
           callback(response_sequence, to_engine_hit_test(*raw));
         });
+  }
+
+  bool request_media_preview(const MediaPreviewRequest& request,
+                             PreviewCallback callback) override {
+    if (request.target.protected_media) {
+      if (callback) callback(std::nullopt, "Protected media preview is restricted by the engine.");
+      return true;
+    }
+    return runtime_view_->request_media_preview(request, std::move(callback));
   }
 
  private:
