@@ -9,6 +9,7 @@ The following concepts were rejected during product review and must not be used 
 - **Glaze Navigation Ribbon** — rejected.
 - **Horizon Portal** — rejected.
 - **Aurora Window** — rejected.
+- **Borealis Lens** — rejected because its segmented circular composition reads too similarly to Google Chrome and risks looking like an imitation rather than an original GoreeCloud identity.
 
 The existing canonical SVG paths are retained only as rejected design history until a replacement concept is approved. They must not be treated as release artwork, launcher identity, favicon identity, package artwork, or production branding.
 
@@ -44,7 +45,8 @@ Avoid making the primary identity a:
 - generic cloud;
 - standalone letter G;
 - generic browser window;
-- Chromium/Chrome-like segmented circle;
+- segmented circular or radial composition resembling Chrome/Chromium;
+- multi-blade aperture or circular lens arrangement that can read as a Chrome derivative;
 - Firefox-like animal/flame orbit;
 - Opera-like ring;
 - upstream Browser derivative.
@@ -70,7 +72,7 @@ A future candidate is not official merely because an SVG is committed. Approval 
 - dark and light contexts;
 - Android adaptive masks;
 - Linux launcher integration;
-- similarity risk against major Browser identities;
+- similarity risk against Chrome, Chromium, Firefox, Opera, Edge, Safari, Brave, Vivaldi, Arc, and other major Browser identities;
 - consistency with current Stable Glaze UI.
 
 ## Production rule
