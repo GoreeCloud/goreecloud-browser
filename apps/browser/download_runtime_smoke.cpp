@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "goreecloud/browser/advanced_download_panel.hpp"
 #include "goreecloud/browser/advanced_download_runtime.hpp"
 
 namespace {
@@ -105,6 +106,71 @@ int main() {
   assert(progress->total_bytes == 160);
   assert(std::filesystem::exists(root / "runtime.bin"));
   assert(std::filesystem::file_size(root / "runtime.bin") == 160);
+
+  const auto completed_panel = AdvancedDownloadPanelBuilder::build(
+      resumed_runtime, DownloadPanelFilter::completed);
+  assert(completed_panel.completed_count == 1);
+  assert(completed_panel.rows.size() == 1);
+  assert(completed_panel.rows.front().can_open);
+  assert(!completed_panel.rows.front().can_pause);
+
+  // Pause must stop further network work and survive runtime reconstruction.
+  const auto controls_root = root / "controls";
+  std::string paused_id;
+  {
+    FakeHttpClient control_client(true);
+    AdvancedDownloadRuntimeService control_runtime(control_client, controls_root);
+    const auto queued = control_runtime.enqueue({
+        .source_url = "https://example.test/paused.bin",
+        .referrer_url = "https://example.test/",
+        .suggested_filename = std::string{"paused.bin"},
+        .private_session = false,
+    });
+    assert(queued.accepted);
+    paused_id = queued.download_id;
+    control_runtime.pump();
+    const auto requests_before_pause = control_client.requests.size();
+    assert(requests_before_pause == 1);
+    assert(control_runtime.pause(paused_id));
+    for (int i = 0; i < 4; ++i) control_runtime.pump();
+    assert(control_client.requests.size() == requests_before_pause);
+    const auto paused_progress = control_runtime.progress(paused_id);
+    assert(paused_progress && paused_progress->state == DownloadState::paused);
+    const auto paused_panel = AdvancedDownloadPanelBuilder::build(
+        control_runtime, DownloadPanelFilter::paused);
+    assert(paused_panel.paused_count == 1);
+    assert(paused_panel.rows.size() == 1);
+    assert(paused_panel.rows.front().can_resume);
+  }
+
+  FakeHttpClient paused_restore_client(false);
+  AdvancedDownloadRuntimeService paused_restore(paused_restore_client, controls_root);
+  const auto restored_paused = paused_restore.progress(paused_id);
+  assert(restored_paused && restored_paused->state == DownloadState::paused);
+  paused_restore.pump();
+  assert(paused_restore_client.requests.empty());
+  assert(paused_restore.resume(paused_id));
+  paused_restore.pump();
+  assert(!paused_restore_client.requests.empty());
+
+  // Cancel removes the transfer from live scheduling; optional discard removes partial data.
+  const auto cancel_root = root / "cancel";
+  FakeHttpClient cancel_client(true);
+  AdvancedDownloadRuntimeService cancel_runtime(cancel_client, cancel_root);
+  const auto cancel_queued = cancel_runtime.enqueue({
+      .source_url = "https://example.test/cancel.bin",
+      .referrer_url = "https://example.test/",
+      .suggested_filename = std::string{"cancel.bin"},
+      .private_session = false,
+  });
+  assert(cancel_queued.accepted);
+  cancel_runtime.pump();
+  const auto requests_before_cancel = cancel_client.requests.size();
+  assert(cancel_runtime.cancel(cancel_queued.download_id, true));
+  for (int i = 0; i < 4; ++i) cancel_runtime.pump();
+  assert(cancel_client.requests.size() == requests_before_cancel);
+  const auto cancelled = cancel_runtime.progress(cancel_queued.download_id);
+  assert(cancelled && cancelled->state == DownloadState::cancelled);
 
   // Private-session queue records must not be reconstructed after restart.
   std::string private_id;
