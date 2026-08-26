@@ -6,6 +6,14 @@ GoreeCloud Browser is GoreeCloud's first-party native web browser. The browser p
 
 GoreeCloud Browser is the sole normal user-facing Browser product identity. Upstream and third-party implementation technology may appear where technically, legally, operationally, diagnostically, or compliance-wise required, but it does not become GoreeCloud product branding.
 
+## Glaze UI requirement
+
+GoreeCloud Browser is built against the **latest approved Stable Glaze UI release**. The current Stable baseline is **Glaze UI 1.5.0**, promoted from `GoreeCloud/glaze-ui` at source revision `2e1618397f6ebcdd254a76bfdd7e98846f2c5aa3`.
+
+This is a moving production requirement rather than a permanent version pin. When a newer Glaze UI release becomes Stable, GoreeCloud Browser becomes migration-required until Browser-owned surfaces have adopted and validated that current Stable contract. A superseded Glaze UI baseline cannot satisfy Browser production readiness.
+
+See [`docs/GLAZE_UI_ADOPTION.md`](docs/GLAZE_UI_ADOPTION.md) for the Browser-specific adoption and validation policy.
+
 ## Architectural direction
 
 GoreeCloud Browser is **not** intended to be a conventional Chromium skin or a permanently deep Chromium fork.
@@ -17,7 +25,7 @@ The browser is structured so that GoreeCloud-owned application layers remain sep
 - **GoreeCloud Browser** — native browser application, browser chrome, tab model, profiles, preferences, history, permissions, downloads, sessions, and product experience.
 - **Browser Engine Layer** — GoreeCloud-owned abstraction between the application and the underlying web engine.
 - **Chromium/Blink** — initial rendering, JavaScript, WebAssembly, Web APIs, media, graphics, accessibility, and web-platform foundation.
-- **Glaze UI** — GoreeCloud visual, interaction, responsive, and cross-device interface system.
+- **Glaze UI** — authoritative GoreeCloud presentation and interaction system for Browser-owned surfaces; Browser must track the current approved Stable release.
 - **GoreeCloud Wayfinder** — first-party Browser feature family for navigation, productivity, organization, downloads, transfers, capture, sessions, synchronization, Browser utilities, content handling, and workflow integration.
 - **GoreeCloud Search** — sole and default integrated search authority for approved Browser search entry points.
 - **GoreeCloud Bookmarks** — first-class bookmarks, read-later, collections, and library subsystem.
@@ -42,12 +50,13 @@ The browser is structured so that GoreeCloud-owned application layers remain sep
 7. Engine-specific exceptions must be documented and isolated.
 8. Planned capabilities must not be presented as production-ready until implementation and acceptance evidence exist.
 9. Security, privacy, credential, DNS, networking, search, and synchronization authority boundaries remain explicit.
+10. Browser-owned user-facing surfaces must conform to the latest approved Stable Glaze UI release before production acceptance.
 
 ## Initial development phases
 
 ### 0.x — GoreeCloud-owned browser shell
 
-Build the native application, Glaze UI browser chrome, tabs, windows, sessions, profiles, settings, permissions UI, history, bookmarks integration, Search integration, downloads, local browser-state storage, and the engine adapter.
+Build the native application, current-Stable Glaze UI browser chrome, tabs, windows, sessions, profiles, settings, permissions UI, history, bookmarks integration, Search integration, downloads, local browser-state storage, and the engine adapter.
 
 ### 0.x — First-party browser services
 
@@ -66,7 +75,7 @@ browser/engine/               Browser Engine Layer interfaces
 browser/engine/chromium/      Chromium adapter implementation
 browser/services/             GoreeCloud service contracts and adapters
 browser/storage/              GoreeCloud-owned browser data stores
-browser/ui/                   Glaze UI browser components
+browser/ui/                   Current-Stable Glaze UI browser components
 include/goreecloud/browser/   Public C++ interfaces
 src/                          Initial implementation scaffolding
 docs/                         Architecture and engineering documentation
@@ -80,4 +89,5 @@ See:
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architectural boundaries and ownership model.
 - [`docs/ENGINE_LAYER.md`](docs/ENGINE_LAYER.md) — Browser Engine Layer contracts.
+- [`docs/GLAZE_UI_ADOPTION.md`](docs/GLAZE_UI_ADOPTION.md) — current-Stable Glaze UI adoption and acceptance policy.
 - [`docs/PRODUCT_INVENTORY.md`](docs/PRODUCT_INVENTORY.md) — planned inventory, feature requirements, authority boundaries, and production-acceptance direction.
