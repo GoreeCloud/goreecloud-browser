@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <iomanip>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -12,23 +14,8 @@
 
 namespace goreecloud::browser {
 
-enum class DownloadPanelFilter {
-  all,
-  active,
-  queued,
-  paused,
-  completed,
-  failed,
-  cancelled,
-};
-
-enum class DownloadPanelSort {
-  queue_order,
-  filename,
-  size,
-  progress,
-  speed,
-};
+enum class DownloadPanelFilter { all, active, queued, paused, completed, failed, cancelled };
+enum class DownloadPanelSort { queue_order, filename, size, progress, speed };
 
 struct DownloadPanelRow {
   std::string download_id;
@@ -67,12 +54,10 @@ class AdvancedDownloadPanelBuilder {
     AdvancedDownloadPanelModel model;
     const auto records = runtime.snapshot();
     model.rows.reserve(records.size());
-
     for (const auto& record : records) {
       const auto live = runtime.progress(record.download_id);
       const auto state = live ? live->state : record.state;
       if (!matches(filter, state)) continue;
-
       DownloadPanelRow row;
       row.download_id = record.download_id;
       row.filename = record.request.suggested_filename.value_or(filename_from_url(record.request.source_url));
@@ -87,21 +72,17 @@ class AdvancedDownloadPanelBuilder {
       }
       if (row.total_bytes > 0) {
         row.progress_fraction = std::clamp(
-            static_cast<double>(row.completed_bytes) / static_cast<double>(row.total_bytes),
-            0.0, 1.0);
+            static_cast<double>(row.completed_bytes) / static_cast<double>(row.total_bytes), 0.0, 1.0);
       }
       if (row.bytes_per_second > 0.0 && row.total_bytes > row.completed_bytes) {
         const auto remaining = static_cast<double>(row.total_bytes - row.completed_bytes);
-        row.estimated_seconds_remaining = static_cast<std::uint64_t>(
-            std::ceil(remaining / row.bytes_per_second));
+        row.estimated_seconds_remaining = static_cast<std::uint64_t>(std::ceil(remaining / row.bytes_per_second));
       }
-
       row.can_pause = state == DownloadState::running || state == DownloadState::queued;
       row.can_resume = state == DownloadState::paused;
       row.can_cancel = state == DownloadState::running || state == DownloadState::queued ||
                        state == DownloadState::paused || state == DownloadState::failed;
       row.can_open = state == DownloadState::completed;
-
       switch (state) {
         case DownloadState::running: ++model.active_count; break;
         case DownloadState::queued: ++model.queued_count; break;
@@ -113,9 +94,37 @@ class AdvancedDownloadPanelBuilder {
       model.aggregate_bytes_per_second += row.bytes_per_second;
       model.rows.push_back(std::move(row));
     }
-
     sort_rows(model.rows, sort);
     return model;
+  }
+
+  static std::string format_text(const AdvancedDownloadPanelModel& model) {
+    std::ostringstream out;
+    out << "Advanced Download Manager\n"
+        << "Active " << model.active_count
+        << "  Queued " << model.queued_count
+        << "  Paused " << model.paused_count
+        << "  Completed " << model.completed_count
+        << "  Failed " << model.failed_count << '\n';
+    if (model.aggregate_bytes_per_second > 0.0) {
+      out << "Total speed " << format_rate(model.aggregate_bytes_per_second) << '\n';
+    }
+    if (model.rows.empty()) {
+      out << "No downloads.";
+      return out.str();
+    }
+    for (const auto& row : model.rows) {
+      out << "\n" << row.filename << " — " << state_label(row.state);
+      if (row.total_bytes > 0) {
+        out << " — " << static_cast<int>(std::round(row.progress_fraction * 100.0)) << "%"
+            << " (" << format_bytes(row.completed_bytes) << " / " << format_bytes(row.total_bytes) << ")";
+      }
+      if (row.bytes_per_second > 0.0) out << " — " << format_rate(row.bytes_per_second);
+      if (row.estimated_seconds_remaining) out << " — ETA " << format_eta(*row.estimated_seconds_remaining);
+      if (!row.status_message.empty()) out << "\n  " << row.status_message;
+      if (row.private_session) out << "\n  Private session";
+    }
+    return out.str();
   }
 
  private:
@@ -154,6 +163,47 @@ class AdvancedDownloadPanelBuilder {
     auto filename = std::string{url.substr(start, end - start)};
     if (filename.empty()) filename = "download";
     return filename;
+  }
+
+  static const char* state_label(DownloadState state) {
+    switch (state) {
+      case DownloadState::queued: return "Queued";
+      case DownloadState::running: return "Downloading";
+      case DownloadState::paused: return "Paused";
+      case DownloadState::completed: return "Completed";
+      case DownloadState::failed: return "Failed";
+      case DownloadState::cancelled: return "Cancelled";
+    }
+    return "Unknown";
+  }
+
+  static std::string format_bytes(std::uint64_t bytes) {
+    constexpr double kb = 1024.0;
+    constexpr double mb = kb * 1024.0;
+    constexpr double gb = mb * 1024.0;
+    std::ostringstream out;
+    out << std::fixed << std::setprecision(1);
+    if (bytes >= static_cast<std::uint64_t>(gb)) out << static_cast<double>(bytes) / gb << " GB";
+    else if (bytes >= static_cast<std::uint64_t>(mb)) out << static_cast<double>(bytes) / mb << " MB";
+    else if (bytes >= static_cast<std::uint64_t>(kb)) out << static_cast<double>(bytes) / kb << " KB";
+    else out << bytes << " B";
+    return out.str();
+  }
+
+  static std::string format_rate(double bytes_per_second) {
+    if (bytes_per_second < 0.0) bytes_per_second = 0.0;
+    return format_bytes(static_cast<std::uint64_t>(bytes_per_second)) + "/s";
+  }
+
+  static std::string format_eta(std::uint64_t seconds) {
+    const auto hours = seconds / 3600;
+    const auto minutes = (seconds % 3600) / 60;
+    const auto remaining = seconds % 60;
+    std::ostringstream out;
+    if (hours > 0) out << hours << "h ";
+    if (minutes > 0 || hours > 0) out << minutes << "m ";
+    out << remaining << "s";
+    return out.str();
   }
 };
 
