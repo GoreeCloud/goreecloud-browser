@@ -31,15 +31,13 @@ class GtkLinuxGlazeWindowHost final : public NativeWindowHost {
   void show() override;
   void close() override;
   void set_title(std::string_view title) override;
-  void render_chrome(const ChromeShellState& state) override;
+  void render_chrome(const BrowserChromeState& state) override;
   void attach_engine_view(EngineView& view) override;
   void detach_engine_view() override;
   void show_internal_surface(std::string_view internal_url) override;
   void show_panel(std::string_view panel_id) override;
   [[nodiscard]] NativeWindowMetrics metrics() const override;
 
-  // Drives pending GTK events without taking ownership of the process-wide
-  // event loop. Returns false once the window has been closed.
   bool pump_events();
   [[nodiscard]] bool close_requested() const noexcept;
 
