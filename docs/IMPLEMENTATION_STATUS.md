@@ -13,6 +13,9 @@ The repository currently contains GoreeCloud-owned contracts and initial runtime
 - Engine-independent sessions, containers, bookmarks, downloads, proxy, memory, permissions, capture, Reader Mode, Identity, recovery, platform integration, security state, Glaze UI acceptance, networking policy, and service integration contracts.
 - Latest-approved-Stable Glaze UI build baseline enforcement.
 - Approved Tabmark artwork and artwork governance.
+- Flatpak packaging scaffold for Linux.
+- WiX installer scaffold for Windows `.exe` distribution.
+- Android Gradle application scaffold with HTTP/HTTPS browser-role intent declarations for future APK builds.
 
 ## Development engine
 
@@ -48,6 +51,22 @@ The first adapter milestone requires:
 - accessibility integration;
 - printing and PDF plumbing where applicable.
 
+## Distribution scaffolds
+
+### Linux Flatpak
+
+`packaging/flatpak/io.goreecloud.Browser.yml` establishes the initial Flatpak application identity and permission surface. It is not production-ready until Chromium runtime packaging, sandbox behavior, portals, codecs, desktop metadata, Tabmark derivatives, signing, and installation/upgrade validation are complete.
+
+### Windows
+
+`packaging/windows/GoreeCloudBrowser.wxs` establishes the initial WiX installer definition for an eventual signed Windows installer executable. Production readiness additionally requires signed executable/installer artifacts, supported default-browser registration, application associations, upgrade/repair/uninstall validation, Chromium runtime packaging, Tabmark resources, and release-integrity evidence.
+
+### Android APK
+
+`apps/android` establishes a native Android application module using `io.goreecloud.browser`. The manifest declares launcher behavior and HTTP/HTTPS browsing intents. It deliberately does not implement the Browser as a generic WebView shell. Production APK acceptance requires native Browser runtime integration, Glaze UI, Chromium/approved engine integration, Tabmark adaptive/round/monochrome assets, external signing configuration, upgrade validation, and real-device evidence.
+
+Signing secrets must remain outside source control for every platform.
+
 ## Next implementation milestones
 
 1. Implement the Linux Chromium adapter and native application window host.
@@ -59,7 +78,7 @@ The first adapter milestone requires:
 7. Add GoreeCloud Bookmarks local storage and synchronized-tree adapters.
 8. Add GoreeCloud Identity, Sync, and Vault service adapters.
 9. Add GoreeCloud DNS and Network integration.
-10. Establish Linux package/runtime acceptance and then Android client implementation.
+10. Make Flatpak, Windows installer, and Android APK pipelines consume exact accepted Browser source and signed release metadata.
 
 ## Production rule
 
