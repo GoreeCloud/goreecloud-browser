@@ -123,8 +123,10 @@ class InMemoryAdvancedTabManager final : public AdvancedTabManager {
                             const std::string& group_id) override {
     if (!all_exist(tab_ids) || !groups_.contains(group_id)) return false;
     auto& group = groups_[group_id];
+    const auto workspace = group_workspace_.find(group_id);
     for (const auto& id : tab_ids) {
       tabs_[id].group_id = group_id;
+      if (workspace != group_workspace_.end()) tabs_[id].workspace_id = workspace->second;
       if (std::find(group.tab_ids.begin(), group.tab_ids.end(), id) == group.tab_ids.end()) {
         group.tab_ids.push_back(id);
       }
