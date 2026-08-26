@@ -1,28 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
-  <title id="title">GoreeCloud Browser — Aurora Window Candidate</title>
-  <desc id="desc">A four-pane luminous window mark with a distinctive asymmetric center cut, representing a first-party window onto the web.</desc>
+  <title id="title">GoreeCloud Browser — Borealis Lens Candidate</title>
+  <desc id="desc">A compact faceted lens made from three converging sails around a clear central aperture.</desc>
   <defs>
-    <linearGradient id="bg" x1="170" y1="118" x2="854" y2="900" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#071A35"/>
-      <stop offset="0.48" stop-color="#123E78"/>
-      <stop offset="1" stop-color="#402A78"/>
+    <linearGradient id="foundation" x1="158" y1="118" x2="866" y2="904" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#07182E"/>
+      <stop offset="0.50" stop-color="#123E6D"/>
+      <stop offset="1" stop-color="#31245F"/>
     </linearGradient>
-    <linearGradient id="paneA" x1="286" y1="270" x2="706" y2="742" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#DDF8FF"/>
-      <stop offset="0.48" stop-color="#75D7FF"/>
-      <stop offset="1" stop-color="#8B7CFF"/>
+    <linearGradient id="north" x1="342" y1="236" x2="590" y2="530" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#A7F4FF"/>
+      <stop offset="1" stop-color="#45BFFF"/>
     </linearGradient>
-    <filter id="lift" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#020A18" flood-opacity="0.28"/>
+    <linearGradient id="east" x1="532" y1="356" x2="786" y2="706" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8B9BFF"/>
+      <stop offset="1" stop-color="#7860F2"/>
+    </linearGradient>
+    <linearGradient id="west" x1="244" y1="450" x2="566" y2="770" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5FE6D0"/>
+      <stop offset="1" stop-color="#53A9FF"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#020915" flood-opacity="0.30"/>
     </filter>
   </defs>
-  <rect x="64" y="64" width="896" height="896" rx="224" fill="url(#bg)"/>
-  <g filter="url(#lift)" fill="url(#paneA)">
-    <path d="M250 252H480V480H250C226 480 208 462 208 438V294C208 270 226 252 250 252Z"/>
-    <path d="M544 252H774C798 252 816 270 816 294V438C816 462 798 480 774 480H544V252Z"/>
-    <path d="M208 544H480V772H250C226 772 208 754 208 730V544Z"/>
-    <path d="M544 544H816V730C816 754 798 772 774 772H544V544Z"/>
+  <rect x="64" y="64" width="896" height="896" rx="224" fill="url(#foundation)"/>
+  <g filter="url(#soft)">
+    <path d="M512 208C600 208 680 240 742 294L580 486C560 470 536 462 512 462C484 462 460 472 440 490L290 286C350 236 426 208 512 208Z" fill="url(#north)"/>
+    <path d="M742 294C804 350 842 430 842 520C842 630 786 726 700 782L574 568C602 548 620 516 620 482C620 480 620 478 620 476L742 294Z" fill="url(#east)"/>
+    <path d="M700 782C646 816 582 836 512 836C326 836 176 686 176 500C176 416 206 340 258 282L440 490C420 510 408 538 408 568C408 630 458 680 520 680C544 680 566 672 584 660L700 782Z" fill="url(#west)"/>
+    <circle cx="512" cy="548" r="112" fill="#07182E"/>
+    <circle cx="512" cy="548" r="66" fill="#EAFBFF"/>
+    <circle cx="512" cy="548" r="28" fill="#123E6D"/>
   </g>
-  <path d="M480 480H544V544H480Z" fill="#071A35"/>
-  <path d="M480 480L544 544M544 480L480 544" stroke="#DDF8FF" stroke-width="18" stroke-linecap="round"/>
 </svg>
