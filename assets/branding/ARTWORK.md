@@ -8,12 +8,13 @@ The following concepts were rejected during product review and must not be used 
 
 - **Glaze Navigation Ribbon** — rejected.
 - **Horizon Portal** — rejected.
+- **Aurora Window** — rejected.
 
 The existing canonical SVG paths are retained only as rejected design history until a replacement concept is approved. They must not be treated as release artwork, launcher identity, favicon identity, package artwork, or production branding.
 
 ## Replacement requirement
 
-The next GoreeCloud Browser identity must be designed as a genuinely new concept rather than an iteration of either rejected mark.
+The next GoreeCloud Browser identity must be designed as a genuinely new concept rather than an iteration of any rejected mark.
 
 It must satisfy these requirements:
 
@@ -38,6 +39,7 @@ Avoid making the primary identity a:
 - navigation ribbon;
 - compass;
 - open portal/ring with forward path;
+- four-pane or generic window tile;
 - generic globe;
 - generic cloud;
 - standalone letter G;
