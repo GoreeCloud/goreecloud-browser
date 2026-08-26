@@ -11,6 +11,10 @@ The repository currently contains GoreeCloud-owned contracts and initial runtime
 - Browser window and tab lifecycle (`WindowController`, `Tab`).
 - Development-only navigation history and view state (`DevelopmentEngine`).
 - Engine-independent sessions, containers, bookmarks, downloads, proxy, memory, permissions, capture, Reader Mode, Identity, recovery, platform integration, security state, Glaze UI acceptance, networking policy, and service integration contracts.
+- First-party internal-page routing for GoreeCloud New Tab, Home, and Settings.
+- Unified search/navigation resolution that separates direct URL navigation from GoreeCloud Search and prohibits alternate-provider fallback.
+- Explicit Local Bookmarks versus GoreeCloud Bookmarks destination selection.
+- Explicit Local Vault versus GoreeCloud Vault destination selection.
 - Latest-approved-Stable Glaze UI build baseline enforcement.
 - Approved Tabmark artwork and artwork governance.
 - Flatpak packaging scaffold for Linux.
@@ -70,14 +74,14 @@ Signing secrets must remain outside source control for every platform.
 ## Next implementation milestones
 
 1. Implement the Linux Chromium adapter and native application window host.
-2. Connect Glaze UI Browser chrome to `WindowController` and `EngineView` state.
-3. Implement the address/search controller with GoreeCloud Search authority and direct-navigation separation.
-4. Add local profile/session persistence and crash-safe restoration.
-5. Implement Privacy Shield interception boundaries and evidence reporting.
-6. Route downloads into GoreeCloud Download Manager.
-7. Add GoreeCloud Bookmarks local storage and synchronized-tree adapters.
-8. Add GoreeCloud Identity, Sync, and Vault service adapters.
-9. Add GoreeCloud DNS and Network integration.
+2. Connect Glaze UI Browser chrome to `WindowController`, `EngineView`, toolbar, and unified search state.
+3. Render GoreeCloud New Tab, Home, and Settings through the first-party internal-page host.
+4. Add Local Bookmarks persistence and GoreeCloud Bookmarks synchronization adapter.
+5. Add Local Vault persistence and GoreeCloud Vault synchronization adapter with explicit destination controls.
+6. Add local profile/session persistence and crash-safe restoration.
+7. Implement Privacy Shield interception boundaries and evidence reporting.
+8. Route Chromium download interception into GoreeCloud Advanced Download Manager.
+9. Add GoreeCloud Identity, Sync, DNS, Network, and service adapters.
 10. Make Flatpak, Windows installer, and Android APK pipelines consume exact accepted Browser source and signed release metadata.
 
 ## Production rule
