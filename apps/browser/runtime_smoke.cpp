@@ -96,14 +96,14 @@ int main() {
     const auto second_sequence = tracker.next_sequence();
     assert(second_sequence > first_sequence);
 
-    RawMediaHitTest stale;
-    stale.kind = MediaKind::image;
+    EngineMediaHitTest stale;
+    stale.kind = EngineMediaElementKind::image;
     stale.media_url = "https://example.com/stale.jpg";
     assert(!tracker.accept(first_sequence, stale));
     assert(!tracker.latest_result());
 
-    RawMediaHitTest current;
-    current.kind = MediaKind::image;
+    EngineMediaHitTest current;
+    current.kind = EngineMediaElementKind::image;
     current.media_url = "https://example.com/current.jpg";
     assert(tracker.accept(second_sequence, current));
     assert(tracker.latest_result());
