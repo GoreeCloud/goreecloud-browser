@@ -17,6 +17,10 @@ option(GOREECLOUD_ENABLE_CEF
   "Build the CEF-backed Chromium runtime path"
   OFF
 )
+option(GOREECLOUD_ENABLE_LINUX_GTK_HOST
+  "Build the GTK3/X11 GoreeCloud desktop beta host"
+  OFF
+)
 
 set(GOREECLOUD_CEF_ROOT "" CACHE PATH
     "Path to an unpacked CEF binary distribution")
@@ -25,6 +29,9 @@ set(GOREECLOUD_RELEASE_CHANNEL "beta" CACHE STRING
 
 if(GOREECLOUD_ENABLE_CEF AND NOT GOREECLOUD_ENABLE_CHROMIUM)
   message(FATAL_ERROR "GOREECLOUD_ENABLE_CEF requires GOREECLOUD_ENABLE_CHROMIUM=ON")
+endif()
+if(GOREECLOUD_ENABLE_LINUX_GTK_HOST AND NOT UNIX)
+  message(FATAL_ERROR "GOREECLOUD_ENABLE_LINUX_GTK_HOST is currently supported only on Linux/Unix")
 endif()
 
 set(GOREECLOUD_GLAZE_UI_STABLE_VERSION "1.5.0" CACHE STRING
@@ -130,6 +137,16 @@ if(GOREECLOUD_ENABLE_CEF)
   endif()
 endif()
 
+if(GOREECLOUD_ENABLE_LINUX_GTK_HOST)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(GTK3 REQUIRED IMPORTED_TARGET gtk+-3.0 gdk-x11-3.0)
+  target_sources(goreecloud_browser PRIVATE src/platform/gtk_linux_glaze_host.cpp)
+  target_link_libraries(goreecloud_browser PRIVATE PkgConfig::GTK3)
+  target_compile_definitions(goreecloud_browser PRIVATE GOREECLOUD_ENABLE_LINUX_GTK_HOST=1)
+else()
+  target_compile_definitions(goreecloud_browser PRIVATE GOREECLOUD_ENABLE_LINUX_GTK_HOST=0)
+endif()
+
 goreecloud_apply_warnings(goreecloud_browser)
 
 add_executable(goreecloud_browser_runtime_smoke apps/browser/runtime_smoke.cpp)
@@ -165,3 +182,4 @@ message(STATUS "GoreeCloud Browser ${PROJECT_VERSION} channel=${GOREECLOUD_RELEA
 message(STATUS "Glaze UI Stable ${GOREECLOUD_GLAZE_UI_STABLE_VERSION} @ ${GOREECLOUD_GLAZE_UI_STABLE_REVISION}")
 message(STATUS "Chromium adapter: ${GOREECLOUD_ENABLE_CHROMIUM}")
 message(STATUS "CEF runtime: ${GOREECLOUD_ENABLE_CEF}")
+message(STATUS "Linux GTK beta host: ${GOREECLOUD_ENABLE_LINUX_GTK_HOST}")
