@@ -2,6 +2,10 @@
 
 GoreeCloud Browser is GoreeCloud's first-party native web browser. The browser product, user experience, data model, privacy controls, security services, synchronization behavior, session model, and GoreeCloud integrations are owned by GoreeCloud. A mature web engine is used underneath as an implementation dependency rather than as the identity of the product.
 
+## Product identity
+
+GoreeCloud Browser is the sole normal user-facing Browser product identity. Upstream and third-party implementation technology may appear where technically, legally, operationally, diagnostically, or compliance-wise required, but it does not become GoreeCloud product branding.
+
 ## Architectural direction
 
 GoreeCloud Browser is **not** intended to be a conventional Chromium skin or a permanently deep Chromium fork.
@@ -14,14 +18,17 @@ The browser is structured so that GoreeCloud-owned application layers remain sep
 - **Browser Engine Layer** — GoreeCloud-owned abstraction between the application and the underlying web engine.
 - **Chromium/Blink** — initial rendering, JavaScript, WebAssembly, Web APIs, media, graphics, accessibility, and web-platform foundation.
 - **Glaze UI** — GoreeCloud visual, interaction, responsive, and cross-device interface system.
-- **GoreeCloud Search** — default integrated search provider for suggestions, private search, contextual search, and AI-assisted search experiences where implemented.
+- **GoreeCloud Wayfinder** — first-party Browser feature family for navigation, productivity, organization, downloads, transfers, capture, sessions, synchronization, Browser utilities, content handling, and workflow integration.
+- **GoreeCloud Search** — sole and default integrated search authority for approved Browser search entry points.
 - **GoreeCloud Bookmarks** — first-class bookmarks, read-later, collections, and library subsystem.
-- **GoreeCloud Sync** — synchronization for tabs, history, bookmarks, preferences, sessions, collections, and browser state.
-- **Privacy Shield** — privacy-control contracts, tracking protection, permissions, storage policies, private-browsing behavior, privacy reports, and data minimization.
-- **Wardveil Security** — malicious-site protection, phishing defenses, download reputation, certificate state, sandbox state, and security reporting.
+- **GoreeCloud Sync** — synchronization for approved Browser state while excluding indiscriminate synchronization of sensitive website state.
+- **Privacy Shield** — privacy and content-protection authority for tracking protection, filtering, URL cleaning, private-browsing protection, and related controls.
+- **Wardveil Security** — security presentation, classification, protection-state experience, and evidence-backed Browser security status.
 - **Everkeep** — encrypted browser-state backup, recovery, portability, session preservation, and long-term preservation where appropriate.
 - **GoreeCloud Identity** — browser profiles, device authorization, synchronization identity, account-bound preferences, and passkey identity integration.
-- **GoreeCloud Vault** — passwords, credentials, passkeys, secure autofill, and other sensitive browser secrets.
+- **GoreeCloud Vault** — credentials, passkeys, secrets, secure autofill, and other protected authentication material.
+- **GoreeCloud DNS** — DNS resolution, resolver policy, DNS privacy, filtering where approved, and Browser DNS integration.
+- **GoreeCloud Network** — networking and private-connectivity authority.
 - **GoreeCloud Mesh** — coordination and governance layer between GoreeCloud Browser and other first-party GoreeCloud applications and services.
 
 ## Design principles
@@ -33,6 +40,8 @@ The browser is structured so that GoreeCloud-owned application layers remain sep
 5. Browser state uses GoreeCloud-owned schemas and services instead of depending on Chromium profile formats as the canonical model.
 6. Security updates from the underlying engine must remain practical to consume.
 7. Engine-specific exceptions must be documented and isolated.
+8. Planned capabilities must not be presented as production-ready until implementation and acceptance evidence exist.
+9. Security, privacy, credential, DNS, networking, search, and synchronization authority boundaries remain explicit.
 
 ## Initial development phases
 
@@ -42,7 +51,7 @@ Build the native application, Glaze UI browser chrome, tabs, windows, sessions, 
 
 ### 0.x — First-party browser services
 
-Integrate GoreeCloud Sync, Identity, Vault, Privacy Shield, Wardveil Security, Everkeep, and Mesh through explicit service contracts.
+Integrate GoreeCloud Sync, Identity, Vault, Privacy Shield, Wardveil Security, Everkeep, DNS, Network, Wayfinder, and Mesh through explicit service contracts.
 
 ### Later — selective engine ownership
 
@@ -65,6 +74,10 @@ docs/                         Architecture and engineering documentation
 
 ## Status
 
-Early architecture and implementation scaffolding. APIs and internal boundaries are expected to evolve while the 0.x product foundation is established.
+GoreeCloud Browser is in active development. Unless explicitly identified as implemented, documented capabilities are product requirements or planned capabilities rather than claims of production readiness.
 
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/ENGINE_LAYER.md`](docs/ENGINE_LAYER.md) for the initial contracts.
+See:
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architectural boundaries and ownership model.
+- [`docs/ENGINE_LAYER.md`](docs/ENGINE_LAYER.md) — Browser Engine Layer contracts.
+- [`docs/PRODUCT_INVENTORY.md`](docs/PRODUCT_INVENTORY.md) — planned inventory, feature requirements, authority boundaries, and production-acceptance direction.
