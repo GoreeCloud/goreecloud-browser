@@ -24,7 +24,7 @@ enum class DownloadState {
   stopped,
 };
 
-enum class NetworkClass { unknown, wifi, ethernet, cellular, metered, private_network };
+enum class NetworkClass { unknown, offline, wifi, ethernet, cellular, metered, private_network };
 
 struct DownloadPolicy {
   std::uint8_t maximum_segments{16};
@@ -64,8 +64,10 @@ struct DownloadRecord {
   std::string id;
   std::string resolved_filename;
   std::string destination_path;
+  DownloadPriority priority{DownloadPriority::normal};
   DownloadState state{DownloadState::queued};
   DownloadProgress progress;
+  std::uint64_t created_sequence{};
   std::uint32_t retry_count{};
   bool resumable{false};
 };
