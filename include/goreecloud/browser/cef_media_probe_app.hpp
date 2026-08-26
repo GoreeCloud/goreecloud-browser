@@ -26,8 +26,18 @@ class GoreeCloudCefRenderApp final : public CefApp, public CefRenderProcessHandl
                                 CefProcessId source_process,
                                 CefRefPtr<CefProcessMessage> message) override {
     if (source_process != PID_BROWSER || !message || !frame) return false;
-    if (message->GetName() != kMediaProbeRequestMessage) return false;
+    if (message->GetName() == kMediaProbeRequestMessage) {
+      return handle_probe(frame, message);
+    }
+    if (message->GetName() == kMediaPreviewRequestMessage) {
+      return handle_preview(frame, message);
+    }
+    return false;
+  }
 
+ private:
+  static bool handle_probe(CefRefPtr<CefFrame> frame,
+                           CefRefPtr<CefProcessMessage> message) {
     auto args = message->GetArgumentList();
     if (!args || args->GetSize() < 3) return true;
 
@@ -37,7 +47,7 @@ class GoreeCloudCefRenderApp final : public CefApp, public CefRenderProcessHandl
 
     auto context = frame->GetV8Context();
     if (!context || !context->Enter()) {
-      send_empty(frame, sequence);
+      send_empty_probe(frame, sequence);
       return true;
     }
 
@@ -95,12 +105,13 @@ class GoreeCloudCefRenderApp final : public CefApp, public CefRenderProcessHandl
 
     CefRefPtr<CefV8Value> retval;
     CefRefPtr<CefV8Exception> exception;
-    const std::string script = std::string{"("} + kProbeScript + ")(" + std::to_string(x) + "," + std::to_string(y) + ")";
+    const std::string script = std::string{"("} + kProbeScript + ")(" +
+                               std::to_string(x) + "," + std::to_string(y) + ")";
     const bool ok = context->Eval(script, frame->GetURL(), 0, retval, exception);
     context->Exit();
 
     if (!ok || !retval || retval->IsNull() || !retval->IsObject()) {
-      send_empty(frame, sequence);
+      send_empty_probe(frame, sequence);
       return true;
     }
 
@@ -126,7 +137,106 @@ class GoreeCloudCefRenderApp final : public CefApp, public CefRenderProcessHandl
     return true;
   }
 
- private:
+  static bool handle_preview(CefRefPtr<CefFrame> frame,
+                             CefRefPtr<CefProcessMessage> message) {
+    auto args = message->GetArgumentList();
+    if (!args || args->GetSize() < 5) return true;
+
+    const auto request_id = static_cast<std::uint64_t>(args->GetDouble(0));
+    const std::string media_url = args->GetString(1).ToString();
+    const std::string kind = args->GetString(2).ToString();
+    const int maximum_width = args->GetInt(3);
+    const int maximum_height = args->GetInt(4);
+
+    auto context = frame->GetV8Context();
+    if (!context || !context->Enter()) {
+      send_preview_error(frame, request_id, "Renderer context unavailable.");
+      return true;
+    }
+
+    static constexpr const char* kPreviewFunction = R"JS((function(url,kind,maxW,maxH){
+      const absolute = (value) => { try { return new URL(value, location.href).href; } catch (_) { return value || ''; } };
+      let media = null;
+      if (kind === 'video') {
+        for (const candidate of document.querySelectorAll('video')) {
+          if (absolute(candidate.currentSrc || candidate.src) === absolute(url)) { media = candidate; break; }
+        }
+        if (!media || media.readyState < 2 || !media.videoWidth || !media.videoHeight) return {error:'Video frame is not currently capturable.'};
+      } else {
+        for (const candidate of document.querySelectorAll('img')) {
+          if (absolute(candidate.currentSrc || candidate.src) === absolute(url)) { media = candidate; break; }
+        }
+        if (!media || !media.complete || !media.naturalWidth || !media.naturalHeight) return {error:'Image is not currently available for preview.'};
+      }
+      const sourceW = kind === 'video' ? media.videoWidth : media.naturalWidth;
+      const sourceH = kind === 'video' ? media.videoHeight : media.naturalHeight;
+      const scale = Math.min(1, maxW / sourceW, maxH / sourceH);
+      const width = Math.max(1, Math.round(sourceW * scale));
+      const height = Math.max(1, Math.round(sourceH * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d', {alpha:true});
+      if (!ctx) return {error:'Canvas preview is unavailable.'};
+      try {
+        ctx.drawImage(media, 0, 0, width, height);
+        const data = canvas.toDataURL('image/png');
+        if (!data || !data.startsWith('data:image/png;base64,')) return {error:'Preview encoding failed.'};
+        return {width, height, data};
+      } catch (_) {
+        return {error:'Engine security policy prevented media preview capture.'};
+      }
+    }))JS";
+
+    CefRefPtr<CefV8Value> retval;
+    CefRefPtr<CefV8Exception> exception;
+    const std::string escaped_url = js_string(media_url);
+    const std::string escaped_kind = js_string(kind);
+    const std::string script = std::string{"("} + kPreviewFunction + ")(" +
+                               escaped_url + "," + escaped_kind + "," +
+                               std::to_string(maximum_width) + "," +
+                               std::to_string(maximum_height) + ")";
+    const bool ok = context->Eval(script, frame->GetURL(), 0, retval, exception);
+    context->Exit();
+
+    if (!ok || !retval || !retval->IsObject()) {
+      send_preview_error(frame, request_id, "Preview evaluation failed.");
+      return true;
+    }
+    const auto error = get_string(retval, "error");
+    if (!error.empty()) {
+      send_preview_error(frame, request_id, error);
+      return true;
+    }
+
+    auto response = CefProcessMessage::Create(kMediaPreviewResponseMessage);
+    auto out = response->GetArgumentList();
+    out->SetDouble(0, static_cast<double>(request_id));
+    out->SetBool(1, true);
+    out->SetInt(2, get_int(retval, "width"));
+    out->SetInt(3, get_int(retval, "height"));
+    out->SetString(4, "image/png");
+    out->SetString(5, get_string(retval, "data"));
+    frame->SendProcessMessage(PID_BROWSER, response);
+    return true;
+  }
+
+  static std::string js_string(const std::string& value) {
+    std::string out{"\""};
+    for (const char ch : value) {
+      switch (ch) {
+        case '\\': out += "\\\\"; break;
+        case '"': out += "\\\""; break;
+        case '\n': out += "\\n"; break;
+        case '\r': out += "\\r"; break;
+        case '\t': out += "\\t"; break;
+        default: out += ch; break;
+      }
+    }
+    out += '"';
+    return out;
+  }
+
   static std::string get_string(CefRefPtr<CefV8Value> object, const char* key) {
     auto value = object->GetValue(key);
     return value && value->IsString() ? value->GetStringValue().ToString() : std::string{};
@@ -144,11 +254,22 @@ class GoreeCloudCefRenderApp final : public CefApp, public CefRenderProcessHandl
     return value && value->IsBool() ? value->GetBoolValue() : false;
   }
 
-  static void send_empty(CefRefPtr<CefFrame> frame, std::uint64_t sequence) {
+  static void send_empty_probe(CefRefPtr<CefFrame> frame, std::uint64_t sequence) {
     auto response = CefProcessMessage::Create(kMediaProbeResponseMessage);
     auto out = response->GetArgumentList();
     out->SetDouble(0, static_cast<double>(sequence));
     out->SetBool(1, false);
+    frame->SendProcessMessage(PID_BROWSER, response);
+  }
+
+  static void send_preview_error(CefRefPtr<CefFrame> frame,
+                                 std::uint64_t request_id,
+                                 const std::string& error) {
+    auto response = CefProcessMessage::Create(kMediaPreviewResponseMessage);
+    auto out = response->GetArgumentList();
+    out->SetDouble(0, static_cast<double>(request_id));
+    out->SetBool(1, false);
+    out->SetString(2, error);
     frame->SendProcessMessage(PID_BROWSER, response);
   }
 
