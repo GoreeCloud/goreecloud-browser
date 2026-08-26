@@ -9,17 +9,20 @@ enum class InternalPage {
   new_tab,
   home,
   settings,
+  private_start,
 };
 
 inline constexpr std::string_view kNewTabUrl{"goreecloud://new-tab"};
 inline constexpr std::string_view kHomeUrl{"goreecloud://home"};
 inline constexpr std::string_view kSettingsUrl{"goreecloud://settings"};
+inline constexpr std::string_view kPrivateStartUrl{"goreecloud://private"};
 
 [[nodiscard]] constexpr std::string_view internal_page_url(InternalPage page) {
   switch (page) {
     case InternalPage::new_tab: return kNewTabUrl;
     case InternalPage::home: return kHomeUrl;
     case InternalPage::settings: return kSettingsUrl;
+    case InternalPage::private_start: return kPrivateStartUrl;
   }
   return "goreecloud://invalid";
 }
