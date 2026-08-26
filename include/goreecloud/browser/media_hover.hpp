@@ -10,6 +10,7 @@
 namespace goreecloud::browser {
 
 enum class MediaKind {
+  unknown,
   image,
   animated_image,
   video,
