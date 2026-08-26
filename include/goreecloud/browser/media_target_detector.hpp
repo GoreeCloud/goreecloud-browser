@@ -64,9 +64,9 @@ class MediaTargetDetector {
     target.duration_seconds = hit.duration_seconds;
     target.animated = hit.animated;
     target.secure_resource = hit.secure_resource;
-    target.downloadable = hit.downloadable && !hit.protected_media && !hit.drm_protected;
-    target.copyable = hit.copyable;
-    target.capturable_frame = hit.capturable_frame && !hit.drm_protected;
+    target.can_download = hit.downloadable && !hit.protected_media && !hit.drm_protected;
+    target.can_copy = hit.copyable;
+    target.can_capture_frame = hit.capturable_frame && !hit.drm_protected;
     target.protected_media = hit.protected_media || hit.drm_protected;
     target.same_origin_with_page = hit.same_origin_with_page;
     return target;
@@ -87,9 +87,6 @@ class MediaTargetDetector {
   }
 };
 
-// Normalization is deliberately conservative. The engine is authoritative for
-// whether a resource is protected/DRM-backed and whether frame capture or
-// direct download is technically permitted.
 inline constexpr bool kMediaDetectorMayOverrideProtectedMedia = false;
 static_assert(!kMediaDetectorMayOverrideProtectedMedia);
 
