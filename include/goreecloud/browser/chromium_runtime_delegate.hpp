@@ -8,6 +8,7 @@
 #include <string_view>
 
 #include "goreecloud/browser/engine.hpp"
+#include "goreecloud/browser/media_preview_provider.hpp"
 #include "goreecloud/browser/media_target_detector.hpp"
 #include "goreecloud/browser/native_engine_surface.hpp"
 
@@ -18,6 +19,7 @@ class ChromiumRuntimeView {
   using MediaProbeCallback =
       std::function<void(std::uint64_t sequence,
                          std::optional<RawMediaHitTest> result)>;
+  using MediaPreviewCallback = AsyncMediaPreviewProvider::PreviewCallback;
 
   virtual ~ChromiumRuntimeView() = default;
   virtual void navigate(std::string_view url) = 0;
@@ -41,6 +43,17 @@ class ChromiumRuntimeView {
     (void)viewport_x;
     (void)viewport_y;
     (void)sequence;
+    (void)callback;
+    return false;
+  }
+
+  // Optional authenticated preview path. Implementations must derive preview
+  // bytes from the active engine context and must not perform a second host-side
+  // fetch that could bypass cookies, authorization state, DRM, CSP, CORS, or
+  // other engine-enforced restrictions.
+  virtual bool request_media_preview(const MediaPreviewRequest& request,
+                                     MediaPreviewCallback callback) {
+    (void)request;
     (void)callback;
     return false;
   }
