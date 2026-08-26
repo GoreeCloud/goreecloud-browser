@@ -22,7 +22,7 @@ class GoreeCloudCefRenderApp final : public CefApp, public CefRenderProcessHandl
  public:
   CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() override { return this; }
 
-  bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
+  bool OnProcessMessageReceived(CefRefPtr<CefBrowser>,
                                 CefRefPtr<CefFrame> frame,
                                 CefProcessId source_process,
                                 CefRefPtr<CefProcessMessage> message) override {
@@ -42,7 +42,7 @@ class GoreeCloudCefRenderApp final : public CefApp, public CefRenderProcessHandl
       return true;
     }
 
-    static constexpr const char* kProbeScript = R"JS((function(x,y){
+    static constexpr const char* kProbeFunction = R"JS(function(x,y){
       const el = document.elementFromPoint(x,y);
       if (!el) return null;
       const closest = (node, selector) => node && node.closest ? node.closest(selector) : null;
@@ -92,11 +92,12 @@ class GoreeCloudCefRenderApp final : public CefApp, public CefRenderProcessHandl
         secure: location.protocol === 'https:' && (!src || src.startsWith('https:') || src.startsWith('data:') || src.startsWith('blob:')),
         crossOrigin: !!src && (function(){ try { return new URL(src, location.href).origin !== location.origin; } catch (_) { return false; } })()
       };
-    }))()JS";
+    })JS";
 
     CefRefPtr<CefV8Value> retval;
     CefRefPtr<CefV8Exception> exception;
-    const std::string script = std::string{"("} + kProbeScript + ")(" + std::to_string(x) + "," + std::to_string(y) + ")";
+    const std::string script = std::string{"("} + kProbeFunction + ")(" +
+                               std::to_string(x) + "," + std::to_string(y) + ")";
     const bool ok = context->Eval(script, frame->GetURL(), 0, retval, exception);
     context->Exit();
 
