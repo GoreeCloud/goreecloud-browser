@@ -11,6 +11,7 @@
 #include "goreecloud/browser/internal_pages.hpp"
 #include "goreecloud/browser/media_hover.hpp"
 #include "goreecloud/browser/media_hover_controller.hpp"
+#include "goreecloud/browser/media_probe_result_tracker.hpp"
 #include "goreecloud/browser/media_target_detector.hpp"
 #include "goreecloud/browser/omnibox_controller.hpp"
 #include "goreecloud/browser/toolbar.hpp"
@@ -85,6 +86,27 @@ int main() {
     assert(protected_target->protected_media);
     assert(!protected_target->downloadable);
     assert(!protected_target->capturable_frame);
+  }
+
+  {
+    MediaProbeResultTracker tracker;
+    const auto first_sequence = tracker.next_sequence();
+    const auto second_sequence = tracker.next_sequence();
+    assert(second_sequence > first_sequence);
+
+    RawMediaHitTest stale;
+    stale.kind = MediaKind::image;
+    stale.media_url = "https://example.com/stale.jpg";
+    assert(!tracker.accept(first_sequence, stale));
+    assert(!tracker.latest_result());
+
+    RawMediaHitTest current;
+    current.kind = MediaKind::image;
+    current.media_url = "https://example.com/current.jpg";
+    assert(tracker.accept(second_sequence, current));
+    assert(tracker.latest_result());
+    assert(tracker.latest_result()->media_url == current.media_url);
+    assert(tracker.latest_accepted() == second_sequence);
   }
 
   {
