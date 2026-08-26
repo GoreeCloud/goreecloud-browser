@@ -45,6 +45,8 @@ class GtkLinuxGlazeWindowHost final : public NativeWindowHost {
 
   [[nodiscard]] bool copy_text_to_clipboard(std::string_view text);
   [[nodiscard]] std::optional<MediaSaveDestination> choose_media_save_destination(MediaKind kind);
+  [[nodiscard]] bool confirm_media_boundary(std::string_view title,
+                                            std::string_view explanation);
   void show_media_action_status(std::string_view message);
 
   bool pump_events();
