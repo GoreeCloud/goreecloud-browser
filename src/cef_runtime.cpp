@@ -7,6 +7,7 @@
 
 #if GOREECLOUD_ENABLE_CEF
 #include "goreecloud/browser/cef_client.hpp"
+#include "goreecloud/browser/cef_media_probe_app.hpp"
 #include "include/cef_app.h"
 #include "include/cef_browser.h"
 #include "include/cef_request_context.h"
@@ -116,9 +117,7 @@ class CefRuntimeView final : public ChromiumRuntimeView {
 
   void resize_surface(const NativeEngineSurface& surface) override {
     surface_ = surface;
-    if (client_ && client_->browser()) {
-      client_->browser()->GetHost()->WasResized();
-    }
+    if (client_ && client_->browser()) client_->browser()->GetHost()->WasResized();
   }
 
   [[nodiscard]] NavigationState navigation_state() const override {
@@ -152,10 +151,7 @@ class CefRuntimeContext final : public ChromiumRuntimeContext {
     return std::make_unique<CefRuntimeView>(request_context_, options);
   }
 
-  bool clear_origin_data(std::string_view,
-                         EngineDataClasses) override {
-    return false;
-  }
+  bool clear_origin_data(std::string_view, EngineDataClasses) override { return false; }
 
   bool clear_all_data(EngineDataClasses classes) override {
     if ((classes & data_class(EngineDataClass::HttpCache)) != 0) {
@@ -171,9 +167,7 @@ class CefRuntimeContext final : public ChromiumRuntimeContext {
     return true;
   }
 
-  bool clear_permission_state(std::optional<std::string_view>) override {
-    return false;
-  }
+  bool clear_permission_state(std::optional<std::string_view>) override { return false; }
 
  private:
   EngineContextOptions options_;
@@ -205,7 +199,8 @@ class CefRuntimeDelegateScaffold final : public ChromiumRuntimeDelegate {
     CefString(&settings.root_cache_path) = options_.cache_root.string();
     CefString(&settings.locale) = options_.locale;
 
-    if (!CefInitialize(main_args, settings, nullptr, nullptr)) {
+    CefRefPtr<GoreeCloudCefRenderApp> app = new GoreeCloudCefRenderApp();
+    if (!CefInitialize(main_args, settings, app, nullptr)) {
       throw std::runtime_error("CEF initialization failed");
     }
 #endif
@@ -249,7 +244,7 @@ class CefRuntimeDelegateScaffold final : public ChromiumRuntimeDelegate {
   }
 
   [[nodiscard]] std::string_view runtime_version() const noexcept override {
-    return "cef-runtime-client-context";
+    return "cef-runtime-client-context-media-probe";
   }
 
  private:
@@ -259,8 +254,7 @@ class CefRuntimeDelegateScaffold final : public ChromiumRuntimeDelegate {
 
 }  // namespace
 
-std::unique_ptr<ChromiumRuntimeDelegate> create_cef_runtime_delegate(
-    CefRuntimeOptions options) {
+std::unique_ptr<ChromiumRuntimeDelegate> create_cef_runtime_delegate(CefRuntimeOptions options) {
   return std::make_unique<CefRuntimeDelegateScaffold>(std::move(options));
 }
 
