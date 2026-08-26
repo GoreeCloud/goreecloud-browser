@@ -7,6 +7,7 @@ project(goreecloud_browser
 )
 
 include(CTest)
+include(GNUInstallDirs)
 
 option(GOREECLOUD_ENABLE_CHROMIUM
   "Build the GoreeCloud Chromium engine adapter integration target"
@@ -107,6 +108,7 @@ add_executable(goreecloud_browser
   apps/browser/main.cpp
   src/cef_process.cpp
 )
+set_target_properties(goreecloud_browser PROPERTIES OUTPUT_NAME "goreecloud-browser")
 target_link_libraries(goreecloud_browser PRIVATE goreecloud_browser_core)
 
 if(GOREECLOUD_ENABLE_CHROMIUM)
@@ -149,6 +151,15 @@ if(BUILD_TESTING)
     add_test(NAME goreecloud_browser_chromium_smoke COMMAND goreecloud_browser_chromium_smoke)
   endif()
 endif()
+
+install(TARGETS goreecloud_browser RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES packaging/linux/io.goreecloud.Browser.desktop
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+install(FILES packaging/linux/io.goreecloud.Browser.metainfo.xml
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)
+install(FILES assets/branding/goreecloud-browser.svg
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
+        RENAME io.goreecloud.Browser.svg)
 
 message(STATUS "GoreeCloud Browser ${PROJECT_VERSION} channel=${GOREECLOUD_RELEASE_CHANNEL}")
 message(STATUS "Glaze UI Stable ${GOREECLOUD_GLAZE_UI_STABLE_VERSION} @ ${GOREECLOUD_GLAZE_UI_STABLE_REVISION}")
