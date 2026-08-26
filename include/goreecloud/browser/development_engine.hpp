@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -94,8 +95,10 @@ class DevelopmentEngineContext final : public EngineContext {
     return std::make_unique<DevelopmentEngineView>(options.initial_url);
   }
 
-  void clear_site_data(std::string_view) override {}
-  void clear_all_site_data() override {}
+  bool clear_origin_data(std::string_view, EngineDataClasses) override { return true; }
+  bool clear_all_data(EngineDataClasses) override { return true; }
+  bool clear_authentication_state(std::optional<std::string_view>) override { return true; }
+  bool clear_permission_state(std::optional<std::string_view>) override { return true; }
 };
 
 // DevelopmentEngine exists only to make the GoreeCloud-owned application
@@ -112,7 +115,11 @@ class DevelopmentEngine final : public BrowserEngine {
   [[nodiscard]] std::string_view version() const noexcept override { return "0.1"; }
   [[nodiscard]] EngineCapabilities capabilities() const noexcept override {
     return capability(EngineCapability::WebView) |
-           capability(EngineCapability::PrivateContexts);
+           capability(EngineCapability::PrivateContexts) |
+           capability(EngineCapability::PrivateContextCleanup) |
+           capability(EngineCapability::OriginScopedCleanup) |
+           capability(EngineCapability::AuthenticationStateCleanup) |
+           capability(EngineCapability::PermissionStateCleanup);
   }
 
   [[nodiscard]] std::unique_ptr<EngineContext> create_context(
