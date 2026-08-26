@@ -11,8 +11,8 @@
 
 #include "goreecloud/browser/advanced_download_manager_service.hpp"
 #include "goreecloud/browser/advanced_download_transfer_engine.hpp"
-#include "goreecloud/browser/download_checkpoint_store.hpp"
 #include "goreecloud/browser/download_file_store.hpp"
+#include "goreecloud/browser/file_download_checkpoint_store.hpp"
 #include "goreecloud/browser/http_download_transport.hpp"
 
 namespace goreecloud::browser {
@@ -29,7 +29,8 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
  public:
   AdvancedDownloadRuntimeService(HttpDownloadClient& client,
                                  std::filesystem::path download_directory)
-      : file_store_(std::move(download_directory)),
+      : file_store_(download_directory),
+        checkpoints_(download_directory / ".goreecloud-checkpoints"),
         transport_(client, [this](std::string_view download_id,
                                   std::uint64_t offset,
                                   std::span<const std::byte> bytes) {
@@ -134,7 +135,7 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
 
   InProcessAdvancedDownloadManagerService queue_;
   LocalDownloadFileStore file_store_;
-  InMemoryDownloadCheckpointStore checkpoints_;
+  FileDownloadCheckpointStore checkpoints_;
   HttpDownloadTransport transport_;
   DownloadTransferScheduler scheduler_;
   std::unordered_map<std::string, DownloadFilePaths> files_;
