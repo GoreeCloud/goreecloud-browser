@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace goreecloud::browser {
@@ -31,6 +32,13 @@ struct ManagedTabState {
   TabProtection protection{TabProtection::normal};
   TabSleepPolicy sleep_policy{TabSleepPolicy::automatic};
   TabResourceState resources;
+};
+
+class AdvancedTabManagerObserver {
+ public:
+  virtual ~AdvancedTabManagerObserver() = default;
+  virtual void on_managed_tab_state_changed(const ManagedTabState& state) = 0;
+  virtual void on_managed_tab_closed(std::string_view tab_id) = 0;
 };
 
 struct TabGroupState {
@@ -79,6 +87,8 @@ struct ClosedSessionItem {
 class AdvancedTabManager {
  public:
   virtual ~AdvancedTabManager() = default;
+
+  virtual void set_observer(AdvancedTabManagerObserver*) {}
 
   virtual bool duplicate_tabs(const std::vector<std::string>& tab_ids, bool new_window) = 0;
   virtual bool move_tabs(const std::vector<std::string>& tab_ids, const std::string& window_id) = 0;
