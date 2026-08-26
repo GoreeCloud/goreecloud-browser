@@ -69,6 +69,11 @@ class MediaActionExecutor {
               "Protected media cannot be extracted by this action.", false};
     }
 
+    if (is_synchronized_save(request) && !request.persistence_warning_accepted) {
+      return {MediaActionDisposition::denied,
+              "Synchronized media storage requires explicit persistence confirmation.", false};
+    }
+
     switch (request.action) {
       case MediaAction::preview:
         return backend_.preview(request);
@@ -80,8 +85,12 @@ class MediaActionExecutor {
       case MediaAction::save:
       case MediaAction::download_media:
       case MediaAction::save_region:
-      case MediaAction::save_frame:
-        return backend_.save(request);
+      case MediaAction::save_frame: {
+        auto result = backend_.save(request);
+        return is_synchronized_save(request)
+                   ? require_destination_confirmation(std::move(result))
+                   : result;
+      }
       case MediaAction::copy_media:
       case MediaAction::copy_media_url:
       case MediaAction::copy_region:
@@ -149,6 +158,11 @@ class MediaActionExecutor {
       default:
         return false;
     }
+  }
+
+  [[nodiscard]] static bool is_synchronized_save(const MediaActionRequest& request) {
+    if (!request.save_destination) return false;
+    return *request.save_destination != MediaSaveDestination::local_device;
   }
 
   [[nodiscard]] static MediaActionResult require_destination_confirmation(
