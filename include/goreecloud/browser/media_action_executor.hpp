@@ -86,15 +86,18 @@ class MediaActionExecutor {
       case MediaAction::copy_media_url:
       case MediaAction::copy_region:
       case MediaAction::copy_frame:
+      case MediaAction::copy_link:
         return backend_.copy(request);
       case MediaAction::open_media:
       case MediaAction::open_media_new_tab:
       case MediaAction::open_link:
       case MediaAction::open_link_new_tab:
         return backend_.open(request);
+      case MediaAction::extract_text:
       case MediaAction::ocr:
       case MediaAction::translate_text:
       case MediaAction::read_aloud:
+      case MediaAction::ask_goreecloud_ai:
       case MediaAction::ask_ai:
       case MediaAction::describe_media:
         return backend_.process(request);
@@ -122,8 +125,10 @@ class MediaActionExecutor {
       case MediaAction::search_similar:
       case MediaAction::search_region:
       case MediaAction::search_frame:
+      case MediaAction::extract_text:
       case MediaAction::ocr:
       case MediaAction::translate_text:
+      case MediaAction::ask_goreecloud_ai:
       case MediaAction::ask_ai:
       case MediaAction::describe_media:
         return true;
