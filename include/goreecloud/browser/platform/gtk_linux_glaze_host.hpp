@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -41,6 +42,10 @@ class GtkLinuxGlazeWindowHost final : public NativeWindowHost {
   void show_internal_surface(std::string_view internal_url) override;
   void show_panel(std::string_view panel_id) override;
   [[nodiscard]] NativeWindowMetrics metrics() const override;
+
+  [[nodiscard]] bool copy_text_to_clipboard(std::string_view text);
+  [[nodiscard]] std::optional<MediaSaveDestination> choose_media_save_destination(MediaKind kind);
+  void show_media_action_status(std::string_view message);
 
   bool pump_events();
   [[nodiscard]] bool close_requested() const noexcept;
