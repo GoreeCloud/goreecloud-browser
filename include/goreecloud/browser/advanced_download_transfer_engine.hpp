@@ -1,0 +1,248 @@
+#pragma once
+
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <deque>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+#include "goreecloud/browser/advanced_download_manager_service.hpp"
+
+namespace goreecloud::browser {
+
+struct DownloadResourceMetadata {
+  std::uint64_t total_bytes{0};
+  bool accepts_byte_ranges{false};
+  bool resumable{false};
+  std::optional<std::string> etag;
+  std::optional<std::string> last_modified;
+  std::optional<std::string> mime_type;
+};
+
+struct DownloadByteRange {
+  std::uint64_t begin{0};
+  std::uint64_t end_inclusive{0};
+};
+
+struct DownloadSegment {
+  std::size_t index{0};
+  DownloadByteRange range;
+  std::uint64_t completed_bytes{0};
+  unsigned retry_count{0};
+  bool finished{false};
+};
+
+struct DownloadTransferPlan {
+  std::string download_id;
+  std::string source_url;
+  std::string referrer_url;
+  DownloadResourceMetadata metadata;
+  std::vector<DownloadSegment> segments;
+  std::uint64_t completed_bytes{0};
+};
+
+struct DownloadTransportRequest {
+  std::string download_id;
+  std::string source_url;
+  std::string referrer_url;
+  DownloadByteRange range;
+  std::uint64_t resume_offset{0};
+  std::optional<std::string> etag;
+  std::optional<std::string> last_modified;
+};
+
+struct DownloadTransportResult {
+  bool completed{false};
+  bool retryable{false};
+  std::uint64_t transferred_bytes{0};
+  std::string message;
+};
+
+class DownloadTransport {
+ public:
+  virtual ~DownloadTransport() = default;
+  virtual std::optional<DownloadResourceMetadata> inspect(
+      std::string_view source_url,
+      std::string_view referrer_url) = 0;
+  virtual DownloadTransportResult transfer(const DownloadTransportRequest& request) = 0;
+};
+
+class DownloadTransferPlanner {
+ public:
+  static DownloadTransferPlan make_plan(
+      const DownloadRecord& record,
+      const DownloadResourceMetadata& metadata,
+      std::size_t requested_segments =
+          InProcessAdvancedDownloadManagerService::kMaximumSegmentsPerDownload) {
+    DownloadTransferPlan plan;
+    plan.download_id = record.download_id;
+    plan.source_url = record.request.source_url;
+    plan.referrer_url = record.request.referrer_url;
+    plan.metadata = metadata;
+
+    if (metadata.total_bytes == 0) {
+      return plan;
+    }
+
+    const auto segment_cap = std::max<std::size_t>(1, std::min(
+        {requested_segments,
+         record.segment_limit,
+         InProcessAdvancedDownloadManagerService::kMaximumSegmentsPerDownload}));
+
+    const auto segment_count = metadata.accepts_byte_ranges
+                                   ? std::min<std::uint64_t>(segment_cap,
+                                                             metadata.total_bytes)
+                                   : std::uint64_t{1};
+    const auto base_size = metadata.total_bytes / segment_count;
+    const auto remainder = metadata.total_bytes % segment_count;
+
+    std::uint64_t cursor = 0;
+    plan.segments.reserve(static_cast<std::size_t>(segment_count));
+    for (std::uint64_t i = 0; i < segment_count; ++i) {
+      const auto size = base_size + (i < remainder ? 1 : 0);
+      DownloadSegment segment;
+      segment.index = static_cast<std::size_t>(i);
+      segment.range.begin = cursor;
+      segment.range.end_inclusive = cursor + size - 1;
+      plan.segments.push_back(segment);
+      cursor += size;
+    }
+    return plan;
+  }
+};
+
+class DownloadTransferScheduler {
+ public:
+  static constexpr std::size_t kMaximumActiveDownloads =
+      InProcessAdvancedDownloadManagerService::kMaximumSimultaneousDownloads;
+  static constexpr unsigned kMaximumRetriesPerSegment = 3;
+
+  explicit DownloadTransferScheduler(DownloadTransport& transport)
+      : transport_(transport) {}
+
+  bool queue(DownloadRecord record) {
+    if (record.download_id.empty() || record.request.source_url.empty()) return false;
+    for (const auto& pending : pending_) {
+      if (pending.download_id == record.download_id) return false;
+    }
+    for (const auto& active : active_) {
+      if (active.record.download_id == record.download_id) return false;
+    }
+    pending_.push_back(std::move(record));
+    return true;
+  }
+
+  void pump() {
+    while (active_.size() < kMaximumActiveDownloads && !pending_.empty()) {
+      auto record = std::move(pending_.front());
+      pending_.pop_front();
+      const auto metadata = transport_.inspect(record.request.source_url,
+                                               record.request.referrer_url);
+      if (!metadata) {
+        failed_.push_back(record.download_id);
+        continue;
+      }
+      ActiveTransfer active;
+      active.record = std::move(record);
+      active.plan = DownloadTransferPlanner::make_plan(active.record, *metadata);
+      if (active.plan.segments.empty()) {
+        failed_.push_back(active.record.download_id);
+        continue;
+      }
+      active_.push_back(std::move(active));
+    }
+
+    for (auto& active : active_) {
+      if (active.finished || active.failed) continue;
+      run_one_segment(active);
+    }
+
+    for (const auto& active : active_) {
+      if (active.finished) completed_.push_back(active.record.download_id);
+      if (active.failed) failed_.push_back(active.record.download_id);
+    }
+    active_.erase(std::remove_if(active_.begin(), active_.end(),
+                                 [](const ActiveTransfer& active) {
+                                   return active.finished || active.failed;
+                                 }),
+                  active_.end());
+  }
+
+  [[nodiscard]] std::size_t pending_count() const noexcept { return pending_.size(); }
+  [[nodiscard]] std::size_t active_count() const noexcept { return active_.size(); }
+  [[nodiscard]] const std::vector<std::string>& completed_downloads() const noexcept {
+    return completed_;
+  }
+  [[nodiscard]] const std::vector<std::string>& failed_downloads() const noexcept {
+    return failed_;
+  }
+
+ private:
+  struct ActiveTransfer {
+    DownloadRecord record;
+    DownloadTransferPlan plan;
+    bool finished{false};
+    bool failed{false};
+  };
+
+  void run_one_segment(ActiveTransfer& active) {
+    auto segment_it = std::find_if(active.plan.segments.begin(), active.plan.segments.end(),
+                                   [](const DownloadSegment& segment) {
+                                     return !segment.finished;
+                                   });
+    if (segment_it == active.plan.segments.end()) {
+      active.finished = true;
+      return;
+    }
+
+    auto& segment = *segment_it;
+    DownloadTransportRequest request;
+    request.download_id = active.record.download_id;
+    request.source_url = active.record.request.source_url;
+    request.referrer_url = active.record.request.referrer_url;
+    request.range = segment.range;
+    request.resume_offset = segment.completed_bytes;
+    request.etag = active.plan.metadata.etag;
+    request.last_modified = active.plan.metadata.last_modified;
+
+    const auto result = transport_.transfer(request);
+    const auto segment_size = segment.range.end_inclusive - segment.range.begin + 1;
+    segment.completed_bytes = std::min(segment_size,
+                                       segment.completed_bytes + result.transferred_bytes);
+    active.plan.completed_bytes = 0;
+    for (const auto& planned : active.plan.segments) {
+      active.plan.completed_bytes += planned.completed_bytes;
+    }
+
+    if (result.completed || segment.completed_bytes >= segment_size) {
+      segment.completed_bytes = segment_size;
+      segment.finished = true;
+      const bool all_finished = std::all_of(
+          active.plan.segments.begin(), active.plan.segments.end(),
+          [](const DownloadSegment& planned) { return planned.finished; });
+      active.finished = all_finished;
+      return;
+    }
+
+    if (result.retryable && segment.retry_count < kMaximumRetriesPerSegment) {
+      ++segment.retry_count;
+      return;
+    }
+    active.failed = true;
+  }
+
+  DownloadTransport& transport_;
+  std::deque<DownloadRecord> pending_;
+  std::vector<ActiveTransfer> active_;
+  std::vector<std::string> completed_;
+  std::vector<std::string> failed_;
+};
+
+static_assert(DownloadTransferScheduler::kMaximumActiveDownloads == 5);
+static_assert(InProcessAdvancedDownloadManagerService::kMaximumSegmentsPerDownload == 16);
+
+}  // namespace goreecloud::browser
