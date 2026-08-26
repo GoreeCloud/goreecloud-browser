@@ -137,6 +137,11 @@ class BrowserEngine {
   virtual void initialize() = 0;
   virtual void shutdown() = 0;
 
+  // Platform hosts call this regularly when the selected engine integrates
+  // with an external UI/event loop. Engines that do not need explicit pumping
+  // use the default no-op implementation.
+  virtual void pump_events() {}
+
   [[nodiscard]] virtual std::string_view name() const noexcept = 0;
   [[nodiscard]] virtual std::string_view version() const noexcept = 0;
   [[nodiscard]] virtual EngineCapabilities capabilities() const noexcept = 0;
