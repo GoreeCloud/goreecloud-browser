@@ -9,9 +9,6 @@
 
 namespace goreecloud::browser::platform {
 
-// Linux/Flatpak Glaze host boundary. The actual toolkit/windowing backend will
-// provide native_window_handle/native_display_handle once the approved Glaze
-// runtime is connected.
 class LinuxGlazeWindowHost final : public NativeWindowHost {
  public:
   bool create() override {
@@ -26,7 +23,7 @@ class LinuxGlazeWindowHost final : public NativeWindowHost {
   }
 
   void set_title(std::string_view title) override { title_ = std::string{title}; }
-  void render_chrome(const ChromeShellState& state) override { chrome_state_ = state; }
+  void render_chrome(const BrowserChromeState& state) override { chrome_state_ = state; }
 
   void attach_engine_view(EngineView& view) override {
     attached_view_ = &view;
@@ -93,7 +90,7 @@ class LinuxGlazeWindowHost final : public NativeWindowHost {
   std::uintptr_t native_display_handle_{0};
   int chrome_content_top_{116};
   std::string title_{"GoreeCloud Browser"};
-  ChromeShellState chrome_state_{};
+  BrowserChromeState chrome_state_{};
   EngineView* attached_view_{nullptr};
   std::string current_internal_surface_;
   std::string current_panel_;
