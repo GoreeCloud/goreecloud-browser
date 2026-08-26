@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -20,10 +21,13 @@ struct RuntimeTabRecoveryMetadata {
   std::uint64_t last_active_unix_ms{0};
 };
 
-class RuntimeBrowserSessionStateSource final : public BrowserSessionStateSource {
+class RuntimeBrowserSessionStateSource final : public BrowserSessionStateSource,
+                                               public AdvancedTabManagerObserver {
  public:
   explicit RuntimeBrowserSessionStateSource(const BrowserApplication& application)
       : application_(application) {}
+
+  void bind(AdvancedTabManager& manager) { manager.set_observer(this); }
 
   void update_tab_topology(std::string tab_id,
                            std::string workspace_id,
@@ -36,6 +40,18 @@ class RuntimeBrowserSessionStateSource final : public BrowserSessionStateSource 
     metadata.group_id = std::move(group_id);
     metadata.split_id = std::move(split_id);
     metadata.pinned = pinned;
+  }
+
+  void on_managed_tab_state_changed(const ManagedTabState& state) override {
+    update_tab_topology(state.tab_id,
+                        state.workspace_id,
+                        state.group_id,
+                        state.split_id,
+                        state.pinned);
+  }
+
+  void on_managed_tab_closed(std::string_view tab_id) override {
+    tab_metadata_.erase(std::string{tab_id});
   }
 
   void mark_tab_active(const std::string& tab_id, std::uint64_t unix_ms) {
