@@ -120,6 +120,47 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
     return queued;
   }
 
+  bool pause(std::string_view download_id) {
+    const auto record = queue_.find(download_id);
+    if (!record || record->state == DownloadState::completed ||
+        record->state == DownloadState::cancelled) return false;
+    if (!scheduler_.pause(download_id) || !queue_.set_state(download_id, DownloadState::paused)) return false;
+    auto& state = progress_[std::string{download_id}];
+    state.state = DownloadState::paused;
+    state.bytes_per_second = 0.0;
+    state.message = "Paused";
+    persist_queue();
+    return true;
+  }
+
+  bool resume(std::string_view download_id) {
+    const auto record = queue_.find(download_id);
+    if (!record || record->state != DownloadState::paused) return false;
+    if (!scheduler_.resume(download_id) || !queue_.set_state(download_id, DownloadState::queued)) return false;
+    auto& state = progress_[std::string{download_id}];
+    state.state = DownloadState::queued;
+    state.message = "Resuming";
+    persist_queue();
+    return true;
+  }
+
+  bool cancel(std::string_view download_id, bool discard_partial_file = false) {
+    const auto record = queue_.find(download_id);
+    if (!record || record->state == DownloadState::completed ||
+        record->state == DownloadState::cancelled) return false;
+    scheduler_.cancel(download_id);
+    if (!queue_.set_state(download_id, DownloadState::cancelled)) return false;
+    checkpoints_.erase(download_id);
+    auto found = files_.find(std::string{download_id});
+    if (discard_partial_file && found != files_.end()) file_store_.discard(found->second);
+    auto& state = progress_[std::string{download_id}];
+    state.state = DownloadState::cancelled;
+    state.bytes_per_second = 0.0;
+    state.message = discard_partial_file ? "Cancelled and partial data removed" : "Cancelled";
+    persist_queue();
+    return true;
+  }
+
   void pump() { scheduler_.pump(); }
 
   [[nodiscard]] std::optional<LiveDownloadProgress> progress(std::string_view id) const {
@@ -153,15 +194,18 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
       }
       files_[restored->download_id] = *paths;
       const auto checkpoint = checkpoints_.load(restored->download_id);
+      const bool was_paused = record.state == DownloadState::paused;
       progress_[restored->download_id] = {
           .completed_bytes = checkpoint ? checkpoint->completed_bytes : 0,
           .total_bytes = checkpoint ? checkpoint->total_bytes : 0,
           .bytes_per_second = 0.0,
-          .state = DownloadState::queued,
-          .message = checkpoint ? "Ready to resume" : "Restored",
+          .state = was_paused ? DownloadState::paused : DownloadState::queued,
+          .message = was_paused ? "Paused" : (checkpoint ? "Ready to resume" : "Restored"),
       };
       if (!scheduler_.queue(*restored)) {
         mark_failed(restored->download_id, "Restored download could not be scheduled.");
+      } else if (was_paused) {
+        scheduler_.pause(restored->download_id);
       }
     }
     persist_queue();
