@@ -33,6 +33,7 @@ The browser is structured so that GoreeCloud-owned application layers remain sep
 - **Chromium/Blink** — initial rendering, JavaScript, WebAssembly, Web APIs, media, graphics, accessibility, and web-platform foundation.
 - **Glaze UI** — authoritative GoreeCloud presentation and interaction system for Browser-owned surfaces; Browser must track the current approved Stable release.
 - **GoreeCloud Wayfinder** — first-party Browser feature family for navigation, productivity, organization, downloads, transfers, capture, sessions, synchronization, Browser utilities, content handling, and workflow integration.
+- **Media Hover** — first-party contextual media interaction layer for images, video, regions, visual search, destination-aware saving, AI/OCR workflows, source attribution, privacy enforcement, and security evidence.
 - **GoreeCloud Search** — sole and default integrated search authority for approved Browser search entry points.
 - **GoreeCloud Bookmarks** — first-class bookmarks, read-later, collections, and library subsystem.
 - **GoreeCloud Sync** — synchronization for approved Browser state while excluding indiscriminate synchronization of sensitive website state.
@@ -62,11 +63,11 @@ The browser is structured so that GoreeCloud-owned application layers remain sep
 
 ### 0.x — GoreeCloud-owned browser shell
 
-Build the native application, current-Stable Glaze UI browser chrome, tabs, windows, sessions, profiles, settings, permissions UI, history, bookmarks integration, Search integration, downloads, local browser-state storage, and the engine adapter.
+Build the native application, current-Stable Glaze UI browser chrome, tabs, windows, sessions, profiles, settings, permissions UI, history, bookmarks integration, Search integration, downloads, local browser-state storage, Media Hover, and the engine adapter.
 
 ### 0.x — First-party browser services
 
-Integrate GoreeCloud Sync, Identity, Vault, Privacy Shield, Wardveil Security, Everkeep, DNS, Network, Wayfinder, and Mesh through explicit service contracts.
+Integrate GoreeCloud Sync, Identity, Vault, Privacy Shield, Wardveil Security, Everkeep, DNS, Network, Wayfinder, Mesh, and capability-gated Media Hover destinations/processors through explicit service contracts.
 
 ### Later — selective engine ownership
 
@@ -95,6 +96,7 @@ GoreeCloud Browser **0.1.0-beta.1** is in active development and is not producti
 See:
 
 - [`docs/BETA_0_1.md`](docs/BETA_0_1.md) — beta scope, render-capable gates, deferred work, and promotion requirements.
+- [`docs/MEDIA_HOVER.md`](docs/MEDIA_HOVER.md) — Media Hover interaction, search/AI/OCR, destination, privacy, security, accessibility, and integration contract.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architectural boundaries and ownership model.
 - [`docs/ENGINE_LAYER.md`](docs/ENGINE_LAYER.md) — Browser Engine Layer contracts.
 - [`docs/GLAZE_UI_ADOPTION.md`](docs/GLAZE_UI_ADOPTION.md) — current-Stable Glaze UI adoption and acceptance policy.
