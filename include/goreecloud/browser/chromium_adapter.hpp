@@ -34,14 +34,6 @@ struct ChromiumPrivateContextRequirements {
 
 inline constexpr ChromiumPrivateContextRequirements kChromiumPrivateContextRequirements{};
 
-// ChromiumEngineAdapter is the implementation boundary between GoreeCloud
-// Browser and Chromium/Blink. Chromium types must remain behind this boundary.
-// The Browser core, Glaze UI, tabs, sessions, profiles, services, and policies
-// must not depend directly on Chromium public/internal types.
-//
-// Private EngineContext implementations must map GoreeCloud cleanup contracts
-// onto Chromium storage partitions/browser contexts and must not report a
-// successful cleanup unless the requested data classes were actually cleared.
 class ChromiumEngineAdapter : public BrowserEngine {
  public:
   explicit ChromiumEngineAdapter(ChromiumAdapterOptions options);
@@ -49,6 +41,7 @@ class ChromiumEngineAdapter : public BrowserEngine {
 
   void initialize() override;
   void shutdown() override;
+  void pump_events() override;
 
   [[nodiscard]] std::string_view name() const noexcept override;
   [[nodiscard]] std::string_view version() const noexcept override;
