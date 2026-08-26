@@ -1,57 +1,99 @@
 # Building GoreeCloud Browser
 
-GoreeCloud Browser is in active development. The repository currently supports a buildable Browser-owned core and an optional compiled Chromium adapter scaffold. A successful build is not evidence of production browser readiness.
+GoreeCloud Browser is on the **0.1.0-beta.1** development channel. The repository contains a build-tested Browser core, an optional visible Linux GTK/X11 Glaze shell, the Chromium engine adapter, and an optional CEF runtime path. A successful build is not production-readiness evidence.
 
-## Default development build
-
-The default build uses `DevelopmentEngine`, which is intentionally non-rendering.
+## Engine-independent beta core
 
 ```sh
-cmake -S . -B build -DBUILD_TESTING=ON
-cmake --build build
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_TESTING=ON \
+  -DGOREECLOUD_ENABLE_CHROMIUM=OFF \
+  -DGOREECLOUD_ENABLE_CEF=OFF \
+  -DGOREECLOUD_ENABLE_LINUX_GTK_HOST=OFF
+cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-This mode is intended for validating Browser-owned application, tab, private-session, toolbar, internal-page, settings, and service-integration logic while Chromium integration is incomplete.
+This uses `DevelopmentEngine`, which is deliberately non-rendering.
 
-## Chromium integration build
+## Visible Linux beta shell
 
-Enable the compiled Chromium adapter boundary with:
+Install GTK3/X11 development packages, then configure:
+
+```sh
+cmake -S . -B build-gtk \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_TESTING=ON \
+  -DGOREECLOUD_ENABLE_LINUX_GTK_HOST=ON \
+  -DGOREECLOUD_ENABLE_CHROMIUM=OFF \
+  -DGOREECLOUD_ENABLE_CEF=OFF
+cmake --build build-gtk --parallel
+ctest --test-dir build-gtk --output-on-failure
+```
+
+The executable is `goreecloud-browser`. The first beta native host uses GTK3 with an X11 child-surface contract. On a Wayland desktop, use XWayland/X11 for this milestone. Native Wayland engine-surface attachment remains pending.
+
+This configuration produces a visible GoreeCloud/Glaze shell but still uses the non-rendering development engine.
+
+## Chromium adapter scaffold
 
 ```sh
 cmake -S . -B build-chromium \
   -DGOREECLOUD_ENABLE_CHROMIUM=ON \
+  -DGOREECLOUD_ENABLE_CEF=OFF \
   -DBUILD_TESTING=ON
-cmake --build build-chromium
+cmake --build build-chromium --parallel
+ctest --test-dir build-chromium --output-on-failure
 ```
 
-At the current milestone, this compiles the GoreeCloud Chromium adapter scaffold and enforces sandbox/site-isolation requirements, but the concrete Chromium `EngineContext` and `EngineView` are not yet implemented. Therefore this build is not yet render-capable.
+This validates the engine abstraction, contexts, views, navigation state, private cleanup contracts, native-surface attachment, and adapter smoke tests without linking a production renderer.
 
-The next Chromium milestone must implement:
+## CEF render path
 
-- Chromium runtime and subprocess initialization;
-- native Browser view creation;
-- navigation callbacks;
-- renderer lifecycle and crash reporting;
-- private/in-memory Browser contexts;
-- origin-scoped and full-context data cleanup;
-- permission interception;
-- certificate/security inspection;
-- download interception into GoreeCloud Download Manager;
-- GPU and accessibility plumbing;
-- Linux native-window attachment first, followed by Windows and Android platform hosts.
+Use a reviewed CEF binary distribution containing `include/cef_app.h` and `cmake/FindCEF.cmake`:
+
+```sh
+cmake -S . -B build-cef \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DGOREECLOUD_ENABLE_CHROMIUM=ON \
+  -DGOREECLOUD_ENABLE_CEF=ON \
+  -DGOREECLOUD_ENABLE_LINUX_GTK_HOST=ON \
+  -DGOREECLOUD_CEF_ROOT=/absolute/path/to/cef
+cmake --build build-cef --parallel
+```
+
+The build integrates CEF's binary-distribution CMake targets, `libcef_dll_wrapper`, CEF runtime libraries/resources, subprocess dispatch, GoreeCloud request-context separation, and the GTK/X11 child-content surface.
+
+Runtime environment:
+
+```sh
+export GOREECLOUD_BROWSER_RUNTIME_ROOT=/absolute/path/to/runtime
+export GOREECLOUD_BROWSER_SUBPROCESS=/absolute/path/to/goreecloud-browser
+export GOREECLOUD_BROWSER_RESOURCES=/absolute/path/to/runtime
+export GOREECLOUD_BROWSER_LOCALES=/absolute/path/to/runtime/locales
+export GOREECLOUD_SEARCH_URL=https://your-authorized-goreecloud-search-endpoint/search
+./build-cef/goreecloud-browser
+```
+
+`GOREECLOUD_SEARCH_URL` is intentionally required for search behavior. If it is absent or GoreeCloud Search is unavailable, search fails visibly; the Browser does not substitute another search provider. Direct URL navigation remains available.
+
+Private launch examples:
+
+```sh
+./build-cef/goreecloud-browser --private
+./build-cef/goreecloud-browser --isolated-private
+./build-cef/goreecloud-browser https://example.com/
+```
+
+## Beta runtime boundary
+
+CEF/Chromium source integration does not by itself satisfy the render-capable beta gate. Real runtime evidence is still required for HTTPS rendering, native child-window behavior, navigation, private-context isolation, cleanup, sandbox/site isolation, and sustained desktop operation. See `docs/BETA_0_1.md`.
 
 ## Security requirements
 
-GoreeCloud Browser must not initialize the production Chromium adapter with sandboxing or site isolation disabled. Private contexts must not use persistent profile storage.
+GoreeCloud Browser refuses the production Chromium adapter when sandboxing or site isolation are disabled. Private contexts must use non-persistent storage. Integration convenience must not weaken TLS, certificate, sandbox, site-isolation, authentication, or authorization boundaries.
 
 ## Distribution direction
 
-The same accepted Browser source is intended to feed:
-
-- Linux Flatpak;
-- Windows signed `.exe` installer;
-- Android signed APK;
-- other approved GoreeCloud Browser artifacts later.
-
-Packaging success does not override runtime, security, accessibility, recovery, or release-integrity acceptance requirements.
+The accepted source is intended to feed Linux Flatpak, Windows `.exe`, Android APK, and later approved artifacts. The current Flatpak manifest is a beta-shell manifest and intentionally leaves CEF disabled until a reviewed CEF runtime module, provenance, sandbox, codecs, and runtime packaging are incorporated.
