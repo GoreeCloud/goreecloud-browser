@@ -50,21 +50,26 @@ int main() {
   third.checkpoint_id = "checkpoint-003";
   third.created_unix_ms = 300;
   assert(coordinator.checkpoint(third));
-  assert(store.read_recent(5).size() == 2);
+  recent = store.read_recent(5);
+  assert(recent.size() == 2);
+  assert(recent[0].checkpoint_id == "checkpoint-003");
+  assert(recent[1].checkpoint_id == "checkpoint-002");
+  assert(!std::filesystem::exists(root / "checkpoint-001.gcrs"));
 
   const auto corrupt = root / "checkpoint-003.gcrs";
-  if (std::filesystem::exists(corrupt)) {
+  {
     std::ofstream out(corrupt, std::ios::binary | std::ios::app);
     assert(out);
     out << "corruption";
-    out.close();
-    recent = store.read_recent(5);
-    for (const auto& checkpoint : recent) {
-      assert(checkpoint.checkpoint_id != "checkpoint-003");
-    }
   }
 
-  assert(store.erase("checkpoint-002") || !std::filesystem::exists(root / "checkpoint-002.gcrs"));
+  recent = store.read_recent(5);
+  assert(recent.size() == 1);
+  assert(recent.front().checkpoint_id == "checkpoint-002");
+
+  assert(store.erase("checkpoint-002"));
+  assert(store.read_recent(5).empty());
+
   std::filesystem::remove_all(root, error);
   return 0;
 }
