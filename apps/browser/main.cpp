@@ -1,8 +1,10 @@
 #include <exception>
 #include <iostream>
+#include <string>
 
 #include "goreecloud/browser/application.hpp"
 #include "goreecloud/browser/cef_process.hpp"
+#include "goreecloud/browser/command_line.hpp"
 #include "goreecloud/browser/internal_pages.hpp"
 #include "goreecloud/browser/runtime_engine_factory.hpp"
 #include "goreecloud/browser/toolbar.hpp"
@@ -16,12 +18,30 @@ int main(int argc, char** argv) {
   if (cef_exit_code >= 0) return cef_exit_code;
 
   try {
+    const auto launch = parse_browser_launch_request(argc, argv);
+
     BrowserApplicationOptions options;
-    options.initial_url = std::string{kNewTabUrl};
+    options.initial_private_window = launch.private_window;
+    options.initial_private_session_id = launch.isolated_private_window
+                                             ? "isolated-private-1"
+                                             : "shared-private";
+    if (!launch.urls.empty()) {
+      options.initial_url = launch.urls.front();
+    } else {
+      options.initial_url = launch.private_window
+                                ? std::string{kPrivateStartUrl}
+                                : std::string{kNewTabUrl};
+    }
 
     auto selection = create_runtime_engine_from_environment();
     BrowserApplication browser(std::move(selection.engine), options);
     browser.initialize();
+
+    if (auto* first_window = browser.first_window()) {
+      for (std::size_t index = 1; index < launch.urls.size(); ++index) {
+        (void)first_window->new_tab(launch.urls[index]);
+      }
+    }
 
     std::cout << "GoreeCloud Browser " << kBrowserVersion << "\n";
     std::cout << "Release channel: " << kBrowserReleaseChannel << "\n";
@@ -29,7 +49,8 @@ int main(int argc, char** argv) {
     std::cout << "Engine: " << browser.engine().name() << " "
               << browser.engine().version() << "\n";
     std::cout << "Windows: " << browser.window_count() << "\n";
-    std::cout << "Startup surface: " << kNewTabUrl << "\n";
+    std::cout << "Private startup: " << (launch.private_window ? "yes" : "no") << "\n";
+    std::cout << "Startup surface: " << options.initial_url << "\n";
     std::cout << "Toolbar controls: " << kDefaultToolbar.size() << "\n";
     std::cout << "Search authority: " << kSearchAuthority << "\n";
     std::cout << "Glaze UI: approved Stable baseline enforced by build\n";
