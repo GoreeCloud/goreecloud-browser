@@ -53,6 +53,7 @@ endfunction()
 if(GOREECLOUD_ENABLE_CHROMIUM)
   add_library(goreecloud_browser_chromium STATIC
     src/chromium_adapter.cpp
+    src/chromium_runtime_scaffold.cpp
   )
   target_link_libraries(goreecloud_browser_chromium
     PUBLIC
@@ -96,7 +97,7 @@ goreecloud_apply_warnings(goreecloud_browser_runtime_smoke)
 
 if(GOREECLOUD_ENABLE_CHROMIUM)
   add_executable(goreecloud_browser_chromium_smoke
-    apps/browser/chromium_adapter_smoke.cpp
+    apps/browser/chromium_smoke.cpp
   )
   target_link_libraries(goreecloud_browser_chromium_smoke
     PRIVATE
