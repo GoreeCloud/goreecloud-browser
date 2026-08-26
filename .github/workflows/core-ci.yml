@@ -33,6 +33,20 @@ jobs:
       - name: Test
         run: ctest --test-dir build-debug --output-on-failure
 
+  linux-download-curl:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install libcurl development package
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+      - name: Configure curl download transport
+        run: cmake -S . -B build-curl -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGOREECLOUD_ENABLE_CHROMIUM=OFF -DGOREECLOUD_ENABLE_CEF=OFF -DGOREECLOUD_ENABLE_LINUX_GTK_HOST=OFF -DGOREECLOUD_ENABLE_CURL_DOWNLOAD_TRANSPORT=ON
+      - name: Build curl download transport
+        run: cmake --build build-curl --parallel
+      - name: Test download contracts
+        run: ctest --test-dir build-curl --output-on-failure
+
   linux-gtk-beta-shell:
     runs-on: ubuntu-latest
     steps:
