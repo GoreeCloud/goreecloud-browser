@@ -13,7 +13,13 @@ namespace goreecloud::browser {
 
 class InMemoryAdvancedTabManager final : public AdvancedTabManager {
  public:
-  void register_tab(ManagedTabState state) { tabs_[state.tab_id] = std::move(state); }
+  void set_observer(AdvancedTabManagerObserver* observer) override { observer_ = observer; }
+
+  void register_tab(ManagedTabState state) {
+    const auto id = state.tab_id;
+    tabs_[id] = std::move(state);
+    notify(id);
+  }
 
   bool duplicate_tabs(const std::vector<std::string>& tab_ids, bool) override {
     return all_exist(tab_ids);
@@ -23,6 +29,7 @@ class InMemoryAdvancedTabManager final : public AdvancedTabManager {
                  const std::string& window_id) override {
     if (!all_exist(tab_ids)) return false;
     for (const auto& id : tab_ids) tabs_[id].window_id = window_id;
+    notify(tab_ids);
     return true;
   }
 
@@ -38,6 +45,7 @@ class InMemoryAdvancedTabManager final : public AdvancedTabManager {
     for (const auto& id : tab_ids) {
       closed_.push_back({ClosedSessionItem::Kind::tab, id, "memory:" + id});
       tabs_.erase(id);
+      if (observer_) observer_->on_managed_tab_closed(id);
     }
     return true;
   }
@@ -49,6 +57,7 @@ class InMemoryAdvancedTabManager final : public AdvancedTabManager {
   bool pin_tabs(const std::vector<std::string>& tab_ids, bool pinned) override {
     if (!all_exist(tab_ids)) return false;
     for (const auto& id : tab_ids) tabs_[id].pinned = pinned;
+    notify(tab_ids);
     return true;
   }
 
@@ -57,6 +66,7 @@ class InMemoryAdvancedTabManager final : public AdvancedTabManager {
     for (const auto& id : tab_ids) {
       tabs_[id].protection = locked ? TabProtection::locked : TabProtection::normal;
     }
+    notify(tab_ids);
     return true;
   }
 
@@ -67,6 +77,7 @@ class InMemoryAdvancedTabManager final : public AdvancedTabManager {
       tabs_[id].protection = protected_tab ? TabProtection::protected_tab
                                            : TabProtection::normal;
     }
+    notify(tab_ids);
     return true;
   }
 
@@ -80,12 +91,14 @@ class InMemoryAdvancedTabManager final : public AdvancedTabManager {
         tab.resources.sleeping = true;
       }
     }
+    notify(tab_ids);
     return true;
   }
 
   bool wake_tabs(const std::vector<std::string>& tab_ids) override {
     if (!all_exist(tab_ids)) return false;
     for (const auto& id : tab_ids) tabs_[id].resources.sleeping = false;
+    notify(tab_ids);
     return true;
   }
 
@@ -94,6 +107,7 @@ class InMemoryAdvancedTabManager final : public AdvancedTabManager {
     for (const auto& id : tab_ids) {
       if (muted) tabs_[id].resources.audio_active = false;
     }
+    notify(tab_ids);
     return true;
   }
 
@@ -115,6 +129,7 @@ class InMemoryAdvancedTabManager final : public AdvancedTabManager {
         group.tab_ids.push_back(id);
       }
     }
+    notify(tab_ids);
     return true;
   }
 
@@ -129,8 +144,10 @@ class InMemoryAdvancedTabManager final : public AdvancedTabManager {
     if (!all_exist(tab_ids) || !workspaces_.contains(workspace_id)) return false;
     for (const auto& id : tab_ids) {
       tabs_[id].workspace_id = workspace_id;
-      workspaces_[workspace_id].tab_ids.push_back(id);
+      auto& ids = workspaces_[workspace_id].tab_ids;
+      if (std::find(ids.begin(), ids.end(), id) == ids.end()) ids.push_back(id);
     }
+    notify(tab_ids);
     return true;
   }
 
@@ -143,16 +160,19 @@ class InMemoryAdvancedTabManager final : public AdvancedTabManager {
                          std::vector<double>(tab_ids.size(), fraction), std::nullopt};
     splits_[id] = split;
     for (const auto& tab_id : tab_ids) tabs_[tab_id].split_id = id;
+    notify(tab_ids);
     return id;
   }
 
   bool exit_split(const std::string& split_id, bool) override {
     const auto it = splits_.find(split_id);
     if (it == splits_.end()) return false;
-    for (const auto& tab_id : it->second.tab_ids) {
+    const auto tab_ids = it->second.tab_ids;
+    for (const auto& tab_id : tab_ids) {
       if (tabs_.contains(tab_id)) tabs_[tab_id].split_id.reset();
     }
     splits_.erase(it);
+    notify(tab_ids);
     return true;
   }
 
@@ -180,11 +200,20 @@ class InMemoryAdvancedTabManager final : public AdvancedTabManager {
   std::vector<ClosedSessionItem> recently_closed() const override { return closed_; }
 
   bool restore(const ClosedSessionItem&) override {
-    // Actual restoration requires SessionStore payload materialization.
     return false;
   }
 
  private:
+  void notify(const std::string& id) {
+    if (!observer_) return;
+    const auto found = tabs_.find(id);
+    if (found != tabs_.end()) observer_->on_managed_tab_state_changed(found->second);
+  }
+
+  void notify(const std::vector<std::string>& ids) {
+    for (const auto& id : ids) notify(id);
+  }
+
   bool all_exist(const std::vector<std::string>& ids) const {
     return std::all_of(ids.begin(), ids.end(), [this](const auto& id) {
       return tabs_.contains(id);
@@ -198,6 +227,7 @@ class InMemoryAdvancedTabManager final : public AdvancedTabManager {
     return value;
   }
 
+  AdvancedTabManagerObserver* observer_{nullptr};
   std::unordered_map<std::string, ManagedTabState> tabs_;
   std::unordered_map<std::string, TabGroupState> groups_;
   std::unordered_map<std::string, std::string> group_workspace_;
