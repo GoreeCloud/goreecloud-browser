@@ -55,6 +55,25 @@ std::optional<MediaSaveDestination> GtkLinuxGlazeWindowHost::choose_media_save_d
   }
 }
 
+bool GtkLinuxGlazeWindowHost::confirm_media_boundary(std::string_view title,
+                                                      std::string_view explanation) {
+  const std::string title_text{title};
+  const std::string body_text{explanation};
+  auto* dialog = gtk_message_dialog_new(
+      nullptr,
+      GTK_DIALOG_MODAL,
+      GTK_MESSAGE_QUESTION,
+      GTK_BUTTONS_NONE,
+      "%s",
+      body_text.c_str());
+  gtk_window_set_title(GTK_WINDOW(dialog), title_text.c_str());
+  gtk_dialog_add_button(GTK_DIALOG(dialog), "Cancel", GTK_RESPONSE_CANCEL);
+  gtk_dialog_add_button(GTK_DIALOG(dialog), "Continue", GTK_RESPONSE_ACCEPT);
+  const int response = gtk_dialog_run(GTK_DIALOG(dialog));
+  gtk_widget_destroy(dialog);
+  return response == GTK_RESPONSE_ACCEPT;
+}
+
 void GtkLinuxGlazeWindowHost::show_media_action_status(std::string_view message) {
   if (!message.empty()) show_panel(message);
 }
