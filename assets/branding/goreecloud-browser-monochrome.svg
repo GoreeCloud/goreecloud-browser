@@ -1,10 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
-  <title id="title">GoreeCloud Browser — Horizon Portal Monochrome</title>
-  <desc id="desc">Monochrome identity for GoreeCloud Browser using an open portal and forward horizon path.</desc>
+  <title id="title">GoreeCloud Browser — Aurora Window Candidate Monochrome</title>
+  <desc id="desc">Monochrome four-pane window identity with an asymmetric central cut.</desc>
   <rect x="64" y="64" width="896" height="896" rx="224" fill="#000000"/>
-  <path d="M512 226C348 226 216 358 216 522C216 686 348 818 512 818C650 818 766 724 800 596H694C664 664 596 712 516 712C410 712 324 626 324 520C324 414 410 328 516 328C594 328 662 374 694 440H800C764 316 650 226 512 226Z" fill="#FFFFFF"/>
-  <path d="M262 522C350 458 448 430 552 438C626 444 696 468 762 510L704 574C650 544 596 528 540 526C450 522 368 548 294 604L262 522Z" fill="#FFFFFF"/>
-  <path d="M650 430L814 510L682 624L704 574L762 510L694 476L650 430Z" fill="#FFFFFF"/>
-  <circle cx="512" cy="520" r="54" fill="#000000"/>
-  <circle cx="512" cy="520" r="24" fill="#FFFFFF"/>
+  <g fill="#FFFFFF">
+    <path d="M250 252H480V480H250C226 480 208 462 208 438V294C208 270 226 252 250 252Z"/>
+    <path d="M544 252H774C798 252 816 270 816 294V438C816 462 798 480 774 480H544V252Z"/>
+    <path d="M208 544H480V772H250C226 772 208 754 208 730V544Z"/>
+    <path d="M544 544H816V730C816 754 798 772 774 772H544V544Z"/>
+  </g>
+  <path d="M480 480L544 544M544 480L480 544" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
 </svg>
