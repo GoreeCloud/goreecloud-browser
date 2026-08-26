@@ -79,12 +79,18 @@ if(GOREECLOUD_ENABLE_CHROMIUM)
   goreecloud_apply_warnings(goreecloud_browser_chromium)
 endif()
 
-add_executable(goreecloud_browser apps/browser/main.cpp)
+add_executable(goreecloud_browser
+  apps/browser/main.cpp
+  src/cef_process.cpp
+)
 target_link_libraries(goreecloud_browser PRIVATE goreecloud_browser_core)
 
 if(GOREECLOUD_ENABLE_CHROMIUM)
   target_link_libraries(goreecloud_browser PRIVATE goreecloud_browser_chromium)
   target_compile_definitions(goreecloud_browser PRIVATE GOREECLOUD_ENABLE_CHROMIUM=1)
+  if(GOREECLOUD_ENABLE_CEF)
+    target_include_directories(goreecloud_browser PRIVATE ${GOREECLOUD_CEF_ROOT})
+  endif()
 else()
   target_compile_definitions(goreecloud_browser PRIVATE GOREECLOUD_ENABLE_CHROMIUM=0 GOREECLOUD_ENABLE_CEF=0)
 endif()
