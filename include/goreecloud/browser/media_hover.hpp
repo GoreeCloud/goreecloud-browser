@@ -56,16 +56,21 @@ enum class MediaSaveDestination {
 
 struct MediaTarget {
   std::string page_url;
+  std::string page_title;
   std::string media_url;
   std::optional<std::string> link_url;
   std::string mime_type;
+  std::string alt_text;
   MediaKind kind{MediaKind::image};
   int intrinsic_width{0};
   int intrinsic_height{0};
   int displayed_width{0};
   int displayed_height{0};
+  double duration_seconds{0.0};
+  bool animated{false};
   bool secure_resource{false};
   bool protected_media{false};
+  bool same_origin_with_page{false};
   bool can_copy{true};
   bool can_download{true};
   bool can_capture_frame{false};
