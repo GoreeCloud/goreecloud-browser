@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <memory>
 #include <string>
@@ -8,6 +9,8 @@
 #include "goreecloud/browser/development_engine.hpp"
 #include "goreecloud/browser/in_memory_tab_manager.hpp"
 #include "goreecloud/browser/internal_pages.hpp"
+#include "goreecloud/browser/media_hover.hpp"
+#include "goreecloud/browser/media_hover_controller.hpp"
 #include "goreecloud/browser/omnibox_controller.hpp"
 #include "goreecloud/browser/toolbar.hpp"
 #include "goreecloud/browser/unified_search_bar.hpp"
@@ -23,6 +26,9 @@ int main() {
   static_assert(!kSilentSearchFallbackAllowed);
   static_assert(kBetaChannel);
   static_assert(!kProductionApproved);
+  static_assert(!kMediaHoverPassiveUploadAllowed);
+  static_assert(!kMediaHoverPassiveAiAnalysisAllowed);
+  static_assert(!kMediaHoverPassiveOcrAllowed);
 
   {
     char executable[] = "goreecloud-browser";
@@ -44,6 +50,62 @@ int main() {
   const auto search_resolution = omnibox.resolve("goreecloud browser beta");
   assert(search_resolution.intent == OmniboxIntent::goreecloud_search);
   assert(search_resolution.value.find("https://search.goreecloud.test/search?q=") == 0);
+
+  {
+    MediaTarget image;
+    image.page_url = "https://example.com/gallery";
+    image.media_url = "https://cdn.example.com/image.jpg";
+    image.link_url = "https://example.com/destination";
+    image.kind = MediaKind::image;
+    image.secure_resource = true;
+
+    MediaHoverSitePolicy policy;
+    policy.allow_remote_processing = false;
+
+    const auto actions = MediaActionRegistry::actions_for(image, policy);
+    assert(std::find(actions.begin(), actions.end(), MediaAction::preview) != actions.end());
+    assert(std::find(actions.begin(), actions.end(), MediaAction::search) != actions.end());
+    assert(std::find(actions.begin(), actions.end(), MediaAction::open_link) != actions.end());
+    assert(std::find(actions.begin(), actions.end(), MediaAction::copy_media_url) != actions.end());
+
+    const auto denied_remote = MediaProcessingPolicy::decide(
+        MediaAction::search, MediaProcessingDestination::goreecloud_hosted, policy);
+    assert(!denied_remote.allowed);
+
+    policy.allow_remote_processing = true;
+    const auto allowed_remote = MediaProcessingPolicy::decide(
+        MediaAction::search, MediaProcessingDestination::goreecloud_hosted, policy);
+    assert(allowed_remote.allowed);
+    assert(allowed_remote.disclosure_required);
+
+    image.protected_media = true;
+    const auto protected_actions = MediaActionRegistry::actions_for(image, policy);
+    assert(std::find(protected_actions.begin(), protected_actions.end(),
+                     MediaAction::download_media) == protected_actions.end());
+
+    assert(save_destination_label(MediaSaveDestination::local_device).find("Local") !=
+           std::string_view::npos);
+    assert(save_destination_label(MediaSaveDestination::goreecloud_drive).find("Synchronized") !=
+           std::string_view::npos);
+
+    MediaHoverController hover;
+    assert(hover.activate(image, MediaHoverActivation::keyboard_focus, policy, false));
+    assert(hover.visible());
+    const auto placement = MediaHoverController::place(
+        MediaRect{.x = 980, .y = 20, .width = 300, .height = 200},
+        MediaViewport{.width = 1024, .height = 768},
+        220,
+        48);
+    assert(placement.visible);
+    assert(placement.x >= 8);
+    assert(placement.x + 220 <= 1024 - 8);
+    hover.pointer_left_media(false);
+    assert(!hover.visible());
+
+    policy.modifier_required = true;
+    assert(!hover.activate(image, MediaHoverActivation::pointer_hover, policy, false));
+    assert(hover.activate(image, MediaHoverActivation::pointer_hover, policy, true));
+  }
 
   DevelopmentEngine engine;
   engine.initialize();
