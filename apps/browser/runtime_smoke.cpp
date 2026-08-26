@@ -15,7 +15,7 @@
 int main() {
   using namespace goreecloud::browser;
 
-  static_assert(kToolbarItems.size() == 12);
+  static_assert(kDefaultToolbar.size() == 12);
   static_assert(kUnifiedSearchBarControls.size() == 3);
   static_assert(!kAlternateSearchProvidersAllowed);
   static_assert(!kSilentSearchFallbackAllowed);
