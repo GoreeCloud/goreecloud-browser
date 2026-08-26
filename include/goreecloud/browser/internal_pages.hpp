@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <string_view>
 
 namespace goreecloud::browser {
@@ -25,6 +24,10 @@ inline constexpr std::string_view kPrivateStartUrl{"goreecloud://private"};
     case InternalPage::private_start: return kPrivateStartUrl;
   }
   return "goreecloud://invalid";
+}
+
+[[nodiscard]] constexpr bool is_goreecloud_internal_url(std::string_view url) {
+  return url.rfind("goreecloud://", 0) == 0;
 }
 
 inline constexpr bool kInheritedNewTabDisabled = true;
