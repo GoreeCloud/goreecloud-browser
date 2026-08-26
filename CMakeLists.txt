@@ -6,6 +6,8 @@ project(goreecloud_browser
   LANGUAGES CXX
 )
 
+include(CTest)
+
 # GoreeCloud Browser follows the latest approved Stable Glaze UI release.
 # This value is an acceptance baseline and must advance when Glaze UI promotes
 # a newer Stable release; it is not permission to remain on a superseded release.
@@ -35,6 +37,14 @@ target_compile_definitions(goreecloud_browser_core INTERFACE
   GOREECLOUD_GLAZE_UI_STABLE_REVISION="${GOREECLOUD_GLAZE_UI_STABLE_REVISION}"
 )
 
+function(goreecloud_apply_warnings target)
+  if(MSVC)
+    target_compile_options(${target} PRIVATE /W4 /permissive-)
+  else()
+    target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
+  endif()
+endfunction()
+
 add_executable(goreecloud_browser
   apps/browser/main.cpp
 )
@@ -44,8 +54,20 @@ target_link_libraries(goreecloud_browser
     goreecloud_browser_core
 )
 
-if(MSVC)
-  target_compile_options(goreecloud_browser PRIVATE /W4 /permissive-)
-else()
-  target_compile_options(goreecloud_browser PRIVATE -Wall -Wextra -Wpedantic)
+goreecloud_apply_warnings(goreecloud_browser)
+
+add_executable(goreecloud_browser_runtime_smoke
+  apps/browser/runtime_smoke.cpp
+)
+
+target_link_libraries(goreecloud_browser_runtime_smoke
+  PRIVATE
+    goreecloud_browser_core
+)
+
+goreecloud_apply_warnings(goreecloud_browser_runtime_smoke)
+
+if(BUILD_TESTING)
+  add_test(NAME goreecloud_browser_runtime_smoke
+           COMMAND goreecloud_browser_runtime_smoke)
 endif()
