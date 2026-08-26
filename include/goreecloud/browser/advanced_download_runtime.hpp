@@ -8,10 +8,12 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "goreecloud/browser/advanced_download_manager_service.hpp"
 #include "goreecloud/browser/advanced_download_transfer_engine.hpp"
 #include "goreecloud/browser/download_file_store.hpp"
+#include "goreecloud/browser/download_queue_store.hpp"
 #include "goreecloud/browser/file_download_checkpoint_store.hpp"
 #include "goreecloud/browser/http_download_transport.hpp"
 
@@ -29,8 +31,10 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
  public:
   AdvancedDownloadRuntimeService(HttpDownloadClient& client,
                                  std::filesystem::path download_directory)
-      : file_store_(download_directory),
-        checkpoints_(download_directory / ".goreecloud-checkpoints"),
+      : download_directory_(std::move(download_directory)),
+        file_store_(download_directory_),
+        checkpoints_(download_directory_ / ".goreecloud-checkpoints"),
+        queue_store_(download_directory_ / ".goreecloud-download-state"),
         transport_(client, [this](std::string_view download_id,
                                   std::uint64_t offset,
                                   std::span<const std::byte> bytes) {
@@ -39,8 +43,15 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
           return file_store_.write_at(found->second, offset, bytes);
         }),
         scheduler_(transport_) {
+    scheduler_.set_restore_plan_callback([this](DownloadTransferPlan& plan) {
+      const auto checkpoint = checkpoints_.load(plan.download_id);
+      if (!checkpoint) return false;
+      return apply_download_checkpoint(plan, *checkpoint);
+    });
     scheduler_.set_progress_callback([this](const DownloadTransferPlan& plan) {
       checkpoints_.save(make_download_checkpoint(plan));
+      queue_.set_state(plan.download_id, DownloadState::running);
+      persist_queue();
       auto& progress = progress_[plan.download_id];
       const auto now = Clock::now();
       if (progress_samples_.contains(plan.download_id)) {
@@ -61,14 +72,12 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
       auto found = files_.find(plan.download_id);
       auto& progress = progress_[plan.download_id];
       if (found == files_.end()) {
-        progress.state = DownloadState::failed;
-        progress.message = "Download file state is unavailable.";
+        mark_failed(plan.download_id, "Download file state is unavailable.");
         return;
       }
       const auto evidence = file_store_.commit(found->second, plan.metadata.total_bytes);
       if (!evidence.committed) {
-        progress.state = DownloadState::failed;
-        progress.message = evidence.message;
+        mark_failed(plan.download_id, evidence.message);
         return;
       }
       progress.completed_bytes = evidence.final_size;
@@ -76,13 +85,14 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
       progress.bytes_per_second = 0.0;
       progress.state = DownloadState::completed;
       progress.message = evidence.message;
+      queue_.set_state(plan.download_id, DownloadState::completed);
       checkpoints_.erase(plan.download_id);
+      persist_queue();
     });
     scheduler_.set_failure_callback([this](std::string_view download_id) {
-      auto& progress = progress_[std::string{download_id}];
-      progress.state = DownloadState::failed;
-      progress.message = "Download transfer failed.";
+      mark_failed(download_id, "Download transfer failed.");
     });
+    restore_persistent_queue();
   }
 
   DownloadEnqueueResult enqueue(DownloadEnqueueRequest request) override {
@@ -95,6 +105,7 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
     const auto paths = file_store_.prepare(record->download_id, filename, 0);
     if (!paths) {
       queue_.cancel(record->download_id);
+      persist_queue();
       return {false, {}, "Download destination could not be prepared."};
     }
     files_[record->download_id] = *paths;
@@ -102,8 +113,10 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
     if (!scheduler_.queue(*record)) {
       file_store_.discard(*paths);
       queue_.cancel(record->download_id);
+      persist_queue();
       return {false, {}, "Download scheduler rejected the request."};
     }
+    persist_queue();
     return queued;
   }
 
@@ -123,6 +136,55 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
   using Clock = std::chrono::steady_clock;
   struct ProgressSample { std::uint64_t bytes{0}; Clock::time_point time{}; };
 
+  void restore_persistent_queue() {
+    for (auto record : queue_store_.load()) {
+      if (record.request.private_session || record.state == DownloadState::completed ||
+          record.state == DownloadState::cancelled) {
+        continue;
+      }
+      if (!queue_.restore(record)) continue;
+      const auto restored = queue_.find(record.download_id);
+      if (!restored) continue;
+      const auto filename = restored->request.suggested_filename.value_or(default_filename(restored->request.source_url));
+      const auto paths = file_store_.prepare(restored->download_id, filename, 0);
+      if (!paths) {
+        mark_failed(restored->download_id, "Interrupted download file could not be reopened.");
+        continue;
+      }
+      files_[restored->download_id] = *paths;
+      const auto checkpoint = checkpoints_.load(restored->download_id);
+      progress_[restored->download_id] = {
+          .completed_bytes = checkpoint ? checkpoint->completed_bytes : 0,
+          .total_bytes = checkpoint ? checkpoint->total_bytes : 0,
+          .bytes_per_second = 0.0,
+          .state = DownloadState::queued,
+          .message = checkpoint ? "Ready to resume" : "Restored",
+      };
+      if (!scheduler_.queue(*restored)) {
+        mark_failed(restored->download_id, "Restored download could not be scheduled.");
+      }
+    }
+    persist_queue();
+  }
+
+  void persist_queue() {
+    std::vector<DownloadRecord> persistent;
+    for (const auto& record : queue_.snapshot()) {
+      if (!record.request.private_session) persistent.push_back(record);
+    }
+    queue_store_.save(persistent);
+  }
+
+  void mark_failed(std::string_view download_id, std::string message) {
+    const auto id = std::string{download_id};
+    auto& progress = progress_[id];
+    progress.state = DownloadState::failed;
+    progress.bytes_per_second = 0.0;
+    progress.message = std::move(message);
+    queue_.set_state(id, DownloadState::failed);
+    persist_queue();
+  }
+
   static std::string default_filename(std::string_view url) {
     auto end = url.find_first_of("?#");
     if (end == std::string_view::npos) end = url.size();
@@ -133,9 +195,11 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
     return name;
   }
 
+  std::filesystem::path download_directory_;
   InProcessAdvancedDownloadManagerService queue_;
   LocalDownloadFileStore file_store_;
   FileDownloadCheckpointStore checkpoints_;
+  FileDownloadQueueStore queue_store_;
   HttpDownloadTransport transport_;
   DownloadTransferScheduler scheduler_;
   std::unordered_map<std::string, DownloadFilePaths> files_;
