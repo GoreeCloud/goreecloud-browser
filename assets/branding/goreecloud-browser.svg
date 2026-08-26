@@ -1,35 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
-  <title id="title">GoreeCloud Browser — Borealis Lens Candidate</title>
-  <desc id="desc">A compact faceted lens made from three converging sails around a clear central aperture.</desc>
+  <title id="title">GoreeCloud Browser — Tidefold Candidate</title>
+  <desc id="desc">An asymmetric interlocking fold mark built from two broad planes and a central negative channel.</desc>
   <defs>
-    <linearGradient id="foundation" x1="158" y1="118" x2="866" y2="904" gradientUnits="userSpaceOnUse">
+    <linearGradient id="foundation" x1="156" y1="112" x2="870" y2="910" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#07182E"/>
-      <stop offset="0.50" stop-color="#123E6D"/>
-      <stop offset="1" stop-color="#31245F"/>
+      <stop offset="0.52" stop-color="#143A70"/>
+      <stop offset="1" stop-color="#3A246E"/>
     </linearGradient>
-    <linearGradient id="north" x1="342" y1="236" x2="590" y2="530" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#A7F4FF"/>
-      <stop offset="1" stop-color="#45BFFF"/>
+    <linearGradient id="upper" x1="246" y1="250" x2="688" y2="544" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#B5F5FF"/>
+      <stop offset="0.55" stop-color="#68D6FF"/>
+      <stop offset="1" stop-color="#7694FF"/>
     </linearGradient>
-    <linearGradient id="east" x1="532" y1="356" x2="786" y2="706" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#8B9BFF"/>
-      <stop offset="1" stop-color="#7860F2"/>
+    <linearGradient id="lower" x1="350" y1="480" x2="786" y2="774" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#67E0C8"/>
+      <stop offset="0.52" stop-color="#4DB9F5"/>
+      <stop offset="1" stop-color="#8B6EF2"/>
     </linearGradient>
-    <linearGradient id="west" x1="244" y1="450" x2="566" y2="770" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#5FE6D0"/>
-      <stop offset="1" stop-color="#53A9FF"/>
-    </linearGradient>
-    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#020915" flood-opacity="0.30"/>
+    <filter id="lift" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#020916" flood-opacity="0.28"/>
     </filter>
   </defs>
+
   <rect x="64" y="64" width="896" height="896" rx="224" fill="url(#foundation)"/>
-  <g filter="url(#soft)">
-    <path d="M512 208C600 208 680 240 742 294L580 486C560 470 536 462 512 462C484 462 460 472 440 490L290 286C350 236 426 208 512 208Z" fill="url(#north)"/>
-    <path d="M742 294C804 350 842 430 842 520C842 630 786 726 700 782L574 568C602 548 620 516 620 482C620 480 620 478 620 476L742 294Z" fill="url(#east)"/>
-    <path d="M700 782C646 816 582 836 512 836C326 836 176 686 176 500C176 416 206 340 258 282L440 490C420 510 408 538 408 568C408 630 458 680 520 680C544 680 566 672 584 660L700 782Z" fill="url(#west)"/>
-    <circle cx="512" cy="548" r="112" fill="#07182E"/>
-    <circle cx="512" cy="548" r="66" fill="#EAFBFF"/>
-    <circle cx="512" cy="548" r="28" fill="#123E6D"/>
+
+  <g filter="url(#lift)">
+    <path d="M222 350C222 314 248 284 284 278L626 222C674 214 714 254 704 302L670 456C664 484 642 506 614 512L436 548C412 552 394 572 394 596V650L252 604C226 596 208 572 208 544V394C208 374 212 360 222 350Z" fill="url(#upper)"/>
+    <path d="M802 674C802 710 776 740 740 746L398 802C350 810 310 770 320 722L354 568C360 540 382 518 410 512L588 476C612 472 630 452 630 428V374L772 420C798 428 816 452 816 480V630C816 650 812 664 802 674Z" fill="url(#lower)"/>
+    <path d="M394 596C394 572 412 552 436 548L588 516C612 512 630 492 630 468V428C630 452 612 472 588 476L436 508C412 512 394 532 394 556V596Z" fill="#EAFBFF"/>
   </g>
 </svg>
