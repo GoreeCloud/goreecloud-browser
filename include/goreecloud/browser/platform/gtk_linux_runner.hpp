@@ -13,6 +13,7 @@
 #include "goreecloud/browser/configured_search_router.hpp"
 #include "goreecloud/browser/internal_pages.hpp"
 #include "goreecloud/browser/media_action_executor.hpp"
+#include "goreecloud/browser/media_destination_service.hpp"
 #include "goreecloud/browser/media_preview_provider.hpp"
 #include "goreecloud/browser/media_visual_search_router.hpp"
 #include "goreecloud/browser/omnibox_controller.hpp"
@@ -39,6 +40,7 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
   host.set_media_hover_policy(media_policy);
 
   UnavailableAdvancedDownloadManagerService downloads;
+  UnavailableMediaDestinationService media_destinations;
   BrowserMediaActionBackend media_backend(
       visual_search_router,
       downloads,
@@ -78,7 +80,8 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
                 host.show_media_action_status("Media preview could not be displayed.");
               }
             });
-      });
+      },
+      &media_destinations);
   MediaActionExecutor media_executor(media_backend);
 
   host.set_toolbar_handler([&](ToolbarItem item) {
@@ -145,6 +148,15 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
             "This synchronized destination will preserve the media outside the current webpage/session when its GoreeCloud service adapter is available. Continue?");
         if (!request.persistence_warning_accepted) return;
       }
+    }
+
+    if (action == MediaAction::save_to_drive || action == MediaAction::save_to_photos ||
+        action == MediaAction::save_to_video || action == MediaAction::save_to_notes ||
+        action == MediaAction::save_to_memos || action == MediaAction::create_task) {
+      request.persistence_warning_accepted = host.confirm_media_boundary(
+          "Private-to-Persistent Boundary",
+          "This action will intentionally preserve the media reference in another GoreeCloud service. Continue?");
+      if (!request.persistence_warning_accepted) return;
     }
 
     const auto result = media_executor.execute(request, media_policy);
