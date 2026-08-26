@@ -11,6 +11,10 @@
 #include "goreecloud/browser/unified_search_bar.hpp"
 #include "goreecloud/browser/version.hpp"
 
+#if GOREECLOUD_ENABLE_LINUX_GTK_HOST
+#include "goreecloud/browser/platform/gtk_linux_runner.hpp"
+#endif
+
 int main(int argc, char** argv) {
   using namespace goreecloud::browser;
 
@@ -58,8 +62,14 @@ int main(int argc, char** argv) {
               << (selection.production_renderer_requested ? "yes" : "no") << "\n";
     std::cout << "Production approved: " << (kProductionApproved ? "yes" : "no") << "\n";
 
+#if GOREECLOUD_ENABLE_LINUX_GTK_HOST
+    const int result = platform::run_gtk_linux_browser(browser);
+    browser.shutdown();
+    return result;
+#else
     browser.shutdown();
     return 0;
+#endif
   } catch (const std::exception& error) {
     std::cerr << "GoreeCloud Browser startup failed: " << error.what() << "\n";
     return 1;
