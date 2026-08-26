@@ -11,6 +11,7 @@
 #include "goreecloud/browser/internal_pages.hpp"
 #include "goreecloud/browser/media_hover.hpp"
 #include "goreecloud/browser/media_hover_controller.hpp"
+#include "goreecloud/browser/media_hover_ui.hpp"
 #include "goreecloud/browser/media_probe_result_tracker.hpp"
 #include "goreecloud/browser/media_target_detector.hpp"
 #include "goreecloud/browser/omnibox_controller.hpp"
@@ -32,6 +33,7 @@ int main() {
   static_assert(!kMediaHoverPassiveAiAnalysisAllowed);
   static_assert(!kMediaHoverPassiveOcrAllowed);
   static_assert(!kMediaDetectorMayOverrideProtectedMedia);
+  static_assert(kDefaultMediaHoverQuickLabels.size() == 4);
 
   {
     char executable[] = "goreecloud-browser";
@@ -135,6 +137,27 @@ int main() {
         MediaAction::search, MediaProcessingDestination::goreecloud_hosted, policy);
     assert(allowed_remote.allowed);
     assert(allowed_remote.disclosure_required);
+
+    const auto view_model = MediaHoverViewModelBuilder::build(
+        image,
+        policy,
+        false,
+        true,
+        true,
+        MediaSaveDestination::goreecloud_drive,
+        "Privacy Shield: Remote processing allowed",
+        "Wardveil: Secure resource");
+    assert(view_model.visible);
+    assert(view_model.reduced_motion);
+    assert(view_model.keyboard_focus_visible);
+    assert(view_model.quick_actions[0].label == "Preview");
+    assert(view_model.quick_actions[1].label == "Search");
+    assert(view_model.quick_actions[2].label == "Save");
+    assert(view_model.quick_actions[3].label == "More");
+    assert(view_model.destination.visible);
+    assert(view_model.destination.label.find("Synchronized") != std::string::npos);
+    assert(view_model.privacy.visible);
+    assert(view_model.security.visible);
 
     image.protected_media = true;
     const auto protected_actions = MediaActionRegistry::actions_for(image, policy);
