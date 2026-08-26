@@ -1,5 +1,8 @@
 #include "goreecloud/browser/platform/gtk_linux_glaze_host.hpp"
 
+#include <string>
+
+#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
 
 namespace goreecloud::browser::platform {
@@ -72,6 +75,62 @@ bool GtkLinuxGlazeWindowHost::confirm_media_boundary(std::string_view title,
   const int response = gtk_dialog_run(GTK_DIALOG(dialog));
   gtk_widget_destroy(dialog);
   return response == GTK_RESPONSE_ACCEPT;
+}
+
+bool GtkLinuxGlazeWindowHost::show_media_preview(
+    const MediaPreviewFrame& frame,
+    std::string_view accessible_description) {
+  if (frame.encoded_bytes.empty() || frame.width <= 0 || frame.height <= 0) return false;
+
+  GError* error = nullptr;
+  auto* loader = gdk_pixbuf_loader_new();
+  if (!loader) return false;
+
+  const gboolean wrote = gdk_pixbuf_loader_write(
+      loader,
+      frame.encoded_bytes.data(),
+      static_cast<gsize>(frame.encoded_bytes.size()),
+      &error);
+  const gboolean closed = wrote ? gdk_pixbuf_loader_close(loader, &error) : FALSE;
+  auto* pixbuf = closed ? gdk_pixbuf_loader_get_pixbuf(loader) : nullptr;
+  if (!pixbuf) {
+    if (error) g_error_free(error);
+    g_object_unref(loader);
+    return false;
+  }
+
+  g_object_ref(pixbuf);
+  g_object_unref(loader);
+
+  auto* dialog = gtk_dialog_new_with_buttons(
+      "Media Preview",
+      nullptr,
+      GTK_DIALOG_MODAL,
+      "Close", GTK_RESPONSE_CLOSE,
+      nullptr);
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 720, 560);
+  gtk_style_context_add_class(gtk_widget_get_style_context(dialog), "gc-media-preview");
+
+  auto* content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  auto* image = gtk_image_new_from_pixbuf(pixbuf);
+  gtk_widget_set_hexpand(image, TRUE);
+  gtk_widget_set_vexpand(image, TRUE);
+  gtk_widget_set_halign(image, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(image, GTK_ALIGN_CENTER);
+  if (!accessible_description.empty()) {
+    if (auto* accessible = gtk_widget_get_accessible(image)) {
+      const std::string description{accessible_description};
+      atk_object_set_name(accessible, description.c_str());
+    }
+  }
+  gtk_box_pack_start(GTK_BOX(content), image, TRUE, TRUE, 12);
+
+  gtk_widget_show_all(dialog);
+  gtk_dialog_run(GTK_DIALOG(dialog));
+  gtk_widget_destroy(dialog);
+  g_object_unref(pixbuf);
+  if (error) g_error_free(error);
+  return true;
 }
 
 void GtkLinuxGlazeWindowHost::show_media_action_status(std::string_view message) {
