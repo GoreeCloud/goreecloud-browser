@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "goreecloud/browser/engine.hpp"
+#include "goreecloud/browser/internal_pages.hpp"
 #include "goreecloud/browser/tab.hpp"
 
 namespace goreecloud::browser {
@@ -19,7 +20,7 @@ class WindowController {
   explicit WindowController(EngineContext& context, bool private_window = false)
       : context_(context), private_window_(private_window) {}
 
-  [[nodiscard]] Tab& new_tab(std::string initial_url = "about:blank") {
+  [[nodiscard]] Tab& new_tab(std::string initial_url = std::string{kNewTabUrl}) {
     EngineViewOptions options;
     options.initial_url = std::move(initial_url);
 
@@ -85,6 +86,9 @@ class WindowController {
       tab->engine_view().navigate(url);
     }
   }
+
+  void open_home() { navigate_active(kHomeUrl); }
+  void open_settings() { navigate_active(kSettingsUrl); }
 
   void back() {
     if (auto* tab = active_tab()) {
