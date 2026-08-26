@@ -84,19 +84,13 @@ class DownloadTransferPlanner {
     plan.source_url = record.request.source_url;
     plan.referrer_url = record.request.referrer_url;
     plan.metadata = metadata;
-
-    if (metadata.total_bytes == 0) {
-      return plan;
-    }
+    if (metadata.total_bytes == 0) return plan;
 
     const auto segment_cap = std::max<std::size_t>(1, std::min(
-        {requested_segments,
-         record.segment_limit,
+        {requested_segments, record.segment_limit,
          InProcessAdvancedDownloadManagerService::kMaximumSegmentsPerDownload}));
-
     const auto segment_count = metadata.accepts_byte_ranges
-                                   ? std::min<std::uint64_t>(segment_cap,
-                                                             metadata.total_bytes)
+                                   ? std::min<std::uint64_t>(segment_cap, metadata.total_bytes)
                                    : std::uint64_t{1};
     const auto base_size = metadata.total_bytes / segment_count;
     const auto remainder = metadata.total_bytes % segment_count;
@@ -119,26 +113,23 @@ class DownloadTransferPlanner {
 class DownloadTransferScheduler {
  public:
   using ProgressCallback = std::function<void(const DownloadTransferPlan&)>;
+  using CompletionCallback = std::function<void(const DownloadTransferPlan&)>;
+  using FailureCallback = std::function<void(std::string_view)>;
 
   static constexpr std::size_t kMaximumActiveDownloads =
       InProcessAdvancedDownloadManagerService::kMaximumSimultaneousDownloads;
   static constexpr unsigned kMaximumRetriesPerSegment = 3;
 
-  explicit DownloadTransferScheduler(DownloadTransport& transport)
-      : transport_(transport) {}
+  explicit DownloadTransferScheduler(DownloadTransport& transport) : transport_(transport) {}
 
-  void set_progress_callback(ProgressCallback callback) {
-    progress_callback_ = std::move(callback);
-  }
+  void set_progress_callback(ProgressCallback callback) { progress_callback_ = std::move(callback); }
+  void set_completion_callback(CompletionCallback callback) { completion_callback_ = std::move(callback); }
+  void set_failure_callback(FailureCallback callback) { failure_callback_ = std::move(callback); }
 
   bool queue(DownloadRecord record) {
     if (record.download_id.empty() || record.request.source_url.empty()) return false;
-    for (const auto& pending : pending_) {
-      if (pending.download_id == record.download_id) return false;
-    }
-    for (const auto& active : active_) {
-      if (active.record.download_id == record.download_id) return false;
-    }
+    for (const auto& pending : pending_) if (pending.download_id == record.download_id) return false;
+    for (const auto& active : active_) if (active.record.download_id == record.download_id) return false;
     pending_.push_back(std::move(record));
     return true;
   }
@@ -147,10 +138,10 @@ class DownloadTransferScheduler {
     while (active_.size() < kMaximumActiveDownloads && !pending_.empty()) {
       auto record = std::move(pending_.front());
       pending_.pop_front();
-      const auto metadata = transport_.inspect(record.request.source_url,
-                                               record.request.referrer_url);
+      const auto metadata = transport_.inspect(record.request.source_url, record.request.referrer_url);
       if (!metadata) {
         failed_.push_back(record.download_id);
+        if (failure_callback_) failure_callback_(record.download_id);
         continue;
       }
       ActiveTransfer active;
@@ -158,6 +149,7 @@ class DownloadTransferScheduler {
       active.plan = DownloadTransferPlanner::make_plan(active.record, *metadata);
       if (active.plan.segments.empty()) {
         failed_.push_back(active.record.download_id);
+        if (failure_callback_) failure_callback_(active.record.download_id);
         continue;
       }
       if (progress_callback_) progress_callback_(active.plan);
@@ -171,24 +163,24 @@ class DownloadTransferScheduler {
     }
 
     for (const auto& active : active_) {
-      if (active.finished) completed_.push_back(active.record.download_id);
-      if (active.failed) failed_.push_back(active.record.download_id);
+      if (active.finished) {
+        completed_.push_back(active.record.download_id);
+        if (completion_callback_) completion_callback_(active.plan);
+      }
+      if (active.failed) {
+        failed_.push_back(active.record.download_id);
+        if (failure_callback_) failure_callback_(active.record.download_id);
+      }
     }
     active_.erase(std::remove_if(active_.begin(), active_.end(),
-                                 [](const ActiveTransfer& active) {
-                                   return active.finished || active.failed;
-                                 }),
+                                 [](const ActiveTransfer& active) { return active.finished || active.failed; }),
                   active_.end());
   }
 
   [[nodiscard]] std::size_t pending_count() const noexcept { return pending_.size(); }
   [[nodiscard]] std::size_t active_count() const noexcept { return active_.size(); }
-  [[nodiscard]] const std::vector<std::string>& completed_downloads() const noexcept {
-    return completed_;
-  }
-  [[nodiscard]] const std::vector<std::string>& failed_downloads() const noexcept {
-    return failed_;
-  }
+  [[nodiscard]] const std::vector<std::string>& completed_downloads() const noexcept { return completed_; }
+  [[nodiscard]] const std::vector<std::string>& failed_downloads() const noexcept { return failed_; }
 
  private:
   struct ActiveTransfer {
@@ -200,9 +192,7 @@ class DownloadTransferScheduler {
 
   void run_one_segment(ActiveTransfer& active) {
     auto segment_it = std::find_if(active.plan.segments.begin(), active.plan.segments.end(),
-                                   [](const DownloadSegment& segment) {
-                                     return !segment.finished;
-                                   });
+                                   [](const DownloadSegment& segment) { return !segment.finished; });
     if (segment_it == active.plan.segments.end()) {
       active.finished = true;
       return;
@@ -220,24 +210,17 @@ class DownloadTransferScheduler {
 
     const auto result = transport_.transfer(request);
     const auto segment_size = segment.range.end_inclusive - segment.range.begin + 1;
-    segment.completed_bytes = std::min(segment_size,
-                                       segment.completed_bytes + result.transferred_bytes);
+    segment.completed_bytes = std::min(segment_size, segment.completed_bytes + result.transferred_bytes);
     active.plan.completed_bytes = 0;
-    for (const auto& planned : active.plan.segments) {
-      active.plan.completed_bytes += planned.completed_bytes;
-    }
+    for (const auto& planned : active.plan.segments) active.plan.completed_bytes += planned.completed_bytes;
 
     if (result.completed || segment.completed_bytes >= segment_size) {
       segment.completed_bytes = segment_size;
       segment.finished = true;
       active.plan.completed_bytes = 0;
-      for (const auto& planned : active.plan.segments) {
-        active.plan.completed_bytes += planned.completed_bytes;
-      }
-      const bool all_finished = std::all_of(
-          active.plan.segments.begin(), active.plan.segments.end(),
-          [](const DownloadSegment& planned) { return planned.finished; });
-      active.finished = all_finished;
+      for (const auto& planned : active.plan.segments) active.plan.completed_bytes += planned.completed_bytes;
+      active.finished = std::all_of(active.plan.segments.begin(), active.plan.segments.end(),
+                                    [](const DownloadSegment& planned) { return planned.finished; });
       return;
     }
 
@@ -250,6 +233,8 @@ class DownloadTransferScheduler {
 
   DownloadTransport& transport_;
   ProgressCallback progress_callback_;
+  CompletionCallback completion_callback_;
+  FailureCallback failure_callback_;
   std::deque<DownloadRecord> pending_;
   std::vector<ActiveTransfer> active_;
   std::vector<std::string> completed_;
