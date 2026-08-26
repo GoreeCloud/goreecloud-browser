@@ -28,6 +28,7 @@ struct DownloadEnqueueRequest {
   std::string referrer_url;
   std::optional<std::string> suggested_filename;
   bool private_session{false};
+  std::optional<std::int64_t> scheduled_start_unix_seconds;
 };
 
 struct DownloadRecord {
@@ -57,22 +58,17 @@ class InProcessAdvancedDownloadManagerService final
   static constexpr std::size_t kMaximumSegmentsPerDownload = 16;
 
   DownloadEnqueueResult enqueue(DownloadEnqueueRequest request) override {
-    if (request.source_url.empty()) {
-      return {false, {}, "Download source URL is empty."};
-    }
-
+    if (request.source_url.empty()) return {false, {}, "Download source URL is empty."};
     DownloadRecord record;
     record.download_id = next_id();
     record.request = std::move(request);
     record.state = DownloadState::queued;
     record.segment_limit = kMaximumSegmentsPerDownload;
     record.resumable = true;
-
     {
       std::scoped_lock lock(mutex_);
       queue_.push_back(record);
     }
-
     return {true, record.download_id, "Added to Advanced Download Manager queue."};
   }
 
@@ -82,9 +78,7 @@ class InProcessAdvancedDownloadManagerService final
         kMaximumSegmentsPerDownload));
     if (record.state == DownloadState::running) record.state = DownloadState::queued;
     std::scoped_lock lock(mutex_);
-    for (const auto& existing : queue_) {
-      if (existing.download_id == record.download_id) return false;
-    }
+    for (const auto& existing : queue_) if (existing.download_id == record.download_id) return false;
     queue_.push_back(std::move(record));
     return true;
   }
@@ -96,49 +90,28 @@ class InProcessAdvancedDownloadManagerService final
 
   [[nodiscard]] std::optional<DownloadRecord> find(std::string_view download_id) const {
     std::scoped_lock lock(mutex_);
-    for (const auto& record : queue_) {
-      if (record.download_id == download_id) return record;
-    }
+    for (const auto& record : queue_) if (record.download_id == download_id) return record;
     return std::nullopt;
   }
 
   bool set_state(std::string_view download_id, DownloadState state) {
     std::scoped_lock lock(mutex_);
     for (auto& record : queue_) {
-      if (record.download_id == download_id) {
-        record.state = state;
-        return true;
-      }
+      if (record.download_id == download_id) { record.state = state; return true; }
     }
     return false;
   }
 
   bool start(std::string_view download_id) {
-    return transition(download_id,
-                      {DownloadState::queued, DownloadState::paused, DownloadState::failed},
-                      DownloadState::running);
+    return transition(download_id, {DownloadState::queued, DownloadState::paused, DownloadState::failed}, DownloadState::running);
   }
-
-  bool pause(std::string_view download_id) {
-    return transition(download_id, {DownloadState::running}, DownloadState::paused);
-  }
-
-  bool resume(std::string_view download_id) {
-    return transition(download_id, {DownloadState::paused, DownloadState::failed},
-                      DownloadState::running);
-  }
-
+  bool pause(std::string_view download_id) { return transition(download_id, {DownloadState::running}, DownloadState::paused); }
+  bool resume(std::string_view download_id) { return transition(download_id, {DownloadState::paused, DownloadState::failed}, DownloadState::running); }
   bool cancel(std::string_view download_id) {
-    return transition(download_id,
-                      {DownloadState::queued, DownloadState::running, DownloadState::paused,
-                       DownloadState::failed},
-                      DownloadState::cancelled);
+    return transition(download_id, {DownloadState::queued, DownloadState::running, DownloadState::paused, DownloadState::failed}, DownloadState::cancelled);
   }
-
   bool restart(std::string_view download_id) {
-    return transition(download_id,
-                      {DownloadState::completed, DownloadState::failed, DownloadState::cancelled},
-                      DownloadState::queued);
+    return transition(download_id, {DownloadState::completed, DownloadState::failed, DownloadState::cancelled}, DownloadState::queued);
   }
 
  private:
@@ -149,10 +122,7 @@ class InProcessAdvancedDownloadManagerService final
     for (auto& record : queue_) {
       if (record.download_id != download_id) continue;
       for (const auto state : allowed) {
-        if (record.state == state) {
-          record.state = next;
-          return true;
-        }
+        if (record.state == state) { record.state = next; return true; }
       }
       return false;
     }
@@ -169,8 +139,7 @@ class InProcessAdvancedDownloadManagerService final
   std::atomic<std::uint64_t> next_id_{1};
 };
 
-class UnavailableAdvancedDownloadManagerService final
-    : public AdvancedDownloadManagerService {
+class UnavailableAdvancedDownloadManagerService final : public AdvancedDownloadManagerService {
  public:
   DownloadEnqueueResult enqueue(DownloadEnqueueRequest) override {
     return {false, {}, "Advanced Download Manager runtime adapter is not available."};
