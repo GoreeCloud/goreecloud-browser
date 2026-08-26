@@ -1,12 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
-  <title id="title">GoreeCloud Browser — Aurora Window Candidate Monochrome</title>
-  <desc id="desc">Monochrome four-pane window identity with an asymmetric central cut.</desc>
+  <title id="title">GoreeCloud Browser — Borealis Lens Candidate Monochrome</title>
+  <desc id="desc">Monochrome three-sail lens identity around a central aperture.</desc>
   <rect x="64" y="64" width="896" height="896" rx="224" fill="#000000"/>
-  <g fill="#FFFFFF">
-    <path d="M250 252H480V480H250C226 480 208 462 208 438V294C208 270 226 252 250 252Z"/>
-    <path d="M544 252H774C798 252 816 270 816 294V438C816 462 798 480 774 480H544V252Z"/>
-    <path d="M208 544H480V772H250C226 772 208 754 208 730V544Z"/>
-    <path d="M544 544H816V730C816 754 798 772 774 772H544V544Z"/>
-  </g>
-  <path d="M480 480L544 544M544 480L480 544" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
+  <path d="M512 208C600 208 680 240 742 294L580 486C560 470 536 462 512 462C484 462 460 472 440 490L290 286C350 236 426 208 512 208Z" fill="#FFFFFF"/>
+  <path d="M742 294C804 350 842 430 842 520C842 630 786 726 700 782L574 568C602 548 620 516 620 482C620 480 620 478 620 476L742 294Z" fill="#FFFFFF"/>
+  <path d="M700 782C646 816 582 836 512 836C326 836 176 686 176 500C176 416 206 340 258 282L440 490C420 510 408 538 408 568C408 630 458 680 520 680C544 680 566 672 584 660L700 782Z" fill="#FFFFFF"/>
+  <circle cx="512" cy="548" r="112" fill="#000000"/>
+  <circle cx="512" cy="548" r="66" fill="#FFFFFF"/>
+  <circle cx="512" cy="548" r="28" fill="#000000"/>
 </svg>
