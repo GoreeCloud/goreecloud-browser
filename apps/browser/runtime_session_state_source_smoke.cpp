@@ -5,6 +5,7 @@
 #include "goreecloud/browser/application.hpp"
 #include "goreecloud/browser/browser_session_snapshot_provider.hpp"
 #include "goreecloud/browser/development_engine.hpp"
+#include "goreecloud/browser/in_memory_tab_manager.hpp"
 #include "goreecloud/browser/runtime_browser_session_state_source.hpp"
 
 int main() {
@@ -25,11 +26,19 @@ int main() {
   (void)private_tab;
 
   RuntimeBrowserSessionStateSource source(browser);
-  source.update_tab_topology(normal_tab_id,
-                             "workspace-runtime",
-                             "group-runtime",
-                             "split-runtime",
-                             true);
+  InMemoryAdvancedTabManager manager;
+  source.bind(manager);
+  manager.register_tab(ManagedTabState{
+      .tab_id = normal_tab_id,
+      .window_id = normal_window->window_id(),
+      .workspace_id = "default",
+  });
+
+  const auto workspace_id = manager.create_workspace("Runtime Workspace");
+  assert(manager.move_tabs_to_workspace({normal_tab_id}, workspace_id));
+  const auto group_id = manager.create_group(workspace_id, "Runtime Group");
+  assert(manager.assign_tabs_to_group({normal_tab_id}, group_id));
+  assert(manager.pin_tabs({normal_tab_id}, true));
   source.mark_tab_active(normal_tab_id, 4242);
 
   const auto windows = source.windows();
@@ -43,9 +52,8 @@ int main() {
     if (tab.tab_id != normal_tab_id) continue;
     saw_normal = true;
     assert(tab.window_id == normal_window->window_id());
-    assert(tab.workspace_id == "workspace-runtime");
-    assert(tab.group_id && *tab.group_id == "group-runtime");
-    assert(tab.split_id && *tab.split_id == "split-runtime");
+    assert(tab.workspace_id == workspace_id);
+    assert(tab.group_id && *tab.group_id == group_id);
     assert(tab.pinned);
   }
   assert(saw_normal);
@@ -87,10 +95,18 @@ int main() {
   assert(store.last.windows.size() == 1);
   assert(store.last.windows.front().window_id == normal_window->window_id());
   assert(store.last.windows.front().tabs.size() == 1);
-  assert(store.last.windows.front().tabs.front().workspace_id == "workspace-runtime");
-  assert(store.last.windows.front().tabs.front().group_id == "group-runtime");
-  assert(store.last.windows.front().tabs.front().split_id == "split-runtime");
-  assert(store.last.windows.front().tabs.front().pinned);
+  const auto& recovered = store.last.windows.front().tabs.front();
+  assert(recovered.workspace_id == workspace_id);
+  assert(recovered.group_id == group_id);
+  assert(recovered.pinned);
+  assert(recovered.active);
+  assert(recovered.last_active_unix_ms == 5000);
+
+  assert(manager.close_tabs({normal_tab_id}, true));
+  const auto after_close = source.managed_tabs();
+  for (const auto& tab : after_close) {
+    assert(tab.tab_id != normal_tab_id || tab.workspace_id == "default");
+  }
 
   browser.shutdown();
   return 0;
