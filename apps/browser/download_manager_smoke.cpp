@@ -94,11 +94,19 @@ int main() {
 
   FakeTransport transport;
   DownloadTransferScheduler scheduler(transport);
+  scheduler.set_progress_callback([&](const DownloadTransferPlan& progress) {
+    assert(checkpoints.save(make_download_checkpoint(progress)));
+  });
   assert(scheduler.queue(*record));
   scheduler.pump();
   assert(scheduler.active_count() == 1);
   assert(transport.requests.size() == 1);
   assert(transport.requests[0].resume_offset == 0);
+  const auto automatic_checkpoint = checkpoints.load(record->download_id);
+  assert(automatic_checkpoint);
+  assert(automatic_checkpoint->completed_bytes == 50);
+  assert(automatic_checkpoint->segments[0].retry_count == 1);
+
   scheduler.pump();
   assert(transport.requests.size() >= 2);
   assert(transport.requests[1].resume_offset == 50);
@@ -108,6 +116,9 @@ int main() {
   }
   assert(scheduler.completed_downloads().size() == 1);
   assert(scheduler.completed_downloads().front() == record->download_id);
+  const auto completed_checkpoint = checkpoints.load(record->download_id);
+  assert(completed_checkpoint);
+  assert(completed_checkpoint->completed_bytes == 1600);
 
   FakeTransport concurrency_transport;
   DownloadTransferScheduler concurrency_scheduler(concurrency_transport);
