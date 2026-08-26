@@ -1,4 +1,5 @@
 #include <cassert>
+#include <chrono>
 #include <cstddef>
 #include <filesystem>
 #include <optional>
@@ -52,6 +53,11 @@ class FakeHttpClient final : public goreecloud::browser::HttpDownloadClient {
  private:
   bool interrupt_first_{false};
 };
+
+std::int64_t unix_now_seconds() {
+  return std::chrono::duration_cast<std::chrono::seconds>(
+      std::chrono::system_clock::now().time_since_epoch()).count();
+}
 
 }  // namespace
 
@@ -114,7 +120,6 @@ int main() {
   assert(completed_panel.rows.front().can_open);
   assert(!completed_panel.rows.front().can_pause);
 
-  // Pause must stop further network work and survive runtime reconstruction.
   const auto controls_root = root / "controls";
   std::string paused_id;
   {
@@ -153,7 +158,6 @@ int main() {
   paused_restore.pump();
   assert(!paused_restore_client.requests.empty());
 
-  // Cancel removes the transfer from live scheduling; optional discard removes partial data.
   const auto cancel_root = root / "cancel";
   FakeHttpClient cancel_client(true);
   AdvancedDownloadRuntimeService cancel_runtime(cancel_client, cancel_root);
@@ -172,7 +176,34 @@ int main() {
   const auto cancelled = cancel_runtime.progress(cancel_queued.download_id);
   assert(cancelled && cancelled->state == DownloadState::cancelled);
 
-  // Private-session queue records must not be reconstructed after restart.
+  // Future schedules do not inspect or transfer until released; elapsed schedules start normally.
+  const auto schedule_root = root / "schedule";
+  FakeHttpClient schedule_client(false);
+  AdvancedDownloadRuntimeService schedule_runtime(schedule_client, schedule_root);
+  const auto future = schedule_runtime.enqueue({
+      .source_url = "https://example.test/future.bin",
+      .referrer_url = "https://example.test/",
+      .suggested_filename = std::string{"future.bin"},
+      .private_session = false,
+      .scheduled_start_unix_seconds = unix_now_seconds() + 3600,
+  });
+  assert(future.accepted);
+  for (int i = 0; i < 4; ++i) schedule_runtime.pump();
+  assert(schedule_client.requests.empty());
+  const auto future_progress = schedule_runtime.progress(future.download_id);
+  assert(future_progress && future_progress->message == "Scheduled");
+
+  const auto elapsed = schedule_runtime.enqueue({
+      .source_url = "https://example.test/elapsed.bin",
+      .referrer_url = "https://example.test/",
+      .suggested_filename = std::string{"elapsed.bin"},
+      .private_session = false,
+      .scheduled_start_unix_seconds = unix_now_seconds() - 1,
+  });
+  assert(elapsed.accepted);
+  schedule_runtime.pump();
+  assert(!schedule_client.requests.empty());
+
   std::string private_id;
   {
     FakeHttpClient private_client(true);
