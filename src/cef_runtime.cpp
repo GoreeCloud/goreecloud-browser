@@ -1,11 +1,175 @@
 #include "goreecloud/browser/cef_runtime.hpp"
 
+#include <mutex>
+#include <optional>
 #include <stdexcept>
 #include <utility>
+
+#if GOREECLOUD_ENABLE_CEF
+#include "goreecloud/browser/cef_client.hpp"
+#include "include/cef_app.h"
+#include "include/cef_browser.h"
+#include "include/cef_request_context.h"
+#endif
 
 namespace goreecloud::browser {
 
 namespace {
+
+#if GOREECLOUD_ENABLE_CEF
+
+class CefRuntimeView final : public ChromiumRuntimeView {
+ public:
+  CefRuntimeView(CefRefPtr<CefRequestContext> request_context,
+                 EngineViewOptions options)
+      : request_context_(std::move(request_context)), options_(std::move(options)) {
+    state_.url = options_.initial_url;
+  }
+
+  void navigate(std::string_view url) override {
+    if (client_ && client_->browser()) {
+      client_->browser()->GetMainFrame()->LoadURL(std::string{url});
+    }
+  }
+
+  void reload(bool bypass_cache) override {
+    if (!client_ || !client_->browser()) return;
+    if (bypass_cache) client_->browser()->ReloadIgnoreCache();
+    else client_->browser()->Reload();
+  }
+
+  void stop() override {
+    if (client_ && client_->browser()) client_->browser()->StopLoad();
+  }
+
+  void go_back() override {
+    if (client_ && client_->browser() && client_->browser()->CanGoBack()) client_->browser()->GoBack();
+  }
+
+  void go_forward() override {
+    if (client_ && client_->browser() && client_->browser()->CanGoForward()) client_->browser()->GoForward();
+  }
+
+  void set_zoom(double factor) override {
+    if (client_ && client_->browser()) client_->browser()->GetHost()->SetZoomLevel(factor);
+  }
+
+  void find(std::string_view query, bool forward) override {
+    if (!client_ || !client_->browser()) return;
+    client_->browser()->GetHost()->Find(std::string{query}, forward, false, false);
+  }
+
+  void stop_find() override {
+    if (client_ && client_->browser()) client_->browser()->GetHost()->StopFinding(true);
+  }
+
+  bool attach_surface(const NativeEngineSurface& surface) override {
+    surface_ = surface;
+    if (!client_) {
+      client_ = new GoreeCloudCefClient(
+          [this](const NavigationState& state) {
+            std::scoped_lock lock(state_mutex_);
+            state_ = state;
+          },
+          [this]() { closed_ = true; });
+    }
+
+    CefWindowInfo window_info;
+#if defined(OS_LINUX)
+    window_info.SetAsChild(reinterpret_cast<CefWindowHandle>(surface.window_handle),
+                           CefRect(surface.x, surface.y, surface.width, surface.height));
+#else
+    window_info.SetAsChild(reinterpret_cast<CefWindowHandle>(surface.window_handle),
+                           CefRect(surface.x, surface.y, surface.width, surface.height));
+#endif
+
+    CefBrowserSettings browser_settings;
+    const bool created = CefBrowserHost::CreateBrowser(
+        window_info,
+        client_,
+        options_.initial_url,
+        browser_settings,
+        nullptr,
+        request_context_);
+    attached_ = created;
+    return created;
+  }
+
+  void detach_surface() override {
+    if (client_ && client_->browser()) client_->browser()->GetHost()->CloseBrowser(true);
+    attached_ = false;
+    surface_.reset();
+  }
+
+  void resize_surface(const NativeEngineSurface& surface) override {
+    surface_ = surface;
+    if (client_ && client_->browser()) {
+      client_->browser()->GetHost()->WasResized();
+    }
+  }
+
+  [[nodiscard]] NavigationState navigation_state() const override {
+    std::scoped_lock lock(state_mutex_);
+    return state_;
+  }
+
+  [[nodiscard]] RendererHealth renderer_health() const override {
+    return closed_ ? RendererHealth::Terminated : RendererHealth::Healthy;
+  }
+
+ private:
+  CefRefPtr<CefRequestContext> request_context_;
+  EngineViewOptions options_;
+  CefRefPtr<GoreeCloudCefClient> client_;
+  mutable std::mutex state_mutex_;
+  NavigationState state_;
+  std::optional<NativeEngineSurface> surface_;
+  bool attached_{false};
+  bool closed_{false};
+};
+
+class CefRuntimeContext final : public ChromiumRuntimeContext {
+ public:
+  CefRuntimeContext(EngineContextOptions options,
+                    CefRefPtr<CefRequestContext> request_context)
+      : options_(std::move(options)), request_context_(std::move(request_context)) {}
+
+  [[nodiscard]] std::unique_ptr<ChromiumRuntimeView> create_view(
+      const EngineViewOptions& options) override {
+    return std::make_unique<CefRuntimeView>(request_context_, options);
+  }
+
+  bool clear_origin_data(std::string_view,
+                         EngineDataClasses) override {
+    // Full per-origin clearing will be implemented with CEF browsing-data APIs.
+    return false;
+  }
+
+  bool clear_all_data(EngineDataClasses classes) override {
+    if ((classes & data_class(EngineDataClass::HttpCache)) != 0) {
+#if CEF_API_ADDED(14400)
+      request_context_->ClearHttpCache(nullptr);
+#endif
+    }
+    return true;
+  }
+
+  bool clear_authentication_state(std::optional<std::string_view>) override {
+    request_context_->ClearHttpAuthCredentials(nullptr);
+    return true;
+  }
+
+  bool clear_permission_state(std::optional<std::string_view>) override {
+    // Permission-state cleanup will be connected to CEF content settings APIs.
+    return false;
+  }
+
+ private:
+  EngineContextOptions options_;
+  CefRefPtr<CefRequestContext> request_context_;
+};
+
+#endif
 
 class CefRuntimeDelegateScaffold final : public ChromiumRuntimeDelegate {
  public:
@@ -14,55 +178,67 @@ class CefRuntimeDelegateScaffold final : public ChromiumRuntimeDelegate {
 
   void initialize() override {
     if (initialized_) return;
-    if (options_.root.empty()) {
-      throw std::runtime_error("CEF runtime root is not configured");
-    }
-    if (options_.subprocess_path.empty()) {
-      throw std::runtime_error("CEF subprocess path is not configured");
-    }
-    if (!options_.enable_sandbox) {
-      throw std::runtime_error("GoreeCloud Browser refuses to initialize CEF with sandboxing disabled");
-    }
+    if (options_.root.empty()) throw std::runtime_error("CEF runtime root is not configured");
+    if (options_.subprocess_path.empty()) throw std::runtime_error("CEF subprocess path is not configured");
+    if (!options_.enable_sandbox) throw std::runtime_error("GoreeCloud Browser refuses to initialize CEF with sandboxing disabled");
 
-    // TODO(cef):
-    // 1. Construct CefMainArgs at the executable entry point.
-    // 2. Call CefExecuteProcess for renderer/GPU/other subprocesses.
-    // 3. Configure CefSettings with cache/resource/locales paths and
-    //    external_message_pump as selected by the GoreeCloud platform host.
-    // 4. Call CefInitialize in the browser process.
-    // 5. Create BrowserProcessHandler/LifeSpanHandler plumbing that feeds
-    //    navigation and lifecycle callbacks into ChromiumRuntimeView objects.
+#if GOREECLOUD_ENABLE_CEF
+    CefMainArgs main_args;
+    CefSettings settings;
+    settings.no_sandbox = options_.enable_sandbox ? 0 : 1;
+    settings.external_message_pump = options_.external_message_pump ? 1 : 0;
+    settings.windowless_rendering_enabled = options_.windowless_rendering ? 1 : 0;
+    CefString(&settings.browser_subprocess_path) = options_.subprocess_path.string();
+    CefString(&settings.resources_dir_path) = options_.resources_path.string();
+    CefString(&settings.locales_dir_path) = options_.locales_path.string();
+    CefString(&settings.root_cache_path) = options_.cache_root.string();
+    CefString(&settings.locale) = options_.locale;
+
+    if (!CefInitialize(main_args, settings, nullptr, nullptr)) {
+      throw std::runtime_error("CEF initialization failed");
+    }
+#endif
     initialized_ = true;
   }
 
   void shutdown() override {
     if (!initialized_) return;
-    // TODO(cef): close all browsers, drain callbacks, then call CefShutdown.
+#if GOREECLOUD_ENABLE_CEF
+    CefShutdown();
+#endif
     initialized_ = false;
   }
 
   [[nodiscard]] std::unique_ptr<ChromiumRuntimeContext> create_context(
       const EngineContextOptions& options) override {
-    if (!initialized_) {
-      throw std::logic_error("CEF runtime must be initialized before creating contexts");
-    }
+    if (!initialized_) throw std::logic_error("CEF runtime must be initialized before creating contexts");
     if (options.private_context && options.persistent_storage) {
       throw std::invalid_argument("Private CEF contexts must be ephemeral");
     }
 
-    // TODO(cef): create a CefRequestContext with a persistent cache_path for
-    // normal profiles and an empty/ephemeral cache_path for private sessions.
-    // Return a concrete ChromiumRuntimeContext that owns that request context.
+#if GOREECLOUD_ENABLE_CEF
+    CefRequestContextSettings settings;
+    if (!options.private_context && options.persistent_storage) {
+      CefString(&settings.cache_path) = options.storage_path;
+    }
+    CefString(&settings.accept_language_list) = options.locale;
+    auto request_context = CefRequestContext::CreateContext(settings, nullptr);
+    if (!request_context) throw std::runtime_error("CEF failed to create request context");
+    return std::make_unique<CefRuntimeContext>(options, std::move(request_context));
+#else
     return nullptr;
+#endif
   }
 
   void do_message_loop_work() override {
     if (!initialized_) return;
-    // TODO(cef): call CefDoMessageLoopWork() when using the external pump.
+#if GOREECLOUD_ENABLE_CEF
+    if (options_.external_message_pump) CefDoMessageLoopWork();
+#endif
   }
 
   [[nodiscard]] std::string_view runtime_version() const noexcept override {
-    return "cef-runtime-scaffold";
+    return "cef-runtime-client-context";
   }
 
  private:
