@@ -6,6 +6,7 @@
 #include "goreecloud/browser/advanced_download_manager_service.hpp"
 #include "goreecloud/browser/advanced_download_transfer_engine.hpp"
 #include "goreecloud/browser/download_checkpoint_store.hpp"
+#include "goreecloud/browser/download_transfer_policy.hpp"
 
 namespace {
 
@@ -133,6 +134,40 @@ int main() {
   concurrency_scheduler.pump();
   assert(concurrency_scheduler.active_count() <= 5);
   assert(concurrency_scheduler.pending_count() >= 2);
+
+  DownloadTransferPolicy wifi_policy;
+  wifi_policy.wifi_only = true;
+  wifi_policy.allow_metered = false;
+  wifi_policy.stop_on_low_battery = true;
+  wifi_policy.bytes_per_second_limit = 2'000'000;
+
+  DownloadConnectionState wifi;
+  wifi.type = DownloadConnectionType::wifi;
+  wifi.online = true;
+  DownloadPowerState healthy_power;
+  healthy_power.battery_percent = 80;
+  const auto wifi_allowed = DownloadTransferPolicyEngine::decide(
+      wifi_policy, wifi, healthy_power);
+  assert(wifi_allowed.allowed);
+  assert(wifi_allowed.effective_bytes_per_second_limit == 2'000'000);
+
+  DownloadConnectionState cellular;
+  cellular.type = DownloadConnectionType::cellular;
+  const auto cellular_denied = DownloadTransferPolicyEngine::decide(
+      wifi_policy, cellular, healthy_power);
+  assert(!cellular_denied.allowed);
+
+  DownloadPowerState low_power;
+  low_power.battery_percent = 10;
+  low_power.charging = false;
+  const auto low_battery_denied = DownloadTransferPolicyEngine::decide(
+      wifi_policy, wifi, low_power);
+  assert(!low_battery_denied.allowed);
+
+  low_power.charging = true;
+  const auto charging_allowed = DownloadTransferPolicyEngine::decide(
+      wifi_policy, wifi, low_power);
+  assert(charging_allowed.allowed);
 
   assert(queue.start(record->download_id));
   assert(queue.pause(record->download_id));
