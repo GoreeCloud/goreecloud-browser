@@ -70,6 +70,11 @@ class FileSessionRecoveryStore final : public SessionRecoveryStore {
       const auto parsed = read_one(path);
       if (parsed) checkpoints.push_back(*parsed);
     }
+    std::sort(checkpoints.begin(), checkpoints.end(), [](const auto& a, const auto& b) {
+      if (a.created_unix_ms != b.created_unix_ms) return a.created_unix_ms > b.created_unix_ms;
+      return a.checkpoint_id > b.checkpoint_id;
+    });
+    if (checkpoints.size() > limit) checkpoints.resize(limit);
     return checkpoints;
   }
 
@@ -271,21 +276,15 @@ class FileSessionRecoveryStore final : public SessionRecoveryStore {
       if (error) break;
       if (entry.is_regular_file() && entry.path().extension() == ".gcrs") files.push_back(entry.path());
     }
-    std::sort(files.begin(), files.end(), [](const auto& a, const auto& b) {
-      std::error_code ea, eb;
-      const auto ta = std::filesystem::last_write_time(a, ea);
-      const auto tb = std::filesystem::last_write_time(b, eb);
-      if (ea || eb) return a.filename().string() > b.filename().string();
-      return ta > tb;
-    });
     return files;
   }
 
   void rotate() const {
-    const auto files = checkpoint_files();
-    for (std::size_t i = options_.max_checkpoints; i < files.size(); ++i) {
+    auto checkpoints = read_recent(static_cast<std::size_t>(-1));
+    if (checkpoints.size() <= options_.max_checkpoints) return;
+    for (std::size_t i = options_.max_checkpoints; i < checkpoints.size(); ++i) {
       std::error_code error;
-      std::filesystem::remove(files[i], error);
+      std::filesystem::remove(checkpoint_path(checkpoints[i].checkpoint_id), error);
     }
   }
 
