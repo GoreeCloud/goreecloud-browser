@@ -171,6 +171,41 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
     return true;
   }
 
+  bool restart(std::string_view download_id) {
+    const auto record = queue_.find(download_id);
+    if (!record || (record->state != DownloadState::completed &&
+                    record->state != DownloadState::failed &&
+                    record->state != DownloadState::cancelled)) return false;
+    const auto id = std::string{download_id};
+    scheduler_.cancel(id);
+    scheduled_waiting_.erase(id);
+    checkpoints_.erase(id);
+    const auto filename = record->request.suggested_filename.value_or(default_filename(record->request.source_url));
+    const auto paths = file_store_.prepare(id, filename, 0);
+    if (!paths) return false;
+    file_store_.discard(*paths);
+    const auto fresh_paths = file_store_.prepare(id, filename, 0);
+    if (!fresh_paths) return false;
+    files_[id] = *fresh_paths;
+    auto restarted = *record;
+    restarted.state = DownloadState::queued;
+    if (!queue_.set_state(id, DownloadState::queued) || !scheduler_.queue(restarted)) return false;
+    progress_[id] = {.state = DownloadState::queued, .message = "Restarted"};
+    persist_queue();
+    return true;
+  }
+
+  [[nodiscard]] std::optional<std::filesystem::path> completed_file_path(
+      std::string_view download_id) const {
+    const auto progress = this->progress(download_id);
+    if (!progress || progress->state != DownloadState::completed) return std::nullopt;
+    const auto found = files_.find(std::string{download_id});
+    if (found == files_.end()) return std::nullopt;
+    std::error_code error;
+    if (!std::filesystem::exists(found->second.final_path, error) || error) return std::nullopt;
+    return found->second.final_path;
+  }
+
   void pump() {
     release_due_schedules();
     scheduler_.pump();
