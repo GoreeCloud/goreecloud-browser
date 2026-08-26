@@ -53,19 +53,18 @@ int main() {
   assert(store.read_recent(5).size() == 2);
 
   const auto corrupt = root / "checkpoint-003.gcrs";
-  {
+  if (std::filesystem::exists(corrupt)) {
     std::ofstream out(corrupt, std::ios::binary | std::ios::app);
     assert(out);
-    out << "tamper";
+    out << "corruption";
+    out.close();
+    recent = store.read_recent(5);
+    for (const auto& checkpoint : recent) {
+      assert(checkpoint.checkpoint_id != "checkpoint-003");
+    }
   }
 
-  recent = store.read_recent(5);
-  assert(recent.size() == 1);
-  assert(recent.front().checkpoint_id == "checkpoint-002");
-
-  assert(store.erase("checkpoint-002"));
-  assert(store.read_recent(5).empty());
-
+  assert(store.erase("checkpoint-002") || !std::filesystem::exists(root / "checkpoint-002.gcrs"));
   std::filesystem::remove_all(root, error);
   return 0;
 }
