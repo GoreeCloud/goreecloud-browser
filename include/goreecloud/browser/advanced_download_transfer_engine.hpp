@@ -8,6 +8,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -81,15 +82,46 @@ class DownloadTransferScheduler {
 
   bool queue(DownloadRecord record) {
     if (record.download_id.empty() || record.request.source_url.empty()) return false;
-    for (const auto& pending : pending_) if (pending.download_id == record.download_id) return false;
-    for (const auto& active : active_) if (active.record.download_id == record.download_id) return false;
+    if (contains(record.download_id)) return false;
     pending_.push_back(std::move(record));
     return true;
   }
 
+  bool pause(std::string_view id) {
+    if (!contains(id)) return false;
+    paused_.insert(std::string{id});
+    return true;
+  }
+
+  bool resume(std::string_view id) {
+    return paused_.erase(std::string{id}) > 0;
+  }
+
+  bool cancel(std::string_view id) {
+    const std::string key{id};
+    bool removed = false;
+    pending_.erase(std::remove_if(pending_.begin(), pending_.end(), [&](const DownloadRecord& record) {
+      if (record.download_id == key) { removed = true; return true; }
+      return false;
+    }), pending_.end());
+    active_.erase(std::remove_if(active_.begin(), active_.end(), [&](const ActiveTransfer& active) {
+      if (active.record.download_id == key) { removed = true; return true; }
+      return false;
+    }), active_.end());
+    paused_.erase(key);
+    cancelled_.insert(key);
+    return removed;
+  }
+
+  [[nodiscard]] bool paused(std::string_view id) const { return paused_.contains(std::string{id}); }
+  [[nodiscard]] bool cancelled(std::string_view id) const { return cancelled_.contains(std::string{id}); }
+
   void pump() {
-    while (active_.size() < kMaximumActiveDownloads && !pending_.empty()) {
+    std::size_t scans = pending_.size();
+    while (active_.size() < kMaximumActiveDownloads && !pending_.empty() && scans-- > 0) {
       auto record = std::move(pending_.front()); pending_.pop_front();
+      if (cancelled(record.download_id)) continue;
+      if (paused(record.download_id)) { pending_.push_back(std::move(record)); continue; }
       const auto metadata = transport_.inspect(record.request.source_url, record.request.referrer_url);
       if (!metadata) { fail_record(record.download_id); continue; }
       ActiveTransfer active; active.record = std::move(record); active.plan = DownloadTransferPlanner::make_plan(active.record, *metadata);
@@ -99,7 +131,7 @@ class DownloadTransferScheduler {
       active_.push_back(std::move(active));
     }
     for (auto& active : active_) {
-      if (active.finished || active.failed) continue;
+      if (active.finished || active.failed || paused(active.record.download_id) || cancelled(active.record.download_id)) continue;
       run_one_segment(active);
       if (progress_callback_) progress_callback_(active.plan);
     }
@@ -107,7 +139,9 @@ class DownloadTransferScheduler {
       if (active.finished) { completed_.push_back(active.record.download_id); if (completion_callback_) completion_callback_(active.plan); }
       if (active.failed) fail_record(active.record.download_id);
     }
-    active_.erase(std::remove_if(active_.begin(), active_.end(), [](const ActiveTransfer& active) { return active.finished || active.failed; }), active_.end());
+    active_.erase(std::remove_if(active_.begin(), active_.end(), [&](const ActiveTransfer& active) {
+      return active.finished || active.failed || cancelled(active.record.download_id);
+    }), active_.end());
   }
 
   [[nodiscard]] std::size_t pending_count() const noexcept { return pending_.size(); }
@@ -117,6 +151,12 @@ class DownloadTransferScheduler {
 
  private:
   struct ActiveTransfer { DownloadRecord record; DownloadTransferPlan plan; bool finished{false}; bool failed{false}; };
+
+  [[nodiscard]] bool contains(std::string_view id) const {
+    const std::string key{id};
+    return std::any_of(pending_.begin(), pending_.end(), [&](const DownloadRecord& record) { return record.download_id == key; }) ||
+           std::any_of(active_.begin(), active_.end(), [&](const ActiveTransfer& active) { return active.record.download_id == key; });
+  }
 
   void fail_record(std::string_view id) { failed_.push_back(std::string{id}); if (failure_callback_) failure_callback_(id); }
 
@@ -148,6 +188,8 @@ class DownloadTransferScheduler {
   RestorePlanCallback restore_plan_callback_;
   std::deque<DownloadRecord> pending_;
   std::vector<ActiveTransfer> active_;
+  std::unordered_set<std::string> paused_;
+  std::unordered_set<std::string> cancelled_;
   std::vector<std::string> completed_;
   std::vector<std::string> failed_;
 };
