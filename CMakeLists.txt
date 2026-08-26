@@ -8,6 +8,11 @@ project(goreecloud_browser
 
 include(CTest)
 
+option(GOREECLOUD_ENABLE_CHROMIUM
+  "Build the GoreeCloud Chromium engine adapter integration target"
+  OFF
+)
+
 # GoreeCloud Browser follows the latest approved Stable Glaze UI release.
 # This value is an acceptance baseline and must advance when Glaze UI promotes
 # a newer Stable release; it is not permission to remain on a superseded release.
@@ -45,6 +50,21 @@ function(goreecloud_apply_warnings target)
   endif()
 endfunction()
 
+if(GOREECLOUD_ENABLE_CHROMIUM)
+  add_library(goreecloud_browser_chromium STATIC
+    src/chromium_adapter.cpp
+  )
+  target_link_libraries(goreecloud_browser_chromium
+    PUBLIC
+      goreecloud_browser_core
+  )
+  target_compile_definitions(goreecloud_browser_chromium
+    PUBLIC
+      GOREECLOUD_ENABLE_CHROMIUM=1
+  )
+  goreecloud_apply_warnings(goreecloud_browser_chromium)
+endif()
+
 add_executable(goreecloud_browser
   apps/browser/main.cpp
 )
@@ -53,6 +73,13 @@ target_link_libraries(goreecloud_browser
   PRIVATE
     goreecloud_browser_core
 )
+
+if(GOREECLOUD_ENABLE_CHROMIUM)
+  target_link_libraries(goreecloud_browser PRIVATE goreecloud_browser_chromium)
+  target_compile_definitions(goreecloud_browser PRIVATE GOREECLOUD_ENABLE_CHROMIUM=1)
+else()
+  target_compile_definitions(goreecloud_browser PRIVATE GOREECLOUD_ENABLE_CHROMIUM=0)
+endif()
 
 goreecloud_apply_warnings(goreecloud_browser)
 
