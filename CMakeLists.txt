@@ -161,6 +161,10 @@ add_executable(goreecloud_browser_media_hover_smoke apps/browser/media_hover_smo
 target_link_libraries(goreecloud_browser_media_hover_smoke PRIVATE goreecloud_browser_core)
 goreecloud_apply_warnings(goreecloud_browser_media_hover_smoke)
 
+add_executable(goreecloud_browser_download_manager_smoke apps/browser/download_manager_smoke.cpp)
+target_link_libraries(goreecloud_browser_download_manager_smoke PRIVATE goreecloud_browser_core)
+goreecloud_apply_warnings(goreecloud_browser_download_manager_smoke)
+
 if(GOREECLOUD_ENABLE_CHROMIUM)
   add_executable(goreecloud_browser_chromium_smoke apps/browser/chromium_smoke.cpp)
   target_link_libraries(goreecloud_browser_chromium_smoke PRIVATE goreecloud_browser_core goreecloud_browser_chromium)
@@ -173,6 +177,7 @@ endif()
 if(BUILD_TESTING)
   add_test(NAME goreecloud_browser_runtime_smoke COMMAND goreecloud_browser_runtime_smoke)
   add_test(NAME goreecloud_browser_media_hover_smoke COMMAND goreecloud_browser_media_hover_smoke)
+  add_test(NAME goreecloud_browser_download_manager_smoke COMMAND goreecloud_browser_download_manager_smoke)
   if(GOREECLOUD_ENABLE_CHROMIUM AND NOT GOREECLOUD_ENABLE_CEF)
     add_test(NAME goreecloud_browser_chromium_smoke COMMAND goreecloud_browser_chromium_smoke)
   endif()
