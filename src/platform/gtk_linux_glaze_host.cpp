@@ -1,0 +1,439 @@
+#include "goreecloud/browser/platform/gtk_linux_glaze_host.hpp"
+
+#include <cstdint>
+#include <string>
+#include <unordered_map>
+#include <utility>
+
+#include <gdk/gdkx.h>
+#include <gtk/gtk.h>
+
+#include "goreecloud/browser/internal_pages.hpp"
+#include "goreecloud/browser/native_engine_surface.hpp"
+
+namespace goreecloud::browser::platform {
+namespace {
+
+void set_accessible_name(GtkWidget* widget, const char* name) {
+  gtk_widget_set_tooltip_text(widget, name);
+  if (auto* accessible = gtk_widget_get_accessible(widget)) {
+    atk_object_set_name(accessible, name);
+  }
+}
+
+GtkWidget* make_toolbar_button(const char* visible_label, const char* accessible_name) {
+  auto* button = gtk_button_new_with_label(visible_label);
+  gtk_widget_set_size_request(button, 44, 44);
+  gtk_style_context_add_class(gtk_widget_get_style_context(button), "gc-toolbar-button");
+  set_accessible_name(button, accessible_name);
+  return button;
+}
+
+std::string internal_surface_text(std::string_view url) {
+  if (url == kNewTabUrl) {
+    return "GoreeCloud Browser\n\nSearch or enter an address using the unified search bar.";
+  }
+  if (url == kHomeUrl) {
+    return "GoreeCloud Home\n\nYour first-party GoreeCloud Browser home surface.";
+  }
+  if (url == kSettingsUrl) {
+    return "GoreeCloud Settings\n\nBrowser settings use the latest approved Glaze UI design language.";
+  }
+  if (url == kPrivateStartUrl) {
+    return "Private Browsing\n\nTemporary local browsing state. Privacy Shield and Wardveil Security remain active according to their actual protection state. Private Browsing is not a guarantee of network anonymity.";
+  }
+  return std::string{url};
+}
+
+}  // namespace
+
+class GtkLinuxGlazeWindowHost::Impl {
+ public:
+  static void on_window_destroy(GtkWidget*, gpointer data) {
+    auto* self = static_cast<Impl*>(data);
+    self->close_requested = true;
+    self->window = nullptr;
+  }
+
+  static void on_toolbar_clicked(GtkButton* button, gpointer data) {
+    auto* self = static_cast<Impl*>(data);
+    const auto found = self->toolbar_bindings.find(GTK_WIDGET(button));
+    if (found != self->toolbar_bindings.end() && self->toolbar_handler) {
+      self->toolbar_handler(found->second);
+    }
+  }
+
+  static void on_search_control_clicked(GtkButton* button, gpointer data) {
+    auto* self = static_cast<Impl*>(data);
+    const auto found = self->search_control_bindings.find(GTK_WIDGET(button));
+    if (found != self->search_control_bindings.end() && self->search_control_handler) {
+      self->search_control_handler(found->second);
+    }
+  }
+
+  static void on_search_activate(GtkEntry* entry, gpointer data) {
+    auto* self = static_cast<Impl*>(data);
+    if (self->search_handler) {
+      const char* value = gtk_entry_get_text(entry);
+      self->search_handler(value ? std::string_view{value} : std::string_view{});
+    }
+  }
+
+  static void on_content_size_allocate(GtkWidget*, GtkAllocation*, gpointer data) {
+    auto* self = static_cast<Impl*>(data);
+    self->update_metrics();
+    self->resize_attached_engine();
+  }
+
+  void install_css() {
+    css = gtk_css_provider_new();
+    static constexpr const char* kCss = R"CSS(
+      window.gc-browser-window {
+        background-color: @theme_bg_color;
+        color: @theme_fg_color;
+      }
+      .gc-tab-strip {
+        padding: 4px 12px;
+        min-height: 44px;
+        background-color: @theme_bg_color;
+      }
+      .gc-toolbar {
+        padding: 8px 12px;
+        background-color: @theme_bg_color;
+      }
+      .gc-toolbar-button {
+        min-width: 44px;
+        min-height: 44px;
+        border-radius: 14px;
+        padding: 6px 10px;
+      }
+      .gc-search-shell {
+        min-height: 44px;
+        border-radius: 22px;
+        padding: 2px 6px;
+        background-color: @theme_base_color;
+        border: 1px solid alpha(@theme_fg_color, 0.16);
+      }
+      .gc-search-entry {
+        min-height: 40px;
+        border: none;
+        box-shadow: none;
+        background: transparent;
+      }
+      .gc-search-control {
+        min-width: 44px;
+        min-height: 44px;
+        border-radius: 14px;
+      }
+      .gc-content-fallback {
+        padding: 32px;
+      }
+      window.gc-private-window .gc-toolbar,
+      window.gc-private-window .gc-tab-strip {
+        border-bottom: 1px solid alpha(@theme_selected_bg_color, 0.35);
+      }
+    )CSS";
+    gtk_css_provider_load_from_data(css, kCss, -1, nullptr);
+    gtk_style_context_add_provider_for_screen(
+        gdk_screen_get_default(), GTK_STYLE_PROVIDER(css), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+  }
+
+  bool create() {
+    if (created) return true;
+    if (!gtk_init_check(nullptr, nullptr)) return false;
+
+    auto* display = gdk_display_get_default();
+    if (!display || !GDK_IS_X11_DISPLAY(display)) {
+      // The first beta embeds CEF as an X11 child window. Wayland users can
+      // launch through XWayland with GDK_BACKEND=x11 until the native Wayland
+      // engine-surface path is implemented.
+      return false;
+    }
+
+    install_css();
+
+    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_default_size(GTK_WINDOW(window), 1280, 800);
+    gtk_window_set_title(GTK_WINDOW(window), "GoreeCloud Browser");
+    gtk_style_context_add_class(gtk_widget_get_style_context(window), "gc-browser-window");
+    if (private_window) {
+      gtk_style_context_add_class(gtk_widget_get_style_context(window), "gc-private-window");
+    }
+    g_signal_connect(window, "destroy", G_CALLBACK(on_window_destroy), this);
+
+    root = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_container_add(GTK_CONTAINER(window), root);
+
+    tab_strip = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+    gtk_style_context_add_class(gtk_widget_get_style_context(tab_strip), "gc-tab-strip");
+    tab_label = gtk_label_new("New Tab");
+    gtk_widget_set_halign(tab_label, GTK_ALIGN_START);
+    gtk_box_pack_start(GTK_BOX(tab_strip), tab_label, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(root), tab_strip, FALSE, FALSE, 0);
+
+    toolbar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+    gtk_style_context_add_class(gtk_widget_get_style_context(toolbar), "gc-toolbar");
+    gtk_box_pack_start(GTK_BOX(root), toolbar, FALSE, FALSE, 0);
+
+    add_toolbar_button(ToolbarItem::back, "←", "Back");
+    add_toolbar_button(ToolbarItem::forward, "→", "Forward");
+    add_toolbar_button(ToolbarItem::refresh, "↻", "Refresh or Stop");
+    add_toolbar_button(ToolbarItem::home, "⌂", "Home");
+    build_unified_search();
+    add_toolbar_button(ToolbarItem::advanced_download_manager, "↓", "Advanced Download Manager");
+    add_toolbar_button(ToolbarItem::privacy_shield, "P", "Privacy Shield");
+    add_toolbar_button(ToolbarItem::wardveil_security, "W", "Wardveil Security");
+    add_toolbar_button(ToolbarItem::clipboard, "C", "Clipboard");
+    add_toolbar_button(ToolbarItem::dns_cache, "DNS", "Clear DNS Cache");
+    add_toolbar_button(ToolbarItem::advanced_proxy_manager, "Proxy", "Advanced Proxy Manager");
+    add_toolbar_button(ToolbarItem::settings, "⚙", "Settings");
+
+    content_stack = gtk_stack_new();
+    gtk_stack_set_transition_type(GTK_STACK(content_stack), GTK_STACK_TRANSITION_TYPE_NONE);
+    gtk_box_pack_start(GTK_BOX(root), content_stack, TRUE, TRUE, 0);
+
+    content_area = gtk_drawing_area_new();
+    gtk_widget_set_hexpand(content_area, TRUE);
+    gtk_widget_set_vexpand(content_area, TRUE);
+    gtk_stack_add_named(GTK_STACK(content_stack), content_area, "web");
+    g_signal_connect(content_area, "size-allocate", G_CALLBACK(on_content_size_allocate), this);
+
+    internal_label = gtk_label_new(nullptr);
+    gtk_label_set_line_wrap(GTK_LABEL(internal_label), TRUE);
+    gtk_label_set_justify(GTK_LABEL(internal_label), GTK_JUSTIFY_CENTER);
+    gtk_widget_set_halign(internal_label, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(internal_label, GTK_ALIGN_CENTER);
+    gtk_style_context_add_class(gtk_widget_get_style_context(internal_label), "gc-content-fallback");
+    gtk_stack_add_named(GTK_STACK(content_stack), internal_label, "internal");
+
+    panel_label = gtk_label_new(nullptr);
+    gtk_widget_set_halign(panel_label, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(panel_label, GTK_ALIGN_CENTER);
+    gtk_style_context_add_class(gtk_widget_get_style_context(panel_label), "gc-content-fallback");
+    gtk_stack_add_named(GTK_STACK(content_stack), panel_label, "panel");
+
+    created = true;
+    return true;
+  }
+
+  void add_toolbar_button(ToolbarItem item, const char* visible, const char* accessible) {
+    auto* button = make_toolbar_button(visible, accessible);
+    toolbar_bindings.emplace(button, item);
+    g_signal_connect(button, "clicked", G_CALLBACK(on_toolbar_clicked), this);
+    gtk_box_pack_start(GTK_BOX(toolbar), button, FALSE, FALSE, 0);
+  }
+
+  void build_unified_search() {
+    search_shell = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+    gtk_style_context_add_class(gtk_widget_get_style_context(search_shell), "gc-search-shell");
+    gtk_widget_set_hexpand(search_shell, TRUE);
+    set_accessible_name(search_shell, "Unified Search Bar");
+
+    search_entry = gtk_entry_new();
+    gtk_entry_set_placeholder_text(GTK_ENTRY(search_entry), "Search with GoreeCloud Search or enter address");
+    gtk_widget_set_hexpand(search_entry, TRUE);
+    gtk_style_context_add_class(gtk_widget_get_style_context(search_entry), "gc-search-entry");
+    set_accessible_name(search_entry, "Unified Search Bar");
+    g_signal_connect(search_entry, "activate", G_CALLBACK(on_search_activate), this);
+    gtk_box_pack_start(GTK_BOX(search_shell), search_entry, TRUE, TRUE, 0);
+
+    add_search_control(UnifiedSearchBarControl::advanced_reader_mode, "Reader", "Advanced Reader Mode");
+    add_search_control(UnifiedSearchBarControl::unified_bookmarks, "★", "Unified Bookmarks");
+    add_search_control(UnifiedSearchBarControl::wardveil_security, "W", "Wardveil Security");
+
+    gtk_box_pack_start(GTK_BOX(toolbar), search_shell, TRUE, TRUE, 0);
+  }
+
+  void add_search_control(UnifiedSearchBarControl control,
+                          const char* visible,
+                          const char* accessible) {
+    auto* button = gtk_button_new_with_label(visible);
+    gtk_widget_set_size_request(button, 44, 44);
+    gtk_style_context_add_class(gtk_widget_get_style_context(button), "gc-search-control");
+    set_accessible_name(button, accessible);
+    search_control_bindings.emplace(button, control);
+    g_signal_connect(button, "clicked", G_CALLBACK(on_search_control_clicked), this);
+    gtk_box_pack_start(GTK_BOX(search_shell), button, FALSE, FALSE, 0);
+  }
+
+  void show() {
+    if (!created || !window) return;
+    gtk_widget_show_all(window);
+    gtk_widget_realize(content_area);
+    update_metrics();
+    if (attached_view) attach_engine_surface();
+  }
+
+  NativeEngineSurface current_surface() const {
+    NativeEngineSurface surface;
+    if (!content_area || !gtk_widget_get_realized(content_area)) return surface;
+    auto* gdk_window = gtk_widget_get_window(content_area);
+    if (!gdk_window) return surface;
+    auto* display = gdk_window_get_display(gdk_window);
+    if (!display || !GDK_IS_X11_DISPLAY(display)) return surface;
+
+    GtkAllocation allocation{};
+    gtk_widget_get_allocation(content_area, &allocation);
+    surface.window_handle = static_cast<std::uintptr_t>(gdk_x11_window_get_xid(gdk_window));
+    surface.display_handle = reinterpret_cast<std::uintptr_t>(gdk_x11_display_get_xdisplay(display));
+    surface.x = 0;
+    surface.y = 0;
+    surface.width = allocation.width;
+    surface.height = allocation.height;
+    surface.scale_factor = static_cast<float>(gtk_widget_get_scale_factor(content_area));
+    return surface;
+  }
+
+  void attach_engine_surface() {
+    if (!attached_view || !content_area || !gtk_widget_get_realized(content_area)) return;
+    auto* attachable = dynamic_cast<NativeSurfaceAttachable*>(attached_view);
+    if (!attachable) return;
+    const auto surface = current_surface();
+    if (surface.window_handle == 0 || surface.width <= 0 || surface.height <= 0) return;
+    engine_surface_attached = attachable->attach_native_surface(surface);
+    if (engine_surface_attached) {
+      gtk_stack_set_visible_child_name(GTK_STACK(content_stack), "web");
+    }
+  }
+
+  void resize_attached_engine() {
+    if (!engine_surface_attached || !attached_view) return;
+    auto* attachable = dynamic_cast<NativeSurfaceAttachable*>(attached_view);
+    if (!attachable) return;
+    const auto surface = current_surface();
+    if (surface.window_handle != 0 && surface.width > 0 && surface.height > 0) {
+      attachable->resize_native_surface(surface);
+    }
+  }
+
+  void update_metrics() {
+    if (!window) return;
+    int width = 0;
+    int height = 0;
+    gtk_window_get_size(GTK_WINDOW(window), &width, &height);
+    metrics.width = width;
+    metrics.height = height;
+    metrics.scale_factor = static_cast<float>(gtk_widget_get_scale_factor(window));
+  }
+
+  ToolbarHandler toolbar_handler;
+  SearchHandler search_handler;
+  SearchControlHandler search_control_handler;
+  std::unordered_map<GtkWidget*, ToolbarItem> toolbar_bindings;
+  std::unordered_map<GtkWidget*, UnifiedSearchBarControl> search_control_bindings;
+  GtkWidget* window{nullptr};
+  GtkWidget* root{nullptr};
+  GtkWidget* tab_strip{nullptr};
+  GtkWidget* tab_label{nullptr};
+  GtkWidget* toolbar{nullptr};
+  GtkWidget* search_shell{nullptr};
+  GtkWidget* search_entry{nullptr};
+  GtkWidget* content_stack{nullptr};
+  GtkWidget* content_area{nullptr};
+  GtkWidget* internal_label{nullptr};
+  GtkWidget* panel_label{nullptr};
+  GtkCssProvider* css{nullptr};
+  EngineView* attached_view{nullptr};
+  NativeWindowMetrics metrics{1280, 800, 1.0F};
+  bool private_window{false};
+  bool created{false};
+  bool close_requested{false};
+  bool engine_surface_attached{false};
+};
+
+GtkLinuxGlazeWindowHost::GtkLinuxGlazeWindowHost() : impl_(std::make_unique<Impl>()) {}
+
+GtkLinuxGlazeWindowHost::~GtkLinuxGlazeWindowHost() {
+  if (impl_) {
+    detach_engine_view();
+    if (impl_->css) {
+      g_object_unref(impl_->css);
+      impl_->css = nullptr;
+    }
+  }
+}
+
+void GtkLinuxGlazeWindowHost::set_toolbar_handler(ToolbarHandler handler) {
+  impl_->toolbar_handler = std::move(handler);
+}
+
+void GtkLinuxGlazeWindowHost::set_search_handler(SearchHandler handler) {
+  impl_->search_handler = std::move(handler);
+}
+
+void GtkLinuxGlazeWindowHost::set_search_control_handler(SearchControlHandler handler) {
+  impl_->search_control_handler = std::move(handler);
+}
+
+void GtkLinuxGlazeWindowHost::set_private_window(bool private_window) {
+  impl_->private_window = private_window;
+}
+
+bool GtkLinuxGlazeWindowHost::create() { return impl_->create(); }
+
+void GtkLinuxGlazeWindowHost::show() { impl_->show(); }
+
+void GtkLinuxGlazeWindowHost::close() {
+  detach_engine_view();
+  if (impl_->window) {
+    gtk_widget_destroy(impl_->window);
+    impl_->window = nullptr;
+  }
+  impl_->close_requested = true;
+}
+
+void GtkLinuxGlazeWindowHost::set_title(std::string_view title) {
+  if (impl_->window) gtk_window_set_title(GTK_WINDOW(impl_->window), std::string{title}.c_str());
+}
+
+void GtkLinuxGlazeWindowHost::render_chrome(const BrowserChromeState& state) {
+  if (impl_->search_entry && !gtk_widget_has_focus(impl_->search_entry)) {
+    gtk_entry_set_text(GTK_ENTRY(impl_->search_entry), state.unified_search.display_text.c_str());
+  }
+  if (impl_->tab_label && !state.tabs.empty()) {
+    gtk_label_set_text(GTK_LABEL(impl_->tab_label), state.tabs.front().title.c_str());
+  }
+}
+
+void GtkLinuxGlazeWindowHost::attach_engine_view(EngineView& view) {
+  detach_engine_view();
+  impl_->attached_view = &view;
+  impl_->attach_engine_surface();
+}
+
+void GtkLinuxGlazeWindowHost::detach_engine_view() {
+  if (impl_->attached_view) {
+    if (auto* attachable = dynamic_cast<NativeSurfaceAttachable*>(impl_->attached_view)) {
+      if (attachable->native_surface_attached()) attachable->detach_native_surface();
+    }
+  }
+  impl_->attached_view = nullptr;
+  impl_->engine_surface_attached = false;
+}
+
+void GtkLinuxGlazeWindowHost::show_internal_surface(std::string_view internal_url) {
+  if (!impl_->content_stack || !impl_->internal_label) return;
+  const auto text = internal_surface_text(internal_url);
+  gtk_label_set_text(GTK_LABEL(impl_->internal_label), text.c_str());
+  gtk_stack_set_visible_child_name(GTK_STACK(impl_->content_stack), "internal");
+}
+
+void GtkLinuxGlazeWindowHost::show_panel(std::string_view panel_id) {
+  if (!impl_->content_stack || !impl_->panel_label) return;
+  const std::string text = "GoreeCloud Browser — " + std::string{panel_id};
+  gtk_label_set_text(GTK_LABEL(impl_->panel_label), text.c_str());
+  gtk_stack_set_visible_child_name(GTK_STACK(impl_->content_stack), "panel");
+}
+
+NativeWindowMetrics GtkLinuxGlazeWindowHost::metrics() const { return impl_->metrics; }
+
+bool GtkLinuxGlazeWindowHost::pump_events() {
+  while (gtk_events_pending()) gtk_main_iteration_do(FALSE);
+  return !impl_->close_requested;
+}
+
+bool GtkLinuxGlazeWindowHost::close_requested() const noexcept {
+  return impl_->close_requested;
+}
+
+}  // namespace goreecloud::browser::platform
