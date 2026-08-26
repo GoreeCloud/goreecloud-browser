@@ -140,7 +140,10 @@ endif()
 if(GOREECLOUD_ENABLE_LINUX_GTK_HOST)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(GTK3 REQUIRED IMPORTED_TARGET gtk+-3.0 gdk-x11-3.0)
-  target_sources(goreecloud_browser PRIVATE src/platform/gtk_linux_glaze_host.cpp)
+  target_sources(goreecloud_browser PRIVATE
+    src/platform/gtk_linux_glaze_host.cpp
+    src/platform/gtk_media_hover_popover.cpp
+  )
   target_link_libraries(goreecloud_browser PRIVATE PkgConfig::GTK3)
   target_compile_definitions(goreecloud_browser PRIVATE GOREECLOUD_ENABLE_LINUX_GTK_HOST=1)
 else()
