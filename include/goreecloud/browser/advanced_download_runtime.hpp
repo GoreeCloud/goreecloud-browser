@@ -7,6 +7,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -87,6 +88,7 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
       progress.message = evidence.message;
       queue_.set_state(plan.download_id, DownloadState::completed);
       checkpoints_.erase(plan.download_id);
+      scheduled_waiting_.erase(plan.download_id);
       persist_queue();
     });
     scheduler_.set_failure_callback([this](std::string_view download_id) {
@@ -116,6 +118,11 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
       persist_queue();
       return {false, {}, "Download scheduler rejected the request."};
     }
+    if (scheduled_for_future(*record)) {
+      scheduler_.pause(record->download_id);
+      scheduled_waiting_.insert(record->download_id);
+      progress_[record->download_id].message = "Scheduled";
+    }
     persist_queue();
     return queued;
   }
@@ -125,6 +132,7 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
     if (!record || record->state == DownloadState::completed ||
         record->state == DownloadState::cancelled) return false;
     if (!scheduler_.pause(download_id) || !queue_.set_state(download_id, DownloadState::paused)) return false;
+    scheduled_waiting_.erase(std::string{download_id});
     auto& state = progress_[std::string{download_id}];
     state.state = DownloadState::paused;
     state.bytes_per_second = 0.0;
@@ -136,6 +144,7 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
   bool resume(std::string_view download_id) {
     const auto record = queue_.find(download_id);
     if (!record || record->state != DownloadState::paused) return false;
+    scheduled_waiting_.erase(std::string{download_id});
     if (!scheduler_.resume(download_id) || !queue_.set_state(download_id, DownloadState::queued)) return false;
     auto& state = progress_[std::string{download_id}];
     state.state = DownloadState::queued;
@@ -149,6 +158,7 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
     if (!record || record->state == DownloadState::completed ||
         record->state == DownloadState::cancelled) return false;
     scheduler_.cancel(download_id);
+    scheduled_waiting_.erase(std::string{download_id});
     if (!queue_.set_state(download_id, DownloadState::cancelled)) return false;
     checkpoints_.erase(download_id);
     auto found = files_.find(std::string{download_id});
@@ -161,7 +171,10 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
     return true;
   }
 
-  void pump() { scheduler_.pump(); }
+  void pump() {
+    release_due_schedules();
+    scheduler_.pump();
+  }
 
   [[nodiscard]] std::optional<LiveDownloadProgress> progress(std::string_view id) const {
     const auto found = progress_.find(std::string{id});
@@ -177,12 +190,36 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
   using Clock = std::chrono::steady_clock;
   struct ProgressSample { std::uint64_t bytes{0}; Clock::time_point time{}; };
 
+  static std::int64_t unix_now_seconds() {
+    return std::chrono::duration_cast<std::chrono::seconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+  }
+
+  static bool scheduled_for_future(const DownloadRecord& record) {
+    return record.request.scheduled_start_unix_seconds &&
+           *record.request.scheduled_start_unix_seconds > unix_now_seconds();
+  }
+
+  void release_due_schedules() {
+    std::vector<std::string> due;
+    for (const auto& id : scheduled_waiting_) {
+      const auto record = queue_.find(id);
+      if (!record || !scheduled_for_future(*record)) due.push_back(id);
+    }
+    for (const auto& id : due) {
+      scheduled_waiting_.erase(id);
+      if (scheduler_.resume(id)) {
+        auto& state = progress_[id];
+        state.state = DownloadState::queued;
+        state.message = "Scheduled start released";
+      }
+    }
+  }
+
   void restore_persistent_queue() {
     for (auto record : queue_store_.load()) {
       if (record.request.private_session || record.state == DownloadState::completed ||
-          record.state == DownloadState::cancelled) {
-        continue;
-      }
+          record.state == DownloadState::cancelled) continue;
       if (!queue_.restore(record)) continue;
       const auto restored = queue_.find(record.download_id);
       if (!restored) continue;
@@ -195,17 +232,19 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
       files_[restored->download_id] = *paths;
       const auto checkpoint = checkpoints_.load(restored->download_id);
       const bool was_paused = record.state == DownloadState::paused;
+      const bool is_scheduled = !was_paused && scheduled_for_future(*restored);
       progress_[restored->download_id] = {
           .completed_bytes = checkpoint ? checkpoint->completed_bytes : 0,
           .total_bytes = checkpoint ? checkpoint->total_bytes : 0,
           .bytes_per_second = 0.0,
           .state = was_paused ? DownloadState::paused : DownloadState::queued,
-          .message = was_paused ? "Paused" : (checkpoint ? "Ready to resume" : "Restored"),
+          .message = was_paused ? "Paused" : (is_scheduled ? "Scheduled" : (checkpoint ? "Ready to resume" : "Restored")),
       };
       if (!scheduler_.queue(*restored)) {
         mark_failed(restored->download_id, "Restored download could not be scheduled.");
-      } else if (was_paused) {
+      } else if (was_paused || is_scheduled) {
         scheduler_.pause(restored->download_id);
+        if (is_scheduled) scheduled_waiting_.insert(restored->download_id);
       }
     }
     persist_queue();
@@ -225,6 +264,7 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
     progress.state = DownloadState::failed;
     progress.bytes_per_second = 0.0;
     progress.message = std::move(message);
+    scheduled_waiting_.erase(id);
     queue_.set_state(id, DownloadState::failed);
     persist_queue();
   }
@@ -249,6 +289,7 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
   std::unordered_map<std::string, DownloadFilePaths> files_;
   std::unordered_map<std::string, LiveDownloadProgress> progress_;
   std::unordered_map<std::string, ProgressSample> progress_samples_;
+  std::unordered_set<std::string> scheduled_waiting_;
 };
 
 }  // namespace goreecloud::browser
