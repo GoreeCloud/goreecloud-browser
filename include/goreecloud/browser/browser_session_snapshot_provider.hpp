@@ -85,7 +85,9 @@ class BrowserSessionSnapshotProvider final : public SessionSnapshotProvider {
         tab.pinned = managed.pinned;
         tab.active = nav.active ||
                      (window_state.active_tab_id && *window_state.active_tab_id == tab_id);
-        tab.last_active_unix_ms = nav.last_active_unix_ms;
+        tab.last_active_unix_ms = tab.active
+                                      ? std::max(nav.last_active_unix_ms, unix_ms)
+                                      : nav.last_active_unix_ms;
         window.tabs.push_back(std::move(tab));
       }
 
