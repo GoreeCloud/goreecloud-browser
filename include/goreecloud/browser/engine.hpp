@@ -24,6 +24,10 @@ enum class EngineCapability : std::uint64_t {
   WebRTC = 1ull << 11,
   Printing = 1ull << 12,
   Accessibility = 1ull << 13,
+  PrivateContextCleanup = 1ull << 14,
+  OriginScopedCleanup = 1ull << 15,
+  AuthenticationStateCleanup = 1ull << 16,
+  PermissionStateCleanup = 1ull << 17,
 };
 
 using EngineCapabilities = std::uint64_t;
@@ -61,6 +65,32 @@ enum class RendererHealth {
   Terminated,
 };
 
+enum class EngineDataClass : std::uint64_t {
+  Cookies = 1ull << 0,
+  HttpCache = 1ull << 1,
+  LocalStorage = 1ull << 2,
+  IndexedDb = 1ull << 3,
+  ServiceWorkers = 1ull << 4,
+  AuthenticationState = 1ull << 5,
+  Permissions = 1ull << 6,
+  History = 1ull << 7,
+};
+
+using EngineDataClasses = std::uint64_t;
+constexpr EngineDataClasses data_class(EngineDataClass value) noexcept {
+  return static_cast<EngineDataClasses>(value);
+}
+
+inline constexpr EngineDataClasses kAllTemporaryEngineData =
+    data_class(EngineDataClass::Cookies) |
+    data_class(EngineDataClass::HttpCache) |
+    data_class(EngineDataClass::LocalStorage) |
+    data_class(EngineDataClass::IndexedDb) |
+    data_class(EngineDataClass::ServiceWorkers) |
+    data_class(EngineDataClass::AuthenticationState) |
+    data_class(EngineDataClass::Permissions) |
+    data_class(EngineDataClass::History);
+
 class EngineView {
  public:
   virtual ~EngineView() = default;
@@ -85,8 +115,19 @@ class EngineContext {
   [[nodiscard]] virtual std::unique_ptr<EngineView> create_view(
       const EngineViewOptions& options) = 0;
 
-  virtual void clear_site_data(std::string_view origin) = 0;
-  virtual void clear_all_site_data() = 0;
+  virtual bool clear_origin_data(std::string_view origin,
+                                 EngineDataClasses classes) = 0;
+  virtual bool clear_all_data(EngineDataClasses classes) = 0;
+  virtual bool clear_authentication_state(std::optional<std::string_view> origin) = 0;
+  virtual bool clear_permission_state(std::optional<std::string_view> origin) = 0;
+
+  virtual void clear_site_data(std::string_view origin) {
+    (void)clear_origin_data(origin, kAllTemporaryEngineData);
+  }
+
+  virtual void clear_all_site_data() {
+    (void)clear_all_data(kAllTemporaryEngineData);
+  }
 };
 
 class BrowserEngine {
