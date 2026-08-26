@@ -8,10 +8,12 @@ on:
       - "include/goreecloud/browser/sync_manifest.hpp"
       - "include/goreecloud/browser/sync_records.hpp"
       - "include/goreecloud/browser/sync_submission.hpp"
+      - "include/goreecloud/browser/sync_retrieval.hpp"
       - "apps/browser/sync_capabilities_smoke.cpp"
       - "apps/browser/sync_manifest_smoke.cpp"
       - "apps/browser/sync_records_smoke.cpp"
       - "apps/browser/sync_submission_smoke.cpp"
+      - "apps/browser/sync_retrieval_smoke.cpp"
       - ".github/workflows/sync-contract.yml"
   pull_request:
     paths:
@@ -19,10 +21,12 @@ on:
       - "include/goreecloud/browser/sync_manifest.hpp"
       - "include/goreecloud/browser/sync_records.hpp"
       - "include/goreecloud/browser/sync_submission.hpp"
+      - "include/goreecloud/browser/sync_retrieval.hpp"
       - "apps/browser/sync_capabilities_smoke.cpp"
       - "apps/browser/sync_manifest_smoke.cpp"
       - "apps/browser/sync_records_smoke.cpp"
       - "apps/browser/sync_submission_smoke.cpp"
+      - "apps/browser/sync_retrieval_smoke.cpp"
       - ".github/workflows/sync-contract.yml"
 
 permissions:
@@ -49,3 +53,7 @@ jobs:
         run: g++ -std=c++20 -Wall -Wextra -Wpedantic -Iinclude apps/browser/sync_submission_smoke.cpp -o /tmp/browser-sync-submission
       - name: Run submission contract
         run: /tmp/browser-sync-submission
+      - name: Compile retrieval contract
+        run: g++ -std=c++20 -Wall -Wextra -Wpedantic -Iinclude apps/browser/sync_retrieval_smoke.cpp -o /tmp/browser-sync-retrieval
+      - name: Run retrieval contract
+        run: /tmp/browser-sync-retrieval
