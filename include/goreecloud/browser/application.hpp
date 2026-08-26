@@ -78,10 +78,21 @@ class BrowserApplication {
 
   [[nodiscard]] WindowController& new_private_window(const std::string& private_session_id) {
     require_initialized();
-    auto* context = private_context_for(private_session_id);
+    auto* context = ensure_private_context(private_session_id);
     if (!context) throw std::runtime_error("Private Browser context unavailable");
     windows_.push_back(std::make_unique<WindowController>(*context, true));
     return *windows_.back();
+  }
+
+  [[nodiscard]] EngineContext* private_session_context(const std::string& private_session_id) {
+    require_initialized();
+    const auto found = private_contexts_.find(private_session_id);
+    return found == private_contexts_.end() ? nullptr : found->second.get();
+  }
+
+  [[nodiscard]] const EngineContext* private_session_context(const std::string& private_session_id) const {
+    const auto found = private_contexts_.find(private_session_id);
+    return found == private_contexts_.end() ? nullptr : found->second.get();
   }
 
   bool destroy_private_session_context(const std::string& private_session_id) {
@@ -99,7 +110,7 @@ class BrowserApplication {
   [[nodiscard]] bool initialized() const noexcept { return initialized_; }
 
  private:
-  EngineContext* private_context_for(const std::string& private_session_id) {
+  EngineContext* ensure_private_context(const std::string& private_session_id) {
     const auto found = private_contexts_.find(private_session_id);
     if (found != private_contexts_.end()) return found->second.get();
 
