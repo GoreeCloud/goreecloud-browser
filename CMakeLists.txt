@@ -19,12 +19,13 @@ option(GOREECLOUD_ENABLE_CEF
 
 set(GOREECLOUD_CEF_ROOT "" CACHE PATH
     "Path to an unpacked CEF binary distribution")
+set(GOREECLOUD_RELEASE_CHANNEL "beta" CACHE STRING
+    "GoreeCloud Browser release channel")
 
 if(GOREECLOUD_ENABLE_CEF AND NOT GOREECLOUD_ENABLE_CHROMIUM)
   message(FATAL_ERROR "GOREECLOUD_ENABLE_CEF requires GOREECLOUD_ENABLE_CHROMIUM=ON")
 endif()
 
-# GoreeCloud Browser follows the latest approved Stable Glaze UI release.
 set(GOREECLOUD_GLAZE_UI_STABLE_VERSION "1.5.0" CACHE STRING
     "Current approved Stable Glaze UI version required by GoreeCloud Browser")
 set(GOREECLOUD_GLAZE_UI_STABLE_REVISION
@@ -43,6 +44,7 @@ target_compile_features(goreecloud_browser_core INTERFACE cxx_std_20)
 target_compile_definitions(goreecloud_browser_core INTERFACE
   GOREECLOUD_GLAZE_UI_STABLE_VERSION="${GOREECLOUD_GLAZE_UI_STABLE_VERSION}"
   GOREECLOUD_GLAZE_UI_STABLE_REVISION="${GOREECLOUD_GLAZE_UI_STABLE_REVISION}"
+  GOREECLOUD_RELEASE_CHANNEL="${GOREECLOUD_RELEASE_CHANNEL}"
 )
 
 function(goreecloud_apply_warnings target)
@@ -68,10 +70,32 @@ if(GOREECLOUD_ENABLE_CHROMIUM)
     if(NOT EXISTS "${GOREECLOUD_CEF_ROOT}/include/cef_app.h")
       message(FATAL_ERROR "GOREECLOUD_CEF_ROOT does not contain include/cef_app.h")
     endif()
+    if(NOT EXISTS "${GOREECLOUD_CEF_ROOT}/cmake/FindCEF.cmake")
+      message(FATAL_ERROR "GOREECLOUD_CEF_ROOT does not contain cmake/FindCEF.cmake")
+    endif()
+
+    set(CEF_ROOT "${GOREECLOUD_CEF_ROOT}")
+    list(APPEND CMAKE_MODULE_PATH "${CEF_ROOT}/cmake")
+    find_package(CEF REQUIRED)
+
+    if(NOT TARGET libcef_lib)
+      ADD_LOGICAL_TARGET(libcef_lib "${CEF_LIB_DEBUG}" "${CEF_LIB_RELEASE}")
+    endif()
+    if(NOT TARGET libcef_dll_wrapper)
+      add_subdirectory(${CEF_LIBCEF_DLL_WRAPPER_PATH}
+                       ${CMAKE_BINARY_DIR}/libcef_dll_wrapper)
+    endif()
 
     target_sources(goreecloud_browser_chromium PRIVATE src/cef_runtime.cpp)
-    target_include_directories(goreecloud_browser_chromium PRIVATE ${GOREECLOUD_CEF_ROOT})
+    target_include_directories(goreecloud_browser_chromium PRIVATE ${CEF_INCLUDE_PATH})
+    target_link_libraries(goreecloud_browser_chromium
+      PUBLIC
+        libcef_dll_wrapper
+        libcef_lib
+        ${CEF_STANDARD_LIBS}
+    )
     target_compile_definitions(goreecloud_browser_chromium PUBLIC GOREECLOUD_ENABLE_CEF=1)
+    SET_LIBRARY_TARGET_PROPERTIES(goreecloud_browser_chromium)
   else()
     target_compile_definitions(goreecloud_browser_chromium PUBLIC GOREECLOUD_ENABLE_CEF=0)
   endif()
@@ -88,11 +112,20 @@ target_link_libraries(goreecloud_browser PRIVATE goreecloud_browser_core)
 if(GOREECLOUD_ENABLE_CHROMIUM)
   target_link_libraries(goreecloud_browser PRIVATE goreecloud_browser_chromium)
   target_compile_definitions(goreecloud_browser PRIVATE GOREECLOUD_ENABLE_CHROMIUM=1)
-  if(GOREECLOUD_ENABLE_CEF)
-    target_include_directories(goreecloud_browser PRIVATE ${GOREECLOUD_CEF_ROOT})
-  endif()
 else()
   target_compile_definitions(goreecloud_browser PRIVATE GOREECLOUD_ENABLE_CHROMIUM=0 GOREECLOUD_ENABLE_CEF=0)
+endif()
+
+if(GOREECLOUD_ENABLE_CEF)
+  target_include_directories(goreecloud_browser PRIVATE ${CEF_INCLUDE_PATH})
+  target_link_libraries(goreecloud_browser PRIVATE libcef_dll_wrapper libcef_lib ${CEF_STANDARD_LIBS})
+  SET_EXECUTABLE_TARGET_PROPERTIES(goreecloud_browser)
+
+  if(OS_LINUX OR OS_WINDOWS)
+    SET_CEF_TARGET_OUT_DIR()
+    COPY_FILES(goreecloud_browser "${CEF_BINARY_FILES}" "${CEF_BINARY_DIR}" "$<TARGET_FILE_DIR:goreecloud_browser>")
+    COPY_FILES(goreecloud_browser "${CEF_RESOURCE_FILES}" "${CEF_RESOURCE_DIR}" "$<TARGET_FILE_DIR:goreecloud_browser>")
+  endif()
 endif()
 
 goreecloud_apply_warnings(goreecloud_browser)
@@ -104,12 +137,20 @@ goreecloud_apply_warnings(goreecloud_browser_runtime_smoke)
 if(GOREECLOUD_ENABLE_CHROMIUM)
   add_executable(goreecloud_browser_chromium_smoke apps/browser/chromium_smoke.cpp)
   target_link_libraries(goreecloud_browser_chromium_smoke PRIVATE goreecloud_browser_core goreecloud_browser_chromium)
+  if(GOREECLOUD_ENABLE_CEF)
+    SET_EXECUTABLE_TARGET_PROPERTIES(goreecloud_browser_chromium_smoke)
+  endif()
   goreecloud_apply_warnings(goreecloud_browser_chromium_smoke)
 endif()
 
 if(BUILD_TESTING)
   add_test(NAME goreecloud_browser_runtime_smoke COMMAND goreecloud_browser_runtime_smoke)
-  if(GOREECLOUD_ENABLE_CHROMIUM)
+  if(GOREECLOUD_ENABLE_CHROMIUM AND NOT GOREECLOUD_ENABLE_CEF)
     add_test(NAME goreecloud_browser_chromium_smoke COMMAND goreecloud_browser_chromium_smoke)
   endif()
 endif()
+
+message(STATUS "GoreeCloud Browser ${PROJECT_VERSION} channel=${GOREECLOUD_RELEASE_CHANNEL}")
+message(STATUS "Glaze UI Stable ${GOREECLOUD_GLAZE_UI_STABLE_VERSION} @ ${GOREECLOUD_GLAZE_UI_STABLE_REVISION}")
+message(STATUS "Chromium adapter: ${GOREECLOUD_ENABLE_CHROMIUM}")
+message(STATUS "CEF runtime: ${GOREECLOUD_ENABLE_CEF}")
