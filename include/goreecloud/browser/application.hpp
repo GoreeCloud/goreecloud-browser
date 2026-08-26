@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "goreecloud/browser/engine.hpp"
+#include "goreecloud/browser/internal_pages.hpp"
 #include "goreecloud/browser/private_browsing.hpp"
 #include "goreecloud/browser/window_controller.hpp"
 
@@ -17,7 +18,9 @@ struct BrowserApplicationOptions {
   std::string profile_id{"default"};
   std::string storage_path{"profile"};
   std::string locale{"en-US"};
-  std::string initial_url{"about:blank"};
+  std::string initial_url{std::string{kNewTabUrl}};
+  bool initial_private_window{false};
+  std::string initial_private_session_id{"shared-private"};
 };
 
 class BrowserApplication {
@@ -55,8 +58,17 @@ class BrowserApplication {
     }
 
     initialized_ = true;
-    auto& window = new_window(false);
-    (void)window.new_tab(options_.initial_url);
+    if (options_.initial_private_window) {
+      auto& window = new_private_window(options_.initial_private_session_id);
+      (void)window.new_tab(options_.initial_url.empty()
+                               ? std::string{kPrivateStartUrl}
+                               : options_.initial_url);
+    } else {
+      auto& window = new_window(false);
+      (void)window.new_tab(options_.initial_url.empty()
+                               ? std::string{kNewTabUrl}
+                               : options_.initial_url);
+    }
   }
 
   void shutdown() noexcept {
@@ -108,6 +120,14 @@ class BrowserApplication {
   [[nodiscard]] const BrowserEngine& engine() const noexcept { return *engine_; }
   [[nodiscard]] std::size_t window_count() const noexcept { return windows_.size(); }
   [[nodiscard]] bool initialized() const noexcept { return initialized_; }
+
+  [[nodiscard]] WindowController* first_window() noexcept {
+    return windows_.empty() ? nullptr : windows_.front().get();
+  }
+
+  [[nodiscard]] const WindowController* first_window() const noexcept {
+    return windows_.empty() ? nullptr : windows_.front().get();
+  }
 
  private:
   EngineContext* ensure_private_context(const std::string& private_session_id) {
