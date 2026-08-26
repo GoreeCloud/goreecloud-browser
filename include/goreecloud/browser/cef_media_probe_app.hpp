@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string>
 
+#include "goreecloud/browser/cef_media_probe.hpp"
+
 #if GOREECLOUD_ENABLE_CEF
 #include "include/cef_app.h"
 #include "include/cef_browser.h"
@@ -14,9 +16,6 @@
 namespace goreecloud::browser {
 
 #if GOREECLOUD_ENABLE_CEF
-
-inline constexpr char kMediaProbeRequestMessage[] = "goreecloud.media_probe.request";
-inline constexpr char kMediaProbeResponseMessage[] = "goreecloud.media_probe.response";
 
 class GoreeCloudCefRenderApp final : public CefApp, public CefRenderProcessHandler {
  public:
@@ -42,7 +41,7 @@ class GoreeCloudCefRenderApp final : public CefApp, public CefRenderProcessHandl
       return true;
     }
 
-    static constexpr const char* kProbeFunction = R"JS(function(x,y){
+    static constexpr const char* kProbeScript = R"JS((function(x,y){
       const el = document.elementFromPoint(x,y);
       if (!el) return null;
       const closest = (node, selector) => node && node.closest ? node.closest(selector) : null;
@@ -92,12 +91,11 @@ class GoreeCloudCefRenderApp final : public CefApp, public CefRenderProcessHandl
         secure: location.protocol === 'https:' && (!src || src.startsWith('https:') || src.startsWith('data:') || src.startsWith('blob:')),
         crossOrigin: !!src && (function(){ try { return new URL(src, location.href).origin !== location.origin; } catch (_) { return false; } })()
       };
-    })JS";
+    }))JS";
 
     CefRefPtr<CefV8Value> retval;
     CefRefPtr<CefV8Exception> exception;
-    const std::string script = std::string{"("} + kProbeFunction + ")(" +
-                               std::to_string(x) + "," + std::to_string(y) + ")";
+    const std::string script = std::string{"("} + kProbeScript + ")(" + std::to_string(x) + "," + std::to_string(y) + ")";
     const bool ok = context->Eval(script, frame->GetURL(), 0, retval, exception);
     context->Exit();
 
