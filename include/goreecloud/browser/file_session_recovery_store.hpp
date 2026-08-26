@@ -1,7 +1,6 @@
 #pragma once
 
 #include <algorithm>
-#include <array>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -14,6 +13,7 @@
 #include <vector>
 
 #include "goreecloud/browser/session_recovery.hpp"
+#include "goreecloud/browser/session_recovery_protection.hpp"
 
 namespace goreecloud::browser {
 
@@ -24,18 +24,31 @@ struct FileSessionRecoveryStoreOptions {
 
 class FileSessionRecoveryStore final : public SessionRecoveryStore {
  public:
+  static constexpr std::string_view kProtectionPurpose = "browser.session-recovery.v1";
+
   FileSessionRecoveryStore(std::filesystem::path directory,
+                           SessionRecoveryProtectionBoundary protection,
                            FileSessionRecoveryStoreOptions options = {})
-      : directory_(std::move(directory)), options_(options) {}
+      : directory_(std::move(directory)),
+        protection_(std::move(protection)),
+        options_(options) {}
 
   bool write(const SessionCheckpoint& checkpoint) override {
-    if (checkpoint.checkpoint_id.empty()) return false;
+    if (checkpoint.checkpoint_id.empty() || !protection_.persistence_allowed()) return false;
     std::error_code error;
     std::filesystem::create_directories(directory_, error);
     if (error) return false;
 
     const auto payload = serialize(checkpoint);
-    const auto digest = fnv1a64(payload);
+    std::string envelope;
+    if (protection_.protected_at_rest_available()) {
+      const auto protected_payload = protection_.protect(kProtectionPurpose, payload);
+      if (!protected_payload) return false;
+      envelope = serialize_protected(*protected_payload);
+    } else {
+      envelope = serialize_development_plaintext(payload);
+    }
+
     const auto final_path = checkpoint_path(checkpoint.checkpoint_id);
     auto temp_path = final_path;
     temp_path += ".tmp";
@@ -43,7 +56,7 @@ class FileSessionRecoveryStore final : public SessionRecoveryStore {
     {
       std::ofstream out(temp_path, std::ios::binary | std::ios::trunc);
       if (!out) return false;
-      out << "GCRS1\n" << hex64(digest) << "\n" << payload;
+      out.write(envelope.data(), static_cast<std::streamsize>(envelope.size()));
       out.flush();
       if (!out) return false;
     }
@@ -66,7 +79,6 @@ class FileSessionRecoveryStore final : public SessionRecoveryStore {
   [[nodiscard]] std::vector<SessionCheckpoint> read_recent(std::size_t limit) const override {
     std::vector<SessionCheckpoint> checkpoints;
     for (const auto& path : checkpoint_files()) {
-      if (checkpoints.size() >= limit) break;
       const auto parsed = read_one(path);
       if (parsed) checkpoints.push_back(*parsed);
     }
@@ -136,6 +148,53 @@ class FileSessionRecoveryStore final : public SessionRecoveryStore {
     in >> std::hex >> value;
     if (!in || !in.eof()) return std::nullopt;
     return value;
+  }
+
+  static std::string hex_encode(std::string_view bytes) {
+    static constexpr char digits[] = "0123456789abcdef";
+    std::string out;
+    out.reserve(bytes.size() * 2);
+    for (const unsigned char byte : bytes) {
+      out.push_back(digits[(byte >> 4) & 0x0f]);
+      out.push_back(digits[byte & 0x0f]);
+    }
+    return out;
+  }
+
+  static std::optional<std::string> hex_decode(std::string_view text) {
+    if (text.size() % 2 != 0) return std::nullopt;
+    auto nibble = [](char ch) -> int {
+      if (ch >= '0' && ch <= '9') return ch - '0';
+      if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
+      if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
+      return -1;
+    };
+    std::string out;
+    out.reserve(text.size() / 2);
+    for (std::size_t i = 0; i < text.size(); i += 2) {
+      const auto high = nibble(text[i]);
+      const auto low = nibble(text[i + 1]);
+      if (high < 0 || low < 0) return std::nullopt;
+      out.push_back(static_cast<char>((high << 4) | low));
+    }
+    return out;
+  }
+
+  static std::string serialize_development_plaintext(std::string_view payload) {
+    std::ostringstream out;
+    out << "GCRS1\n" << hex64(fnv1a64(payload)) << "\n" << payload;
+    return out.str();
+  }
+
+  static std::string serialize_protected(const ProtectedRecoveryPayload& payload) {
+    std::ostringstream out;
+    out << "GCRS2\n"
+        << hex_encode(payload.algorithm) << '\n'
+        << hex_encode(payload.key_id) << '\n'
+        << hex_encode(payload.nonce) << '\n'
+        << hex_encode(payload.authentication_tag) << '\n'
+        << hex_encode(payload.ciphertext) << '\n';
+    return out.str();
   }
 
   static std::string serialize(const SessionCheckpoint& checkpoint) {
@@ -243,14 +302,53 @@ class FileSessionRecoveryStore final : public SessionRecoveryStore {
     std::ifstream in(path, std::ios::binary);
     if (!in) return std::nullopt;
     std::string magic;
-    std::string digest_text;
-    if (!std::getline(in, magic) || !std::getline(in, digest_text) || magic != "GCRS1") return std::nullopt;
-    std::ostringstream payload_stream;
-    payload_stream << in.rdbuf();
-    const auto payload = payload_stream.str();
-    const auto expected = parse_hex64(digest_text);
-    if (!expected || *expected != fnv1a64(payload)) return std::nullopt;
-    return parse_payload(payload);
+    if (!std::getline(in, magic)) return std::nullopt;
+
+    if (magic == "GCRS1") {
+      if (!protection_.persistence_allowed() || protection_.protected_at_rest_available()) {
+        return std::nullopt;
+      }
+      std::string digest_text;
+      if (!std::getline(in, digest_text)) return std::nullopt;
+      std::ostringstream payload_stream;
+      payload_stream << in.rdbuf();
+      const auto payload = payload_stream.str();
+      const auto expected = parse_hex64(digest_text);
+      if (!expected || *expected != fnv1a64(payload)) return std::nullopt;
+      return parse_payload(payload);
+    }
+
+    if (magic != "GCRS2" || !protection_.protected_at_rest_available()) return std::nullopt;
+    std::string algorithm_hex;
+    std::string key_id_hex;
+    std::string nonce_hex;
+    std::string tag_hex;
+    std::string ciphertext_hex;
+    if (!std::getline(in, algorithm_hex) || !std::getline(in, key_id_hex) ||
+        !std::getline(in, nonce_hex) || !std::getline(in, tag_hex) ||
+        !std::getline(in, ciphertext_hex)) {
+      return std::nullopt;
+    }
+    std::string unexpected;
+    if (std::getline(in, unexpected) && !unexpected.empty()) return std::nullopt;
+
+    const auto algorithm = hex_decode(algorithm_hex);
+    const auto key_id = hex_decode(key_id_hex);
+    const auto nonce = hex_decode(nonce_hex);
+    const auto tag = hex_decode(tag_hex);
+    const auto ciphertext = hex_decode(ciphertext_hex);
+    if (!algorithm || !key_id || !nonce || !tag || !ciphertext) return std::nullopt;
+
+    const ProtectedRecoveryPayload protected_payload{
+        .algorithm = *algorithm,
+        .key_id = *key_id,
+        .nonce = *nonce,
+        .ciphertext = *ciphertext,
+        .authentication_tag = *tag,
+    };
+    const auto plaintext = protection_.unprotect(kProtectionPurpose, protected_payload);
+    if (!plaintext) return std::nullopt;
+    return parse_payload(*plaintext);
   }
 
   [[nodiscard]] std::filesystem::path checkpoint_path(std::string_view checkpoint_id) const {
@@ -289,6 +387,7 @@ class FileSessionRecoveryStore final : public SessionRecoveryStore {
   }
 
   std::filesystem::path directory_;
+  SessionRecoveryProtectionBoundary protection_;
   FileSessionRecoveryStoreOptions options_;
 };
 
