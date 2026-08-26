@@ -1,17 +1,24 @@
 #pragma once
 
+#include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
 
 #include "goreecloud/browser/engine.hpp"
+#include "goreecloud/browser/media_target_detector.hpp"
 #include "goreecloud/browser/native_engine_surface.hpp"
 
 namespace goreecloud::browser {
 
 class ChromiumRuntimeView {
  public:
+  using MediaProbeCallback =
+      std::function<void(std::uint64_t sequence,
+                         std::optional<RawMediaHitTest> result)>;
+
   virtual ~ChromiumRuntimeView() = default;
   virtual void navigate(std::string_view url) = 0;
   virtual void reload(bool bypass_cache) = 0;
@@ -24,6 +31,20 @@ class ChromiumRuntimeView {
   virtual bool attach_surface(const NativeEngineSurface& surface) = 0;
   virtual void detach_surface() = 0;
   virtual void resize_surface(const NativeEngineSurface& surface) = 0;
+
+  // Optional asynchronous media probe. Runtime implementations that do not
+  // support point media hit testing return false without invoking callback.
+  virtual bool request_media_probe(int viewport_x,
+                                   int viewport_y,
+                                   std::uint64_t sequence,
+                                   MediaProbeCallback callback) {
+    (void)viewport_x;
+    (void)viewport_y;
+    (void)sequence;
+    (void)callback;
+    return false;
+  }
+
   [[nodiscard]] virtual NavigationState navigation_state() const = 0;
   [[nodiscard]] virtual RendererHealth renderer_health() const = 0;
 };
