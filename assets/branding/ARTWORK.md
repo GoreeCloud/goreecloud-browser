@@ -10,6 +10,7 @@ The following concepts were rejected during product review and must not be used 
 - **Horizon Portal** — rejected.
 - **Aurora Window** — rejected.
 - **Borealis Lens** — rejected because its segmented circular composition reads too similarly to Google Chrome and risks looking like an imitation rather than an original GoreeCloud identity.
+- **Tidefold** — rejected because its abstract interlocking planes are not immediately legible and do not communicate a clear, memorable Browser identity at a glance.
 
 The existing canonical SVG paths are retained only as rejected design history until a replacement concept is approved. They must not be treated as release artwork, launcher identity, favicon identity, package artwork, or production branding.
 
@@ -20,6 +21,7 @@ The next GoreeCloud Browser identity must be designed as a genuinely new concept
 It must satisfy these requirements:
 
 - immediately recognizable silhouette at launcher and favicon sizes;
+- clear semantic readability at first glance rather than requiring explanation;
 - first-party GoreeCloud character without borrowing upstream Browser identity;
 - compatible with the latest approved Stable Glaze UI design language;
 - simple enough to survive 16–32 px presentation;
@@ -47,9 +49,16 @@ Avoid making the primary identity a:
 - generic browser window;
 - segmented circular or radial composition resembling Chrome/Chromium;
 - multi-blade aperture or circular lens arrangement that can read as a Chrome derivative;
+- abstract interlocking planes, folds, or ribbons whose meaning is unclear without explanation;
 - Firefox-like animal/flame orbit;
 - Opera-like ring;
 - upstream Browser derivative.
+
+## Recognition-first design rule
+
+The next candidate must pass a simple recognition test before any material polish is considered: shown without a label and at small size, the mark should still read as an intentional, coherent product identity rather than an abstract shape.
+
+The mark does not need to literally depict a web browser, but it must have one dominant, memorable silhouette and an obvious internal logic. If the identity requires a paragraph to explain what the viewer is seeing, it is not acceptable.
 
 ## Glaze UI construction requirements
 
@@ -72,6 +81,7 @@ A future candidate is not official merely because an SVG is committed. Approval 
 - dark and light contexts;
 - Android adaptive masks;
 - Linux launcher integration;
+- unlabeled recognizability and semantic clarity;
 - similarity risk against Chrome, Chromium, Firefox, Opera, Edge, Safari, Brave, Vivaldi, Arc, and other major Browser identities;
 - consistency with current Stable Glaze UI.
 
