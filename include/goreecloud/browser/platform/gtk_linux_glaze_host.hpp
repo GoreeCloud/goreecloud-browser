@@ -7,6 +7,7 @@
 #include <string_view>
 
 #include "goreecloud/browser/media_hover.hpp"
+#include "goreecloud/browser/media_preview_provider.hpp"
 #include "goreecloud/browser/native_window_host.hpp"
 #include "goreecloud/browser/toolbar.hpp"
 
@@ -47,6 +48,8 @@ class GtkLinuxGlazeWindowHost final : public NativeWindowHost {
   [[nodiscard]] std::optional<MediaSaveDestination> choose_media_save_destination(MediaKind kind);
   [[nodiscard]] bool confirm_media_boundary(std::string_view title,
                                             std::string_view explanation);
+  [[nodiscard]] bool show_media_preview(const MediaPreviewFrame& frame,
+                                        std::string_view accessible_description);
   void show_media_action_status(std::string_view message);
 
   bool pump_events();
