@@ -2,93 +2,93 @@
 
 ## Approval status
 
-**No GoreeCloud Browser artwork is currently approved.**
+**Tabmark with the Glaze aqua treatment is the approved official GoreeCloud Browser artwork.**
 
-The following concepts were rejected during product review and must not be used as GoreeCloud Browser identity:
+Canonical sources:
 
-- **Glaze Navigation Ribbon** — rejected.
-- **Horizon Portal** — rejected.
-- **Aurora Window** — rejected.
-- **Borealis Lens** — rejected because its segmented circular composition reads too similarly to Google Chrome and risks looking like an imitation rather than an original GoreeCloud identity.
-- **Tidefold** — rejected because its abstract interlocking planes are not immediately legible and do not communicate a clear, memorable Browser identity at a glance.
-- **Waymark** — rejected because the location-pin silhouette reads primarily as GPS/maps/navigation rather than as a distinctive Browser identity.
+- `goreecloud-browser.svg` — approved full-color master.
+- `goreecloud-browser-monochrome.svg` — approved monochrome identity source.
 
-The existing canonical SVG paths are retained only as rejected design history until a replacement concept is approved. They must not be treated as release artwork, launcher identity, favicon identity, package artwork, or production branding.
+The approved identity uses the Tabmark geometry: a compact stack of offset browser tabs with a distinctive central cut. The approved color treatment uses a bright Glaze aqua / white / deep teal system.
 
-## Replacement requirement
+## Identity lock
 
-The next GoreeCloud Browser identity must be designed as a genuinely new concept rather than an iteration of any rejected mark.
+The official GoreeCloud Browser identity is defined by:
 
-It must satisfy these requirements:
+1. the stacked offset browser-tab silhouette;
+2. the front Browser surface with a clear top chrome line;
+3. the central cut integrated into the upper Browser/tab region;
+4. the proportional relationship between rear and front tab surfaces;
+5. the Glaze aqua / white / deep teal color treatment for the full-color master.
 
-- immediately recognizable silhouette at launcher and favicon sizes;
-- clear semantic readability at first glance rather than requiring explanation;
-- first-party GoreeCloud character without borrowing upstream Browser identity;
-- compatible with the latest approved Stable Glaze UI design language;
-- simple enough to survive 16–32 px presentation;
-- independently authored monochrome representation;
-- Android adaptive-icon compatibility;
-- Linux launcher and desktop-integration compatibility;
-- strong light, dark, high-contrast, and reduced-transparency behavior;
-- no dependence on gradients, transparency, shadows, or tiny internal details for recognition;
-- deterministic derivative generation and SHA-256 provenance;
-- no false security, privacy, networking, location, or service symbolism.
+The geometry, not gradients or shadow, is the primary recognition mechanism. Platform adaptations may simplify material effects while preserving the Tabmark silhouette and central cut.
 
-## Concept exclusions
+## Product meaning
 
-The replacement must not simply reuse or cosmetically alter the defining ideas of the rejected concepts.
+Tabmark is intentionally Browser-specific. It represents tabbed browsing, sessions, and first-party Browser chrome without borrowing a globe, compass, map pin, cloud, upstream Browser mark, or radial Browser-logo construction.
 
-Avoid making the primary identity a:
+## Glaze UI construction
 
-- navigation ribbon;
-- compass;
-- map pin or location marker;
-- GPS/location-navigation symbol;
-- open portal/ring with forward path;
-- four-pane or generic window tile;
-- generic globe;
-- generic cloud;
-- standalone letter G;
-- generic browser window;
-- segmented circular or radial composition resembling Chrome/Chromium;
-- multi-blade aperture or circular lens arrangement that can read as a Chrome derivative;
-- abstract interlocking planes, folds, or ribbons whose meaning is unclear without explanation;
-- Firefox-like animal/flame orbit;
-- Opera-like ring;
-- upstream Browser derivative.
+The approved master follows the current Stable Glaze UI application-icon approach:
 
-## Recognition-first design rule
+- **Foundation** — light aqua Glaze application field.
+- **Rear tab surface** — deep teal Browser/session layer.
+- **Front tab surface** — high-legibility white/light aqua primary Browser layer.
+- **Identity detail** — central cut and Browser chrome line.
+- **Depth** — restrained separation shadow only; depth is not required for recognition.
 
-The next candidate must pass a simple recognition test before any material polish is considered: shown without a label and at small size, the mark should still read as an intentional, coherent product identity rather than an abstract shape or an unrelated utility icon.
+## Color approval
 
-The mark does not need to literally depict a web browser, but it must have one dominant, memorable silhouette and an obvious internal logic. If the identity requires a paragraph to explain what the viewer is seeing, or if its first reading is maps, GPS, cloud storage, security, or another unrelated product category, it is not acceptable.
+Approved full-color relationship:
 
-## Glaze UI construction requirements
+- light aqua foundation;
+- deep teal rear surface;
+- white/light aqua front surface;
+- deep teal structural details.
 
-The eventual approved source should use the Glaze UI 1024 × 1024 application-icon master coordinate system and distinguish **identity geometry** from **presentation treatment**.
+The earlier navy/cyan/purple Tabmark palette was not approved and must not be used as the official Browser identity.
 
-Glaze materials, tonal depth, lighting, gradients, and platform adaptations may enhance the mark, but they must not define recognition. The identity must remain recognizable in one-color form.
+## Monochrome and accessibility
 
-## Required review before approval
+The monochrome source is an approved identity representation for single-color and themed contexts. High-contrast and reduced-transparency variants should preserve the same geometry with solid fills and sufficient separation.
 
-A future candidate is not official merely because an SVG is committed. Approval requires explicit product review after evaluating:
+## Platform adaptation
 
-- full-size master;
-- 256 px launcher presentation;
-- 128 px application presentation;
-- 64 px toolbar/task-switcher presentation;
-- 32 px favicon/application presentation;
-- 16 px micro presentation;
-- monochrome presentation;
-- high-contrast presentation;
-- dark and light contexts;
-- Android adaptive masks;
-- Linux launcher integration;
-- unlabeled recognizability and semantic clarity;
-- category confusion risk, including GPS/maps/location, cloud storage, security, networking, and other unrelated product classes;
-- similarity risk against Chrome, Chromium, Firefox, Opera, Edge, Safari, Brave, Vivaldi, Arc, and other major Browser identities;
-- consistency with current Stable Glaze UI.
+Platform derivatives may adapt masking, optical correction, material intensity, and detail density while preserving the identity lock.
 
-## Production rule
+Required targets include:
 
-Until a replacement is explicitly approved, GoreeCloud Browser must be considered to have **artwork pending**. Rejected concepts must not be shipped or represented as official product identity.
+- web and favicon assets;
+- Linux launcher/application sizes;
+- AppImage and portable Linux assets;
+- Android adaptive foreground;
+- Android round icon;
+- Android monochrome/themed icon;
+- future supported platform derivatives.
+
+## Rejected concepts
+
+The following concepts remain rejected and must not be reused as GoreeCloud Browser identity:
+
+- Glaze Navigation Ribbon;
+- Horizon Portal;
+- Aurora Window;
+- Borealis Lens;
+- Tidefold;
+- Waymark.
+
+The earlier Tabmark geometry is retained, but only the approved Glaze aqua treatment is the official full-color identity.
+
+## Prohibited substitutions
+
+Do not substitute Chromium, Chrome, Firefox, Mozilla, Opera, Edge, Safari, Brave, Vivaldi, Arc, or other upstream/third-party Browser artwork for Tabmark.
+
+Do not replace Tabmark in normal GoreeCloud Browser surfaces with a generic globe, cloud, compass, map pin, GPS marker, generic Browser window, radial Browser logo, or unrelated GoreeCloud service symbol.
+
+## Provenance and derivatives
+
+The canonical SVG files are the source of truth. Production derivatives must be generated deterministically, record SHA-256 evidence, and remain traceable to the exact canonical source revision used for generation.
+
+## Production acceptance
+
+Artwork approval establishes the official identity but does not by itself establish platform-release acceptance. Production packaging still requires rendered and real-platform validation at relevant sizes, masks, themes, launchers, task switchers, and accessibility modes.
