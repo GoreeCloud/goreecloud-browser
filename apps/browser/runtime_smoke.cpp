@@ -78,16 +78,16 @@ int main() {
     assert(normalized->kind == MediaKind::image);
     assert(normalized->media_url == hit.media_url);
     assert(normalized->link_url == hit.link_url);
-    assert(normalized->downloadable);
-    assert(normalized->copyable);
+    assert(normalized->can_download);
+    assert(normalized->can_copy);
 
     hit.drm_protected = true;
     hit.capturable_frame = true;
     const auto protected_target = MediaTargetDetector::normalize(hit);
     assert(protected_target);
     assert(protected_target->protected_media);
-    assert(!protected_target->downloadable);
-    assert(!protected_target->capturable_frame);
+    assert(!protected_target->can_download);
+    assert(!protected_target->can_capture_frame);
   }
 
   {
@@ -99,13 +99,15 @@ int main() {
     EngineMediaHitTest stale;
     stale.kind = EngineMediaElementKind::image;
     stale.media_url = "https://example.com/stale.jpg";
-    assert(!tracker.accept(first_sequence, stale));
+    const bool stale_accepted = tracker.accept(first_sequence, stale);
+    assert(!stale_accepted);
     assert(!tracker.latest_result());
 
     EngineMediaHitTest current;
     current.kind = EngineMediaElementKind::image;
     current.media_url = "https://example.com/current.jpg";
-    assert(tracker.accept(second_sequence, current));
+    const bool current_accepted = tracker.accept(second_sequence, current);
+    assert(current_accepted);
     assert(tracker.latest_result());
     assert(tracker.latest_result()->media_url == current.media_url);
     assert(tracker.latest_accepted() == second_sequence);
@@ -170,7 +172,9 @@ int main() {
            std::string_view::npos);
 
     MediaHoverController hover;
-    assert(hover.activate(image, MediaHoverActivation::keyboard_focus, policy, false));
+    const bool keyboard_activated = hover.activate(
+        image, MediaHoverActivation::keyboard_focus, policy, false);
+    assert(keyboard_activated);
     assert(hover.visible());
     const auto placement = MediaHoverController::place(
         MediaRect{.x = 980, .y = 20, .width = 300, .height = 200},
@@ -184,8 +188,12 @@ int main() {
     assert(!hover.visible());
 
     policy.modifier_required = true;
-    assert(!hover.activate(image, MediaHoverActivation::pointer_hover, policy, false));
-    assert(hover.activate(image, MediaHoverActivation::pointer_hover, policy, true));
+    const bool unmodified = hover.activate(
+        image, MediaHoverActivation::pointer_hover, policy, false);
+    const bool modified = hover.activate(
+        image, MediaHoverActivation::pointer_hover, policy, true);
+    assert(!unmodified);
+    assert(modified);
   }
 
   DevelopmentEngine engine;
@@ -209,12 +217,18 @@ int main() {
   tab_manager.register_tab({second.id(), window.window_id(), "workspace-main"});
 
   assert(window.tab_count() == 2);
-  assert(window.select_tab(first.id(), false));
-  assert(window.select_tab(second.id(), true));
-  assert(window.pin_selected_tabs(true));
-  assert(window.protect_selected_tabs(true));
-  assert(!window.close_tab(second.id()));
-  assert(window.close_tab(second.id(), true));
+  const bool selected_first = window.select_tab(first.id(), false);
+  const bool selected_second = window.select_tab(second.id(), true);
+  const bool pinned = window.pin_selected_tabs(true);
+  const bool protected_tabs = window.protect_selected_tabs(true);
+  const bool regular_close = window.close_tab(second.id());
+  const bool explicit_close = window.close_tab(second.id(), true);
+  assert(selected_first);
+  assert(selected_second);
+  assert(pinned);
+  assert(protected_tabs);
+  assert(!regular_close);
+  assert(explicit_close);
   assert(window.tab_count() == 1);
 
   window.open_home();
