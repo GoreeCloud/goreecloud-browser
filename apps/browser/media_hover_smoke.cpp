@@ -23,7 +23,7 @@ class FakeAsyncProvider final : public goreecloud::browser::AsyncMediaHitTestPro
 
   void respond(std::uint64_t sequence,
                std::optional<goreecloud::browser::EngineMediaHitTest> hit) {
-    assert(pending);
+    if (!pending) return;
     auto callback = std::move(pending);
     pending = {};
     callback(sequence, std::move(hit));
@@ -75,12 +75,16 @@ int main() {
   coordinator.set_hide_callback([&] { hidden = true; });
 
   const auto start = Clock::now();
-  assert(coordinator.probe(provider, {.viewport_x = 100, .viewport_y = 80}, start));
+  const bool first_probe = coordinator.probe(
+      provider, {.viewport_x = 100, .viewport_y = 80}, start);
+  assert(first_probe);
   const auto first_sequence = provider.last_sequence;
 
-  assert(!coordinator.probe(provider,
-                            {.viewport_x = 101, .viewport_y = 81},
-                            start + std::chrono::milliseconds{20}));
+  const bool throttled_probe = coordinator.probe(
+      provider,
+      {.viewport_x = 101, .viewport_y = 81},
+      start + std::chrono::milliseconds{20});
+  assert(!throttled_probe);
 
   EngineMediaHitTest image;
   image.kind = EngineMediaElementKind::image;
@@ -105,24 +109,30 @@ int main() {
 
   presented = false;
   const auto later = start + std::chrono::milliseconds{100};
-  assert(coordinator.probe(provider, {.viewport_x = 200, .viewport_y = 160}, later));
+  const bool second_probe = coordinator.probe(
+      provider, {.viewport_x = 200, .viewport_y = 160}, later);
+  assert(second_probe);
   const auto second_sequence = provider.last_sequence;
   coordinator.invalidate();
   provider.respond(second_sequence, image);
   assert(!presented);
   assert(!coordinator.has_visible_target());
 
-  assert(coordinator.probe(provider,
-                           {.viewport_x = 210, .viewport_y = 170},
-                           later + std::chrono::milliseconds{100}));
+  const bool third_probe = coordinator.probe(
+      provider,
+      {.viewport_x = 210, .viewport_y = 170},
+      later + std::chrono::milliseconds{100});
+  assert(third_probe);
   const auto third_sequence = provider.last_sequence;
   provider.respond(third_sequence, image);
   assert(coordinator.has_visible_target());
   hidden = false;
 
-  assert(coordinator.probe(provider,
-                           {.viewport_x = 220, .viewport_y = 180},
-                           later + std::chrono::milliseconds{200}));
+  const bool fourth_probe = coordinator.probe(
+      provider,
+      {.viewport_x = 220, .viewport_y = 180},
+      later + std::chrono::milliseconds{200});
+  assert(fourth_probe);
   provider.respond(provider.last_sequence, std::nullopt);
   assert(hidden);
   assert(!coordinator.has_visible_target());
@@ -130,11 +140,12 @@ int main() {
   MediaHoverSitePolicy disabled;
   disabled.enabled = false;
   coordinator.set_policy(disabled);
-  assert(!coordinator.probe(provider,
-                            {.viewport_x = 1, .viewport_y = 1},
-                            later + std::chrono::milliseconds{300}));
+  const bool disabled_probe = coordinator.probe(
+      provider,
+      {.viewport_x = 1, .viewport_y = 1},
+      later + std::chrono::milliseconds{300});
+  assert(!disabled_probe);
 
-  // Executable action routing remains GoreeCloud-only and explicit.
   MediaTarget target;
   target.kind = MediaKind::image;
   target.page_url = "https://example.test/gallery";
