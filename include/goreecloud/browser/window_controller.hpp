@@ -100,6 +100,13 @@ class WindowController {
   [[nodiscard]] bool private_window() const noexcept { return private_window_; }
   [[nodiscard]] const std::string& window_id() const noexcept { return window_id_; }
 
+  [[nodiscard]] std::vector<const Tab*> tabs() const {
+    std::vector<const Tab*> result;
+    result.reserve(tabs_.size());
+    for (const auto& tab : tabs_) result.push_back(tab.get());
+    return result;
+  }
+
   [[nodiscard]] std::vector<std::string> tab_ids() const {
     std::vector<std::string> ids;
     ids.reserve(tabs_.size());
