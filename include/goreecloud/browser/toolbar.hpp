@@ -14,10 +14,13 @@ enum class ToolbarItem {
   advanced_download_manager,
   privacy_shield,
   wardveil_security,
+  clipboard,
+  dns_cache,
+  advanced_proxy_manager,
   settings,
 };
 
-inline constexpr std::array<ToolbarItem, 9> kDefaultToolbar{
+inline constexpr std::array<ToolbarItem, 12> kDefaultToolbar{
     ToolbarItem::back,
     ToolbarItem::forward,
     ToolbarItem::refresh,
@@ -26,6 +29,9 @@ inline constexpr std::array<ToolbarItem, 9> kDefaultToolbar{
     ToolbarItem::advanced_download_manager,
     ToolbarItem::privacy_shield,
     ToolbarItem::wardveil_security,
+    ToolbarItem::clipboard,
+    ToolbarItem::dns_cache,
+    ToolbarItem::advanced_proxy_manager,
     ToolbarItem::settings,
 };
 
@@ -41,12 +47,15 @@ inline constexpr bool kAllowAdditionalDefaultToolbarItems = false;
     case ToolbarItem::advanced_download_manager: return "Advanced Download Manager";
     case ToolbarItem::privacy_shield: return "Privacy Shield";
     case ToolbarItem::wardveil_security: return "Wardveil Security";
+    case ToolbarItem::clipboard: return "Clipboard";
+    case ToolbarItem::dns_cache: return "DNS Cache";
+    case ToolbarItem::advanced_proxy_manager: return "Advanced Proxy Manager";
     case ToolbarItem::settings: return "Settings";
   }
   return "Unknown";
 }
 
-static_assert(kDefaultToolbar.size() == 9);
+static_assert(kDefaultToolbar.size() == 12);
 static_assert(!kAllowAdditionalDefaultToolbarItems);
 
 }  // namespace goreecloud::browser
