@@ -82,6 +82,12 @@ class CefRuntimeView final : public ChromiumRuntimeView {
                                         std::move(callback));
   }
 
+  bool request_media_preview(const MediaPreviewRequest& request,
+                             MediaPreviewCallback callback) override {
+    if (!client_ || !client_->browser() || !callback) return false;
+    return client_->request_media_preview(request, std::move(callback));
+  }
+
   bool attach_surface(const NativeEngineSurface& surface) override {
     surface_ = surface;
     if (client_ && client_->browser()) {
@@ -255,7 +261,7 @@ class CefRuntimeDelegateScaffold final : public ChromiumRuntimeDelegate {
   }
 
   [[nodiscard]] std::string_view runtime_version() const noexcept override {
-    return "cef-runtime-client-context-media-probe";
+    return "cef-runtime-client-context-media-preview";
   }
 
  private:
