@@ -2,72 +2,87 @@
 
 ## Official identity
 
-The official GoreeCloud Browser artwork is **Glaze Navigation Ribbon**.
+The official GoreeCloud Browser artwork is **Horizon Portal**.
 
 Canonical sources:
 
 - `goreecloud-browser.svg` — full-color master artwork.
-- `goreecloud-browser-monochrome.svg` — monochrome identity representation.
+- `goreecloud-browser-monochrome.svg` — authored monochrome identity representation.
 
 Both sources use the Glaze UI 1.5 Stable 1024 × 1024 master application-icon coordinate system.
 
+The previous **Glaze Navigation Ribbon** design was rejected during product review and is not approved GoreeCloud Browser identity.
+
 ## Identity lock
 
-The Browser identity lock is the combination of:
+Horizon Portal deliberately reduces the Browser mark to a small set of durable geometric characteristics:
 
-1. the rounded application foundation;
-2. the circular navigation ribbon wrapping the visual center;
-3. the forward/upward navigation pointer integrated into the ribbon;
-4. the central navigation pivot;
-5. the blue-to-violet GoreeCloud identity relationship in the full-color master.
+1. a rounded GoreeCloud application foundation;
+2. a large open circular portal forming the dominant silhouette;
+3. a forward-moving horizon/path crossing the portal;
+4. an integrated forward arrow at the path terminus;
+5. a small central navigation focus;
+6. a deep blue-to-violet GoreeCloud relationship in the full-color master.
 
-These characteristics define GoreeCloud Browser recognition and should survive future Glaze UI rendering, material, depth, lighting, and platform adaptations.
+The open portal represents access to the web without using a generic globe. The horizon path represents navigation and forward movement without borrowing a compass or upstream Browser symbol.
 
-The artwork intentionally combines three Browser concepts without becoming a literal browser-engine logo:
+Recognition must remain based on the portal/path silhouette rather than gradients, shadows, or decorative effects.
 
-- **navigation** — directional pointer and forward movement;
-- **continuity** — the surrounding ribbon implies persistent browsing/session flow;
-- **GoreeCloud identity** — Glaze material, rounded geometry, controlled depth, and GoreeCloud blue/violet presentation.
+## Design requirements
+
+The mark is intentionally simpler than the rejected predecessor:
+
+- one dominant silhouette;
+- substantially less internal geometry;
+- no decorative swooshes;
+- no simulated browser-engine symbolism;
+- no letterform logo;
+- no cloud glyph;
+- no globe;
+- no dependency on translucent detail for recognition.
+
+Material and depth are subordinate to the identity geometry. The full-color master uses a restrained foundation gradient and a single soft separation shadow. These may be simplified or removed at smaller optical sizes.
 
 ## Glaze UI construction
 
 The source follows the Glaze UI application-icon anatomy:
 
-- Foundation — rounded 1024-master application field.
-- Material — restrained gradient, atmospheric glaze, and soft depth.
-- Identity — navigation ribbon and pointer.
-- Detail — central pivot and bounded environmental highlight.
-- Light — restrained broad highlight and separation shadow.
+- **Foundation** — rounded 1024-master application field.
+- **Material** — restrained tonal depth.
+- **Identity** — open portal and forward horizon path.
+- **Detail** — central navigation focus.
+- **Light** — minimal separation treatment only.
 
-The primary identity geometry remains centered within the protected icon region. Decorative light is subordinate to recognition.
+## Optical-size behavior
 
-## Adaptation rules
+Display and Standard variants may retain the complete master presentation.
 
-Platform exports may adapt masking, background treatment, material intensity, optical correction, and detail density, but must preserve the identity lock.
+Compact variants should remove shadow before altering identity geometry.
 
-At small sizes, secondary atmospheric detail and shadow may be removed before primary geometry is simplified.
+Micro/favicons should prioritize the open portal and forward path. The central focus may be simplified when necessary for legibility, but the open-right portal and forward path must remain recognizable.
 
-Dark mode must not be produced through simple color inversion. Platform-specific dark presentation may adapt foundation luminosity and material response while preserving the recognizable blue/violet relationship.
+## Monochrome and accessibility
 
-Reduced-transparency and high-contrast variants should favor solid construction and stronger separation rather than attempting to preserve translucent effects.
+The monochrome source is independently authored from the same identity geometry rather than being an automatic grayscale conversion.
 
-The monochrome source is an authored identity representation and should be used as the basis for Android themed/monochrome presentation and other single-color contexts.
+High-contrast and reduced-transparency presentations should use solid construction. Identity must remain recognizable without color.
+
+## Platform adaptation
+
+Platform exports may adapt masking, background treatment, optical correction, and detail density while preserving the identity lock.
+
+Android adaptive, round, and monochrome assets must keep defining geometry inside platform-safe regions. Linux, AppImage, web, favicon, and portable derivatives must use the same canonical identity.
 
 ## Prohibited substitutions
 
 Do not use Chromium, Chrome, Firefox, Mozilla, Opera, Google, Blink, Gecko, or other upstream artwork as GoreeCloud Browser product identity.
 
-Do not replace the Navigation Ribbon with a generic globe, compass, letter G, cloud, or upstream browser mark without a separately approved identity revision.
+Do not substitute a generic globe, compass, cloud, letter G, or platform Browser glyph for Horizon Portal in normal GoreeCloud product surfaces.
 
 ## Provenance
 
-Canonical SHA-256 values:
+Canonical source hashes are recorded and validated by the repository artwork pipeline. Every generated derivative must record its own SHA-256 and identify the canonical source revision/hash from which it was produced.
 
-- `goreecloud-browser.svg`: `bfe541b8721cdacb68c0ff4a84d96f60612bbeb6cbccd352fa911bc2c9fa30ee`
-- `goreecloud-browser-monochrome.svg`: `1e22eabf32341d672f0c79368a45013d9d84a181ed53ee1ae750d8103a4b501a`
+## Production acceptance
 
-Future generated derivatives must record their own SHA-256 and identify the canonical source hash from which they were produced.
-
-## Planned derivatives
-
-The production artwork pipeline should deterministically generate the required Browser assets, including web/favicons, Linux icon sizes, AppImage assets, portable Linux assets, and Android adaptive, round, and monochrome resources. Derivative generation does not itself constitute platform acceptance; rendered review and real-platform validation remain required.
+Artwork is not production-approved merely because canonical SVGs exist. Acceptance requires rendered review at Display, Standard, Compact, and Micro sizes; light/dark contextual review; monochrome and high-contrast review; Launcher/task-switcher comparison; Android adaptive-mask validation; Linux integration validation; and deterministic derivative verification.
