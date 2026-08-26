@@ -5,6 +5,7 @@
 #include <string>
 #include <thread>
 
+#include "goreecloud/browser/advanced_download_panel.hpp"
 #include "goreecloud/browser/application.hpp"
 #include "goreecloud/browser/browser_media_action_backend.hpp"
 #include "goreecloud/browser/chrome_command_router.hpp"
@@ -41,6 +42,7 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
 
   auto download_runtime = make_download_runtime();
   auto& downloads = download_runtime->service();
+  auto* live_downloads = dynamic_cast<AdvancedDownloadRuntimeService*>(&downloads);
   UnavailableMediaDestinationService media_destinations;
   BrowserMediaActionBackend media_backend(
       visual_search_router,
@@ -59,24 +61,19 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
         if (!tab) return false;
         auto* provider = dynamic_cast<AsyncMediaPreviewProvider*>(&tab->engine_view());
         if (!provider) return false;
-
         MediaPreviewRequest preview_request;
         preview_request.target = target;
         preview_request.maximum_width = 960;
         preview_request.maximum_height = 720;
         preview_request.allow_animation = target.animated;
-
         return provider->request_media_preview(
             preview_request,
             [&](std::optional<MediaPreviewFrame> frame, std::string error) {
               if (!frame) {
-                host.show_media_action_status(
-                    error.empty() ? "Media preview is unavailable." : error);
+                host.show_media_action_status(error.empty() ? "Media preview is unavailable." : error);
                 return;
               }
-              const std::string description = target.alt_text.empty()
-                                                  ? "Media preview"
-                                                  : target.alt_text;
+              const std::string description = target.alt_text.empty() ? "Media preview" : target.alt_text;
               if (!host.show_media_preview(*frame, description)) {
                 host.show_media_action_status("Media preview could not be displayed.");
               }
@@ -85,10 +82,21 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
       &media_destinations);
   MediaActionExecutor media_executor(media_backend);
 
+  auto render_download_panel = [&] {
+    if (!live_downloads) {
+      host.show_panel("Advanced Download Manager\nLive transfer runtime is unavailable in this build.");
+      return;
+    }
+    const auto model = AdvancedDownloadPanelBuilder::build(*live_downloads);
+    host.show_panel(AdvancedDownloadPanelBuilder::format_text(model));
+  };
+
   host.set_toolbar_handler([&](ToolbarItem item) {
     commands.clear_panel();
     if (!commands.invoke(item)) return;
-    if (!commands.active_panel().empty()) {
+    if (commands.active_panel() == "downloads") {
+      render_download_panel();
+    } else if (!commands.active_panel().empty()) {
       host.show_panel(commands.active_panel());
     }
   });
@@ -171,8 +179,7 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
         "Linux beta host requires GTK3 on an X11/XWayland display; native Wayland embedding is not yet enabled");
   }
 
-  host.set_title(window->private_window() ? "GoreeCloud Browser — Private"
-                                          : "GoreeCloud Browser");
+  host.set_title(window->private_window() ? "GoreeCloud Browser — Private" : "GoreeCloud Browser");
   host.render_chrome(chrome.snapshot());
 
   auto current_url = window->active_tab()->engine_view().navigation_state().url;
@@ -187,6 +194,7 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
   while (host.pump_events()) {
     application.engine().pump_events();
     download_runtime->pump();
+    if (commands.active_panel() == "downloads") render_download_panel();
 
     host.render_chrome(chrome.snapshot());
     if (auto* tab = window->active_tab()) {
