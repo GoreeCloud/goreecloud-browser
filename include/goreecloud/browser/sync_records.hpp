@@ -27,6 +27,22 @@ struct HistorySyncInput {
   bool private_mode{false};
 };
 
+inline std::string EscapeSyncJson(std::string_view value) {
+  std::string out;
+  out.reserve(value.size());
+  for (const char ch : value) {
+    switch (ch) {
+      case '\\': out += "\\\\"; break;
+      case '"': out += "\\\""; break;
+      case '\n': out += "\\n"; break;
+      case '\r': out += "\\r"; break;
+      case '\t': out += "\\t"; break;
+      default: out += ch; break;
+    }
+  }
+  return out;
+}
+
 // Private/incognito state is structurally excluded from Browser synchronization.
 inline std::optional<SyncRecord> MakeTabSyncRecord(const TabSyncInput& tab) {
   if (tab.private_mode || tab.id.empty() || tab.url.empty()) {
@@ -36,7 +52,8 @@ inline std::optional<SyncRecord> MakeTabSyncRecord(const TabSyncInput& tab) {
       .dataset = "browser.tabs",
       .schema_version = 1,
       .record_id = tab.id,
-      .payload_json = "{\"url\":\"" + tab.url + "\",\"title\":\"" + tab.title + "\"}",
+      .payload_json = "{\"url\":\"" + EscapeSyncJson(tab.url) + "\",\"title\":\"" +
+                      EscapeSyncJson(tab.title) + "\"}",
   };
 }
 
@@ -48,8 +65,9 @@ inline std::optional<SyncRecord> MakeHistorySyncRecord(const HistorySyncInput& h
       .dataset = "browser.history",
       .schema_version = 1,
       .record_id = history.id,
-      .payload_json = "{\"url\":\"" + history.url + "\",\"title\":\"" + history.title +
-                      "\",\"visitedAt\":\"" + history.visited_at + "\"}",
+      .payload_json = "{\"url\":\"" + EscapeSyncJson(history.url) + "\",\"title\":\"" +
+                      EscapeSyncJson(history.title) + "\",\"visitedAt\":\"" +
+                      EscapeSyncJson(history.visited_at) + "\"}",
   };
 }
 
