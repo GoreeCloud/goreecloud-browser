@@ -6,15 +6,19 @@ on:
     paths:
       - "include/goreecloud/browser/sync_capabilities.hpp"
       - "include/goreecloud/browser/sync_manifest.hpp"
+      - "include/goreecloud/browser/sync_records.hpp"
       - "apps/browser/sync_capabilities_smoke.cpp"
       - "apps/browser/sync_manifest_smoke.cpp"
+      - "apps/browser/sync_records_smoke.cpp"
       - ".github/workflows/sync-contract.yml"
   pull_request:
     paths:
       - "include/goreecloud/browser/sync_capabilities.hpp"
       - "include/goreecloud/browser/sync_manifest.hpp"
+      - "include/goreecloud/browser/sync_records.hpp"
       - "apps/browser/sync_capabilities_smoke.cpp"
       - "apps/browser/sync_manifest_smoke.cpp"
+      - "apps/browser/sync_records_smoke.cpp"
       - ".github/workflows/sync-contract.yml"
 
 permissions:
@@ -33,3 +37,7 @@ jobs:
         run: g++ -std=c++20 -Wall -Wextra -Wpedantic -Iinclude apps/browser/sync_manifest_smoke.cpp -o /tmp/browser-sync-manifest
       - name: Run service manifest contract
         run: /tmp/browser-sync-manifest
+      - name: Compile privacy-safe record contract
+        run: g++ -std=c++20 -Wall -Wextra -Wpedantic -Iinclude apps/browser/sync_records_smoke.cpp -o /tmp/browser-sync-records
+      - name: Run privacy-safe record contract
+        run: /tmp/browser-sync-records
