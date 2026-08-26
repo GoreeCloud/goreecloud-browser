@@ -8,6 +8,9 @@
 
 namespace goreecloud::browser {
 
+inline constexpr char kMediaProbeRequestMessage[] = "goreecloud.media_probe.request";
+inline constexpr char kMediaProbeResponseMessage[] = "goreecloud.media_probe.response";
+
 struct MediaProbePoint {
   int x{0};
   int y{0};
@@ -20,10 +23,6 @@ class CefMediaProbeBridge {
 
   virtual ~CefMediaProbeBridge() = default;
 
-  // Requests a renderer-side point probe. The implementation must inspect the
-  // element at the given viewport coordinates and return normalized metadata
-  // asynchronously. The probe itself must not download, OCR, analyze, or send
-  // media off-device.
   virtual bool request_probe(const MediaProbePoint& point, ResultCallback callback) = 0;
 };
 
