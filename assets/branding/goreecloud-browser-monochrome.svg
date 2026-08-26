@@ -1,11 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
-  <title id="title">GoreeCloud Browser — Borealis Lens Candidate Monochrome</title>
-  <desc id="desc">Monochrome three-sail lens identity around a central aperture.</desc>
+  <title id="title">GoreeCloud Browser — Tidefold Candidate Monochrome</title>
+  <desc id="desc">Monochrome asymmetric interlocking fold identity.</desc>
   <rect x="64" y="64" width="896" height="896" rx="224" fill="#000000"/>
-  <path d="M512 208C600 208 680 240 742 294L580 486C560 470 536 462 512 462C484 462 460 472 440 490L290 286C350 236 426 208 512 208Z" fill="#FFFFFF"/>
-  <path d="M742 294C804 350 842 430 842 520C842 630 786 726 700 782L574 568C602 548 620 516 620 482C620 480 620 478 620 476L742 294Z" fill="#FFFFFF"/>
-  <path d="M700 782C646 816 582 836 512 836C326 836 176 686 176 500C176 416 206 340 258 282L440 490C420 510 408 538 408 568C408 630 458 680 520 680C544 680 566 672 584 660L700 782Z" fill="#FFFFFF"/>
-  <circle cx="512" cy="548" r="112" fill="#000000"/>
-  <circle cx="512" cy="548" r="66" fill="#FFFFFF"/>
-  <circle cx="512" cy="548" r="28" fill="#000000"/>
+  <path d="M222 350C222 314 248 284 284 278L626 222C674 214 714 254 704 302L670 456C664 484 642 506 614 512L436 548C412 552 394 572 394 596V650L252 604C226 596 208 572 208 544V394C208 374 212 360 222 350Z" fill="#FFFFFF"/>
+  <path d="M802 674C802 710 776 740 740 746L398 802C350 810 310 770 320 722L354 568C360 540 382 518 410 512L588 476C612 472 630 452 630 428V374L772 420C798 428 816 452 816 480V630C816 650 812 664 802 674Z" fill="#FFFFFF"/>
+  <path d="M394 596C394 572 412 552 436 548L588 516C612 512 630 492 630 468V428C630 452 612 472 588 476L436 508C412 512 394 532 394 556V596Z" fill="#000000"/>
 </svg>
