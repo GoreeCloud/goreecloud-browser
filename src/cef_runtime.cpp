@@ -27,6 +27,13 @@ class CefRuntimeView final : public ChromiumRuntimeView {
   }
 
   void navigate(std::string_view url) override {
+    {
+      std::scoped_lock lock(state_mutex_);
+      state_.url = std::string{url};
+      state_.title = state_.url;
+      state_.loading = true;
+      state_.progress = 0.0;
+    }
     if (client_ && client_->browser()) {
       client_->browser()->GetMainFrame()->LoadURL(std::string{url});
     }
@@ -65,6 +72,11 @@ class CefRuntimeView final : public ChromiumRuntimeView {
 
   bool attach_surface(const NativeEngineSurface& surface) override {
     surface_ = surface;
+    if (client_ && client_->browser()) {
+      attached_ = true;
+      client_->browser()->GetHost()->WasResized();
+      return true;
+    }
     if (!client_) {
       client_ = new GoreeCloudCefClient(
           [this](const NavigationState& state) {
@@ -75,19 +87,20 @@ class CefRuntimeView final : public ChromiumRuntimeView {
     }
 
     CefWindowInfo window_info;
-#if defined(OS_LINUX)
     window_info.SetAsChild(reinterpret_cast<CefWindowHandle>(surface.window_handle),
                            CefRect(surface.x, surface.y, surface.width, surface.height));
-#else
-    window_info.SetAsChild(reinterpret_cast<CefWindowHandle>(surface.window_handle),
-                           CefRect(surface.x, surface.y, surface.width, surface.height));
-#endif
+
+    std::string initial_url;
+    {
+      std::scoped_lock lock(state_mutex_);
+      initial_url = state_.url.empty() ? options_.initial_url : state_.url;
+    }
 
     CefBrowserSettings browser_settings;
     const bool created = CefBrowserHost::CreateBrowser(
         window_info,
         client_,
-        options_.initial_url,
+        initial_url,
         browser_settings,
         nullptr,
         request_context_);
@@ -141,7 +154,6 @@ class CefRuntimeContext final : public ChromiumRuntimeContext {
 
   bool clear_origin_data(std::string_view,
                          EngineDataClasses) override {
-    // Full per-origin clearing will be implemented with CEF browsing-data APIs.
     return false;
   }
 
@@ -160,7 +172,6 @@ class CefRuntimeContext final : public ChromiumRuntimeContext {
   }
 
   bool clear_permission_state(std::optional<std::string_view>) override {
-    // Permission-state cleanup will be connected to CEF content settings APIs.
     return false;
   }
 
