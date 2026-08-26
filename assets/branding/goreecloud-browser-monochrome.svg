@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">GoreeCloud Browser — Glaze Navigation Ribbon Monochrome</title>
+  <desc id="desc">Monochrome identity lock for GoreeCloud Browser.</desc>
+  <rect x="64" y="64" width="896" height="896" rx="224" fill="#000000"/>
+  <path d="M286 512C286 372 394 258 532 248C640 240 744 296 802 390L698 430C656 366 584 330 510 340C420 352 352 426 352 516C352 620 436 704 540 704C620 704 690 656 722 584L806 638C758 740 654 810 534 810C396 810 282 704 270 568C268 548 274 530 286 512Z"
+        fill="#FFFFFF"/>
+  <path d="M458 320L790 388L626 526L558 706L458 320Z" fill="#FFFFFF"/>
+  <path d="M520 398L690 432L604 504L568 598L520 398Z" fill="#000000"/>
+  <circle cx="514" cy="516" r="54" fill="#FFFFFF"/>
+  <circle cx="514" cy="516" r="24" fill="#000000"/>
+</svg>
