@@ -8,12 +8,52 @@
 
 #include "goreecloud/browser/chromium_runtime_delegate.hpp"
 #include "goreecloud/browser/chromium_runtime_factory.hpp"
+#include "goreecloud/browser/media_hit_test_provider.hpp"
 #include "goreecloud/browser/native_engine_surface.hpp"
 
 namespace goreecloud::browser {
 namespace {
 
-class ChromiumEngineView final : public EngineView, public NativeSurfaceAttachable {
+EngineMediaElementKind to_engine_media_kind(MediaKind kind) {
+  switch (kind) {
+    case MediaKind::image: return EngineMediaElementKind::image;
+    case MediaKind::video: return EngineMediaElementKind::video;
+    case MediaKind::animated_image: return EngineMediaElementKind::animated_image;
+    case MediaKind::thumbnail: return EngineMediaElementKind::thumbnail;
+    case MediaKind::background_image: return EngineMediaElementKind::background_image;
+    case MediaKind::embedded_media: return EngineMediaElementKind::embedded_media;
+    case MediaKind::unknown: break;
+  }
+  return EngineMediaElementKind::none;
+}
+
+EngineMediaHitTest to_engine_hit_test(const RawMediaHitTest& raw) {
+  EngineMediaHitTest hit;
+  hit.kind = to_engine_media_kind(raw.kind);
+  hit.page_url = raw.page_url;
+  hit.media_url = raw.media_url;
+  if (!raw.link_url.empty()) hit.link_url = raw.link_url;
+  hit.mime_type = raw.mime_type;
+  hit.alt_text = raw.alt_text;
+  hit.intrinsic_width = raw.intrinsic_width;
+  hit.intrinsic_height = raw.intrinsic_height;
+  hit.displayed_width = raw.displayed_width;
+  hit.displayed_height = raw.displayed_height;
+  hit.duration_seconds = raw.duration_seconds;
+  hit.animated = raw.animated;
+  hit.secure_resource = raw.secure_resource;
+  hit.downloadable = raw.downloadable;
+  hit.copyable = raw.copyable;
+  hit.capturable_frame = raw.frame_capture_supported;
+  hit.protected_media = raw.protected_media;
+  hit.drm_protected = raw.drm_protected;
+  hit.same_origin_with_page = !raw.cross_origin;
+  return hit;
+}
+
+class ChromiumEngineView final : public EngineView,
+                                 public NativeSurfaceAttachable,
+                                 public AsyncMediaHitTestProvider {
  public:
   explicit ChromiumEngineView(std::unique_ptr<ChromiumRuntimeView> runtime_view)
       : runtime_view_(std::move(runtime_view)) {
@@ -58,6 +98,25 @@ class ChromiumEngineView final : public EngineView, public NativeSurfaceAttachab
 
   [[nodiscard]] bool native_surface_attached() const noexcept override {
     return attached_;
+  }
+
+  bool request_media_hit_test(MediaHitTestPoint point,
+                              std::uint64_t sequence,
+                              ResultCallback callback) override {
+    return runtime_view_->request_media_probe(
+        point.viewport_x,
+        point.viewport_y,
+        sequence,
+        [callback = std::move(callback)](
+            std::uint64_t response_sequence,
+            std::optional<RawMediaHitTest> raw) mutable {
+          if (!callback) return;
+          if (!raw) {
+            callback(response_sequence, std::nullopt);
+            return;
+          }
+          callback(response_sequence, to_engine_hit_test(*raw));
+        });
   }
 
  private:
