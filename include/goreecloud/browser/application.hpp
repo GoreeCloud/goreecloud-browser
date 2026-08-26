@@ -3,10 +3,12 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "goreecloud/browser/engine.hpp"
+#include "goreecloud/browser/private_browsing.hpp"
 #include "goreecloud/browser/window_controller.hpp"
 
 namespace goreecloud::browser {
@@ -29,19 +31,14 @@ class BrowserApplication {
   }
 
   ~BrowserApplication() {
-    if (initialized_) {
-      shutdown();
-    }
+    if (initialized_) shutdown();
   }
 
   BrowserApplication(const BrowserApplication&) = delete;
   BrowserApplication& operator=(const BrowserApplication&) = delete;
 
   void initialize() {
-    if (initialized_) {
-      return;
-    }
-
+    if (initialized_) return;
     engine_->initialize();
 
     EngineContextOptions context_options;
@@ -64,34 +61,36 @@ class BrowserApplication {
 
   void shutdown() noexcept {
     windows_.clear();
+    private_contexts_.clear();
     default_context_.reset();
-    private_context_.reset();
     engine_->shutdown();
     initialized_ = false;
   }
 
   [[nodiscard]] WindowController& new_window(bool private_window) {
-    require_initialized();
-
-    EngineContext* context = default_context_.get();
     if (private_window) {
-      if (!private_context_) {
-        EngineContextOptions private_options;
-        private_options.profile_id = options_.profile_id + "-private";
-        private_options.locale = options_.locale;
-        private_options.private_context = true;
-        private_options.persistent_storage = false;
-        private_context_ = engine_->create_context(private_options);
-      }
-      context = private_context_.get();
+      return new_private_window("shared-private");
     }
-
-    if (!context) {
-      throw std::runtime_error("Browser context unavailable");
-    }
-
-    windows_.push_back(std::make_unique<WindowController>(*context, private_window));
+    require_initialized();
+    windows_.push_back(std::make_unique<WindowController>(*default_context_, false));
     return *windows_.back();
+  }
+
+  [[nodiscard]] WindowController& new_private_window(const std::string& private_session_id) {
+    require_initialized();
+    auto* context = private_context_for(private_session_id);
+    if (!context) throw std::runtime_error("Private Browser context unavailable");
+    windows_.push_back(std::make_unique<WindowController>(*context, true));
+    return *windows_.back();
+  }
+
+  bool destroy_private_session_context(const std::string& private_session_id) {
+    require_initialized();
+    return private_contexts_.erase(private_session_id) > 0;
+  }
+
+  [[nodiscard]] bool has_private_session_context(const std::string& private_session_id) const {
+    return private_contexts_.contains(private_session_id);
   }
 
   [[nodiscard]] BrowserEngine& engine() noexcept { return *engine_; }
@@ -100,6 +99,24 @@ class BrowserApplication {
   [[nodiscard]] bool initialized() const noexcept { return initialized_; }
 
  private:
+  EngineContext* private_context_for(const std::string& private_session_id) {
+    const auto found = private_contexts_.find(private_session_id);
+    if (found != private_contexts_.end()) return found->second.get();
+
+    EngineContextOptions private_options;
+    private_options.profile_id = options_.profile_id + "-private-" + private_session_id;
+    private_options.storage_path.clear();
+    private_options.locale = options_.locale;
+    private_options.private_context = true;
+    private_options.persistent_storage = false;
+
+    auto context = engine_->create_context(private_options);
+    if (!context) return nullptr;
+    auto* raw = context.get();
+    private_contexts_.emplace(private_session_id, std::move(context));
+    return raw;
+  }
+
   void require_initialized() const {
     if (!initialized_) {
       throw std::logic_error("BrowserApplication is not initialized");
@@ -109,7 +126,7 @@ class BrowserApplication {
   std::unique_ptr<BrowserEngine> engine_;
   BrowserApplicationOptions options_;
   std::unique_ptr<EngineContext> default_context_;
-  std::unique_ptr<EngineContext> private_context_;
+  std::unordered_map<std::string, std::unique_ptr<EngineContext>> private_contexts_;
   std::vector<std::unique_ptr<WindowController>> windows_;
   bool initialized_{false};
 };
