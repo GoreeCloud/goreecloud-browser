@@ -5,37 +5,48 @@
 
 namespace goreecloud::browser {
 
-enum class ToolbarAction {
+enum class ToolbarItem {
   back,
   forward,
+  refresh,
   home,
-  reload_or_stop,
-  address_and_search,
-  clipboard,
+  unified_search,
+  advanced_download_manager,
+  privacy_shield,
+  wardveil_security,
   settings,
-  downloads,
-  clear_dns_cache,
-  proxy_quick_switch,
 };
 
-inline constexpr std::array<ToolbarAction, 8> kDefaultDesktopToolbar{
-    ToolbarAction::back,
-    ToolbarAction::forward,
-    ToolbarAction::home,
-    ToolbarAction::reload_or_stop,
-    ToolbarAction::address_and_search,
-    ToolbarAction::clipboard,
-    ToolbarAction::settings,
-    ToolbarAction::downloads,
+inline constexpr std::array<ToolbarItem, 9> kDefaultToolbar{
+    ToolbarItem::back,
+    ToolbarItem::forward,
+    ToolbarItem::refresh,
+    ToolbarItem::home,
+    ToolbarItem::unified_search,
+    ToolbarItem::advanced_download_manager,
+    ToolbarItem::privacy_shield,
+    ToolbarItem::wardveil_security,
+    ToolbarItem::settings,
 };
 
-enum class ReloadStopMode {
-  hard_reload,
-  stop,
-};
+inline constexpr bool kAllowAdditionalDefaultToolbarItems = false;
 
-[[nodiscard]] constexpr ReloadStopMode reload_stop_mode(bool page_loading) {
-  return page_loading ? ReloadStopMode::stop : ReloadStopMode::hard_reload;
+[[nodiscard]] constexpr std::string_view toolbar_item_name(ToolbarItem item) {
+  switch (item) {
+    case ToolbarItem::back: return "Back";
+    case ToolbarItem::forward: return "Forward";
+    case ToolbarItem::refresh: return "Refresh";
+    case ToolbarItem::home: return "Home";
+    case ToolbarItem::unified_search: return "Unified Search";
+    case ToolbarItem::advanced_download_manager: return "Advanced Download Manager";
+    case ToolbarItem::privacy_shield: return "Privacy Shield";
+    case ToolbarItem::wardveil_security: return "Wardveil Security";
+    case ToolbarItem::settings: return "Settings";
+  }
+  return "Unknown";
 }
+
+static_assert(kDefaultToolbar.size() == 9);
+static_assert(!kAllowAdditionalDefaultToolbarItems);
 
 }  // namespace goreecloud::browser
