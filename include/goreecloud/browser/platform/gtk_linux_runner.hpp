@@ -5,11 +5,15 @@
 #include <string>
 #include <thread>
 
+#include "goreecloud/browser/advanced_download_manager_service.hpp"
 #include "goreecloud/browser/application.hpp"
+#include "goreecloud/browser/browser_media_action_backend.hpp"
 #include "goreecloud/browser/chrome_command_router.hpp"
 #include "goreecloud/browser/chrome_shell.hpp"
 #include "goreecloud/browser/configured_search_router.hpp"
 #include "goreecloud/browser/internal_pages.hpp"
+#include "goreecloud/browser/media_action_executor.hpp"
+#include "goreecloud/browser/media_visual_search_router.hpp"
 #include "goreecloud/browser/omnibox_controller.hpp"
 #include "goreecloud/browser/platform/gtk_linux_glaze_host.hpp"
 
@@ -26,7 +30,33 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
   BrowserChromeShell chrome(*window);
   ChromeCommandRouter commands(*window);
   auto search_router = search_router_from_environment();
+  auto visual_search_router = visual_search_router_from_environment();
   OmniboxController omnibox(search_router);
+
+  MediaHoverSitePolicy media_policy;
+  media_policy.allow_remote_processing = true;
+  host.set_media_hover_policy(media_policy);
+
+  UnavailableAdvancedDownloadManagerService downloads;
+  BrowserMediaActionBackend media_backend(
+      visual_search_router,
+      downloads,
+      [&](std::string_view url) {
+        commands.clear_panel();
+        window->navigate_active(url);
+        if (auto* tab = window->active_tab()) host.attach_engine_view(tab->engine_view());
+      },
+      [&](std::string_view url) {
+        (void)window->new_tab(url);
+      },
+      [&](std::string_view text) { return host.copy_text_to_clipboard(text); },
+      [&](const MediaTarget&) {
+        // A true inline preview requires an engine-backed preview surface that
+        // preserves the page authorization context. Do not substitute a fake
+        // GTK network fetch or navigate away from the page.
+        return false;
+      });
+  MediaActionExecutor media_executor(media_backend);
 
   host.set_toolbar_handler([&](ToolbarItem item) {
     commands.clear_panel();
@@ -66,6 +96,38 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
         host.show_panel("Wardveil Security");
         break;
     }
+  });
+
+  host.set_media_hover_action_handler([&](MediaAction action, const MediaTarget& target) {
+    MediaActionRequest request;
+    request.action = action;
+    request.target = target;
+    request.explicit_user_action = true;
+
+    if (action == MediaAction::search || action == MediaAction::search_similar ||
+        action == MediaAction::search_region || action == MediaAction::search_frame) {
+      request.processing_destination = MediaProcessingDestination::goreecloud_hosted;
+      request.privacy_authorized = host.confirm_media_boundary(
+          "Privacy Shield — Visual Search",
+          "This action will send the selected media reference to GoreeCloud Search for visual processing. Continue?");
+      if (!request.privacy_authorized) return;
+    }
+
+    if (action == MediaAction::save || action == MediaAction::download_media ||
+        action == MediaAction::save_region || action == MediaAction::save_frame) {
+      const auto destination = host.choose_media_save_destination(target.kind);
+      if (!destination) return;
+      request.save_destination = *destination;
+      if (*destination != MediaSaveDestination::local_device) {
+        request.persistence_warning_accepted = host.confirm_media_boundary(
+            "Private-to-Persistent Boundary",
+            "This synchronized destination will preserve the media outside the current webpage/session when its GoreeCloud service adapter is available. Continue?");
+        if (!request.persistence_warning_accepted) return;
+      }
+    }
+
+    const auto result = media_executor.execute(request, media_policy);
+    host.show_media_action_status(result.message);
   });
 
   if (!host.create()) {
