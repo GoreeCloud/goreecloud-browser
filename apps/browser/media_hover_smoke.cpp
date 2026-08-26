@@ -6,6 +6,7 @@
 
 #include "goreecloud/browser/browser_media_action_backend.hpp"
 #include "goreecloud/browser/live_media_hover_coordinator.hpp"
+#include "goreecloud/browser/media_destination_service.hpp"
 #include "goreecloud/browser/media_visual_search_router.hpp"
 
 namespace {
@@ -43,6 +44,22 @@ class FakeDownloads final : public goreecloud::browser::AdvancedDownloadManagerS
   }
 
   std::optional<goreecloud::browser::DownloadEnqueueRequest> last;
+};
+
+class FakeDestinations final : public goreecloud::browser::MediaDestinationService {
+ public:
+  goreecloud::browser::MediaDestinationResult store(
+      goreecloud::browser::MediaDestinationRequest request) override {
+    last = std::move(request);
+    return {.accepted = true,
+            .persisted = persist,
+            .item_id = persist ? "media-1" : std::string{},
+            .message = persist ? "Stored in synchronized destination."
+                               : "Destination did not confirm persistence."};
+  }
+
+  bool persist{true};
+  std::optional<goreecloud::browser::MediaDestinationRequest> last;
 };
 
 }  // namespace
@@ -155,6 +172,7 @@ int main() {
   ConfiguredGoreeCloudVisualSearchRouter visual_search(
       "https://search.goreecloud.test/visual");
   FakeDownloads downloads;
+  FakeDestinations destinations;
   std::string navigated;
   std::string opened;
   std::string copied;
@@ -167,7 +185,8 @@ int main() {
         copied = std::string{text};
         return true;
       },
-      [](const MediaTarget&) { return false; });
+      [](const MediaTarget&) { return false; },
+      &destinations);
   MediaActionExecutor executor(backend);
 
   MediaHoverSitePolicy policy;
@@ -194,6 +213,27 @@ int main() {
   assert(downloads.last);
   assert(downloads.last->source_url == target.media_url);
   assert(downloads.last->referrer_url == target.page_url);
+
+  MediaActionRequest synchronized_save;
+  synchronized_save.action = MediaAction::save;
+  synchronized_save.target = target;
+  synchronized_save.save_destination = MediaSaveDestination::goreecloud_drive;
+  synchronized_save.explicit_user_action = true;
+  const auto denied_sync = executor.execute(synchronized_save, policy);
+  assert(denied_sync.disposition == MediaActionDisposition::denied);
+  assert(!destinations.last);
+
+  synchronized_save.persistence_warning_accepted = true;
+  const auto stored_sync = executor.execute(synchronized_save, policy);
+  assert(stored_sync.disposition == MediaActionDisposition::completed);
+  assert(stored_sync.destination_confirmed);
+  assert(destinations.last);
+  assert(destinations.last->destination == MediaDestinationKind::drive);
+  assert(destinations.last->target.media_url == target.media_url);
+
+  destinations.persist = false;
+  const auto unconfirmed_sync = executor.execute(synchronized_save, policy);
+  assert(unconfirmed_sync.disposition == MediaActionDisposition::failed);
 
   MediaActionRequest copy_request;
   copy_request.action = MediaAction::copy_media_url;
