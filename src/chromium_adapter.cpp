@@ -42,23 +42,21 @@ class ChromiumEngineView final : public EngineView, public NativeSurfaceAttachab
   }
 
   bool attach_native_surface(const NativeEngineSurface& surface) override {
-    return runtime_view_->attach_surface(surface);
-  }
-
-  void resize_native_surface(const NativeEngineSurface& surface) override {
-    runtime_view_->resize_surface(surface);
-  }
-
-  void detach_native_surface() override { runtime_view_->detach_surface(); }
-
-  [[nodiscard]] bool native_surface_attached() const noexcept override {
-    // Runtime surface state is intentionally kept behind the Chromium boundary;
-    // the Browser host treats successful attach as authoritative until detach.
+    attached_ = runtime_view_->attach_surface(surface);
     return attached_;
   }
 
-  bool attach_and_track(const NativeEngineSurface& surface) {
-    attached_ = runtime_view_->attach_surface(surface);
+  void resize_native_surface(const NativeEngineSurface& surface) override {
+    if (!attached_) return;
+    runtime_view_->resize_surface(surface);
+  }
+
+  void detach_native_surface() override {
+    runtime_view_->detach_surface();
+    attached_ = false;
+  }
+
+  [[nodiscard]] bool native_surface_attached() const noexcept override {
     return attached_;
   }
 
