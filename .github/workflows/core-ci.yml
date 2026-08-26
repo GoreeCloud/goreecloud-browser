@@ -1,0 +1,34 @@
+name: GoreeCloud Browser Core CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-core:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGOREECLOUD_ENABLE_CHROMIUM=OFF -DGOREECLOUD_ENABLE_CEF=OFF
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  linux-core-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DGOREECLOUD_ENABLE_CHROMIUM=OFF -DGOREECLOUD_ENABLE_CEF=OFF
+      - name: Build
+        run: cmake --build build-debug --parallel
+      - name: Test
+        run: ctest --test-dir build-debug --output-on-failure
