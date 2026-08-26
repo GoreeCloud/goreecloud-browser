@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -117,12 +118,18 @@ class DownloadTransferPlanner {
 
 class DownloadTransferScheduler {
  public:
+  using ProgressCallback = std::function<void(const DownloadTransferPlan&)>;
+
   static constexpr std::size_t kMaximumActiveDownloads =
       InProcessAdvancedDownloadManagerService::kMaximumSimultaneousDownloads;
   static constexpr unsigned kMaximumRetriesPerSegment = 3;
 
   explicit DownloadTransferScheduler(DownloadTransport& transport)
       : transport_(transport) {}
+
+  void set_progress_callback(ProgressCallback callback) {
+    progress_callback_ = std::move(callback);
+  }
 
   bool queue(DownloadRecord record) {
     if (record.download_id.empty() || record.request.source_url.empty()) return false;
@@ -153,12 +160,14 @@ class DownloadTransferScheduler {
         failed_.push_back(active.record.download_id);
         continue;
       }
+      if (progress_callback_) progress_callback_(active.plan);
       active_.push_back(std::move(active));
     }
 
     for (auto& active : active_) {
       if (active.finished || active.failed) continue;
       run_one_segment(active);
+      if (progress_callback_) progress_callback_(active.plan);
     }
 
     for (const auto& active : active_) {
@@ -221,6 +230,10 @@ class DownloadTransferScheduler {
     if (result.completed || segment.completed_bytes >= segment_size) {
       segment.completed_bytes = segment_size;
       segment.finished = true;
+      active.plan.completed_bytes = 0;
+      for (const auto& planned : active.plan.segments) {
+        active.plan.completed_bytes += planned.completed_bytes;
+      }
       const bool all_finished = std::all_of(
           active.plan.segments.begin(), active.plan.segments.end(),
           [](const DownloadSegment& planned) { return planned.finished; });
@@ -236,6 +249,7 @@ class DownloadTransferScheduler {
   }
 
   DownloadTransport& transport_;
+  ProgressCallback progress_callback_;
   std::deque<DownloadRecord> pending_;
   std::vector<ActiveTransfer> active_;
   std::vector<std::string> completed_;
