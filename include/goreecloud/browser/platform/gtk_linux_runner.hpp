@@ -13,6 +13,7 @@
 #include "goreecloud/browser/configured_search_router.hpp"
 #include "goreecloud/browser/internal_pages.hpp"
 #include "goreecloud/browser/media_action_executor.hpp"
+#include "goreecloud/browser/media_preview_provider.hpp"
 #include "goreecloud/browser/media_visual_search_router.hpp"
 #include "goreecloud/browser/omnibox_controller.hpp"
 #include "goreecloud/browser/platform/gtk_linux_glaze_host.hpp"
@@ -50,11 +51,33 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
         (void)window->new_tab(url);
       },
       [&](std::string_view text) { return host.copy_text_to_clipboard(text); },
-      [&](const MediaTarget&) {
-        // A true inline preview requires an engine-backed preview surface that
-        // preserves the page authorization context. Do not substitute a fake
-        // GTK network fetch or navigate away from the page.
-        return false;
+      [&](const MediaTarget& target) {
+        auto* tab = window->active_tab();
+        if (!tab) return false;
+        auto* provider = dynamic_cast<AsyncMediaPreviewProvider*>(&tab->engine_view());
+        if (!provider) return false;
+
+        MediaPreviewRequest preview_request;
+        preview_request.target = target;
+        preview_request.maximum_width = 960;
+        preview_request.maximum_height = 720;
+        preview_request.allow_animation = target.animated;
+
+        return provider->request_media_preview(
+            preview_request,
+            [&](std::optional<MediaPreviewFrame> frame, std::string error) {
+              if (!frame) {
+                host.show_media_action_status(
+                    error.empty() ? "Media preview is unavailable." : error);
+                return;
+              }
+              const std::string description = target.alt_text.empty()
+                                                  ? "Media preview"
+                                                  : target.alt_text;
+              if (!host.show_media_preview(*frame, description)) {
+                host.show_media_action_status("Media preview could not be displayed.");
+              }
+            });
       });
   MediaActionExecutor media_executor(media_backend);
 
@@ -78,8 +101,6 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
         host.attach_engine_view(tab->engine_view());
       }
     } catch (const std::exception&) {
-      // Search failure is visible and fail-closed. No alternate provider is
-      // ever substituted when GoreeCloud Search is unavailable/unconfigured.
       host.show_panel("GoreeCloud Search unavailable");
     }
   });
@@ -127,7 +148,9 @@ inline int run_gtk_linux_browser(BrowserApplication& application) {
     }
 
     const auto result = media_executor.execute(request, media_policy);
-    host.show_media_action_status(result.message);
+    if (!result.message.empty() && action != MediaAction::preview) {
+      host.show_media_action_status(result.message);
+    }
   });
 
   if (!host.create()) {
