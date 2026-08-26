@@ -1,6 +1,8 @@
 #pragma once
 
+#include <algorithm>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "goreecloud/browser/advanced_tab_manager.hpp"
