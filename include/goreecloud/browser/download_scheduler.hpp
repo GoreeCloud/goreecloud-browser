@@ -11,8 +11,6 @@
 
 namespace goreecloud::browser {
 
-enum class NetworkClass { offline, wifi, ethernet, cellular, metered, unknown };
-
 struct DeviceTransferState {
   NetworkClass network{NetworkClass::unknown};
   bool battery_saver{false};
