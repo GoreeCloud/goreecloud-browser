@@ -17,10 +17,17 @@ modules:
     buildsystem: cmake-ninja
     config-opts:
       - -DCMAKE_BUILD_TYPE=Release
+      - -DBUILD_TESTING=OFF
+      - -DGOREECLOUD_ENABLE_LINUX_GTK_HOST=ON
+      - -DGOREECLOUD_ENABLE_CHROMIUM=OFF
+      - -DGOREECLOUD_ENABLE_CEF=OFF
+      - -DGOREECLOUD_RELEASE_CHANNEL=beta
     sources:
       - type: dir
         path: ../..
 
-# Development scaffold only. Chromium runtime files, sandbox integration,
-# portals, codecs, desktop metadata, icons, signing, and production permission
-# review must be completed before this manifest is release-eligible.
+# Beta shell manifest. It builds the visible GoreeCloud/Glaze GTK host and
+# first-party Browser core, but intentionally leaves Chromium/CEF disabled
+# until a reviewed CEF runtime module, sandbox, codecs, and runtime provenance
+# are incorporated into the Flatpak build. It is not a render-capable browser
+# package or production artifact yet.
