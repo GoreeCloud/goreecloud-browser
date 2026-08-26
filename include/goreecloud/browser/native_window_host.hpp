@@ -23,7 +23,7 @@ class NativeWindowHost {
   virtual void close() = 0;
 
   virtual void set_title(std::string_view title) = 0;
-  virtual void render_chrome(const ChromeShellState& state) = 0;
+  virtual void render_chrome(const BrowserChromeState& state) = 0;
   virtual void attach_engine_view(EngineView& view) = 0;
   virtual void detach_engine_view() = 0;
   virtual void show_internal_surface(std::string_view internal_url) = 0;
