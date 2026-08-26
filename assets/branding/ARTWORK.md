@@ -1,88 +1,76 @@
 # GoreeCloud Browser Artwork
 
-## Official identity
+## Approval status
 
-The official GoreeCloud Browser artwork is **Horizon Portal**.
+**No GoreeCloud Browser artwork is currently approved.**
 
-Canonical sources:
+The following concepts were rejected during product review and must not be used as GoreeCloud Browser identity:
 
-- `goreecloud-browser.svg` — full-color master artwork.
-- `goreecloud-browser-monochrome.svg` — authored monochrome identity representation.
+- **Glaze Navigation Ribbon** — rejected.
+- **Horizon Portal** — rejected.
 
-Both sources use the Glaze UI 1.5 Stable 1024 × 1024 master application-icon coordinate system.
+The existing canonical SVG paths are retained only as rejected design history until a replacement concept is approved. They must not be treated as release artwork, launcher identity, favicon identity, package artwork, or production branding.
 
-The previous **Glaze Navigation Ribbon** design was rejected during product review and is not approved GoreeCloud Browser identity.
+## Replacement requirement
 
-## Identity lock
+The next GoreeCloud Browser identity must be designed as a genuinely new concept rather than an iteration of either rejected mark.
 
-Horizon Portal deliberately reduces the Browser mark to a small set of durable geometric characteristics:
+It must satisfy these requirements:
 
-1. a rounded GoreeCloud application foundation;
-2. a large open circular portal forming the dominant silhouette;
-3. a forward-moving horizon/path crossing the portal;
-4. an integrated forward arrow at the path terminus;
-5. a small central navigation focus;
-6. a deep blue-to-violet GoreeCloud relationship in the full-color master.
+- immediately recognizable silhouette at launcher and favicon sizes;
+- first-party GoreeCloud character without borrowing upstream Browser identity;
+- compatible with the latest approved Stable Glaze UI design language;
+- simple enough to survive 16–32 px presentation;
+- independently authored monochrome representation;
+- Android adaptive-icon compatibility;
+- Linux launcher and desktop-integration compatibility;
+- strong light, dark, high-contrast, and reduced-transparency behavior;
+- no dependence on gradients, transparency, shadows, or tiny internal details for recognition;
+- deterministic derivative generation and SHA-256 provenance;
+- no false security, privacy, networking, or service symbolism.
 
-The open portal represents access to the web without using a generic globe. The horizon path represents navigation and forward movement without borrowing a compass or upstream Browser symbol.
+## Concept exclusions
 
-Recognition must remain based on the portal/path silhouette rather than gradients, shadows, or decorative effects.
+The replacement must not simply reuse or cosmetically alter the defining ideas of the rejected concepts.
 
-## Design requirements
+Avoid making the primary identity a:
 
-The mark is intentionally simpler than the rejected predecessor:
+- navigation ribbon;
+- compass;
+- open portal/ring with forward path;
+- generic globe;
+- generic cloud;
+- standalone letter G;
+- generic browser window;
+- Chromium/Chrome-like segmented circle;
+- Firefox-like animal/flame orbit;
+- Opera-like ring;
+- upstream Browser derivative.
 
-- one dominant silhouette;
-- substantially less internal geometry;
-- no decorative swooshes;
-- no simulated browser-engine symbolism;
-- no letterform logo;
-- no cloud glyph;
-- no globe;
-- no dependency on translucent detail for recognition.
+## Glaze UI construction requirements
 
-Material and depth are subordinate to the identity geometry. The full-color master uses a restrained foundation gradient and a single soft separation shadow. These may be simplified or removed at smaller optical sizes.
+The eventual approved source should use the Glaze UI 1024 × 1024 application-icon master coordinate system and distinguish **identity geometry** from **presentation treatment**.
 
-## Glaze UI construction
+Glaze materials, tonal depth, lighting, gradients, and platform adaptations may enhance the mark, but they must not define recognition. The identity must remain recognizable in one-color form.
 
-The source follows the Glaze UI application-icon anatomy:
+## Required review before approval
 
-- **Foundation** — rounded 1024-master application field.
-- **Material** — restrained tonal depth.
-- **Identity** — open portal and forward horizon path.
-- **Detail** — central navigation focus.
-- **Light** — minimal separation treatment only.
+A future candidate is not official merely because an SVG is committed. Approval requires explicit product review after evaluating:
 
-## Optical-size behavior
+- full-size master;
+- 256 px launcher presentation;
+- 128 px application presentation;
+- 64 px toolbar/task-switcher presentation;
+- 32 px favicon/application presentation;
+- 16 px micro presentation;
+- monochrome presentation;
+- high-contrast presentation;
+- dark and light contexts;
+- Android adaptive masks;
+- Linux launcher integration;
+- similarity risk against major Browser identities;
+- consistency with current Stable Glaze UI.
 
-Display and Standard variants may retain the complete master presentation.
+## Production rule
 
-Compact variants should remove shadow before altering identity geometry.
-
-Micro/favicons should prioritize the open portal and forward path. The central focus may be simplified when necessary for legibility, but the open-right portal and forward path must remain recognizable.
-
-## Monochrome and accessibility
-
-The monochrome source is independently authored from the same identity geometry rather than being an automatic grayscale conversion.
-
-High-contrast and reduced-transparency presentations should use solid construction. Identity must remain recognizable without color.
-
-## Platform adaptation
-
-Platform exports may adapt masking, background treatment, optical correction, and detail density while preserving the identity lock.
-
-Android adaptive, round, and monochrome assets must keep defining geometry inside platform-safe regions. Linux, AppImage, web, favicon, and portable derivatives must use the same canonical identity.
-
-## Prohibited substitutions
-
-Do not use Chromium, Chrome, Firefox, Mozilla, Opera, Google, Blink, Gecko, or other upstream artwork as GoreeCloud Browser product identity.
-
-Do not substitute a generic globe, compass, cloud, letter G, or platform Browser glyph for Horizon Portal in normal GoreeCloud product surfaces.
-
-## Provenance
-
-Canonical source hashes are recorded and validated by the repository artwork pipeline. Every generated derivative must record its own SHA-256 and identify the canonical source revision/hash from which it was produced.
-
-## Production acceptance
-
-Artwork is not production-approved merely because canonical SVGs exist. Acceptance requires rendered review at Display, Standard, Compact, and Micro sizes; light/dark contextual review; monochrome and high-contrast review; Launcher/task-switcher comparison; Android adaptive-mask validation; Linux integration validation; and deterministic derivative verification.
+Until a replacement is explicitly approved, GoreeCloud Browser must be considered to have **artwork pending**. Rejected concepts must not be shipped or represented as official product identity.
