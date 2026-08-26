@@ -7,6 +7,7 @@
 #include "goreecloud/browser/runtime_engine_factory.hpp"
 #include "goreecloud/browser/toolbar.hpp"
 #include "goreecloud/browser/unified_search_bar.hpp"
+#include "goreecloud/browser/version.hpp"
 
 int main(int argc, char** argv) {
   using namespace goreecloud::browser;
@@ -22,7 +23,8 @@ int main(int argc, char** argv) {
     BrowserApplication browser(std::move(selection.engine), options);
     browser.initialize();
 
-    std::cout << "GoreeCloud Browser 0.1.0-beta.1\n";
+    std::cout << "GoreeCloud Browser " << kBrowserVersion << "\n";
+    std::cout << "Release channel: " << kBrowserReleaseChannel << "\n";
     std::cout << "Runtime mode: " << selection.mode << "\n";
     std::cout << "Engine: " << browser.engine().name() << " "
               << browser.engine().version() << "\n";
@@ -33,6 +35,7 @@ int main(int argc, char** argv) {
     std::cout << "Glaze UI: approved Stable baseline enforced by build\n";
     std::cout << "Production renderer requested: "
               << (selection.production_renderer_requested ? "yes" : "no") << "\n";
+    std::cout << "Production approved: " << (kProductionApproved ? "yes" : "no") << "\n";
 
     browser.shutdown();
     return 0;
