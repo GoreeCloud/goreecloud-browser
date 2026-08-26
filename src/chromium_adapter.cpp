@@ -137,6 +137,10 @@ class ChromiumEngineAdapter::Impl {
     initialized_ = false;
   }
 
+  void pump_events() {
+    if (initialized_) runtime_->do_message_loop_work();
+  }
+
   [[nodiscard]] bool initialized() const noexcept { return initialized_; }
   [[nodiscard]] ChromiumRuntimeDelegate& runtime() noexcept { return *runtime_; }
   [[nodiscard]] const ChromiumRuntimeDelegate& runtime() const noexcept {
@@ -156,6 +160,7 @@ ChromiumEngineAdapter::~ChromiumEngineAdapter() = default;
 
 void ChromiumEngineAdapter::initialize() { impl_->initialize(); }
 void ChromiumEngineAdapter::shutdown() { impl_->shutdown(); }
+void ChromiumEngineAdapter::pump_events() { impl_->pump_events(); }
 
 std::string_view ChromiumEngineAdapter::name() const noexcept {
   return "GoreeCloud Browser Engine Layer (Chromium)";
