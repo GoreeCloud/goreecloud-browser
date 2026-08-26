@@ -84,7 +84,8 @@ class BrowserApplication {
       return new_private_window("shared-private");
     }
     require_initialized();
-    windows_.push_back(std::make_unique<WindowController>(*default_context_, false));
+    const auto id = std::string{"window-"} + std::to_string(next_window_id_++);
+    windows_.push_back(std::make_unique<WindowController>(*default_context_, false, nullptr, id));
     return *windows_.back();
   }
 
@@ -92,7 +93,8 @@ class BrowserApplication {
     require_initialized();
     auto* context = ensure_private_context(private_session_id);
     if (!context) throw std::runtime_error("Private Browser context unavailable");
-    windows_.push_back(std::make_unique<WindowController>(*context, true));
+    const auto id = std::string{"window-"} + std::to_string(next_window_id_++);
+    windows_.push_back(std::make_unique<WindowController>(*context, true, nullptr, id));
     return *windows_.back();
   }
 
@@ -120,6 +122,13 @@ class BrowserApplication {
   [[nodiscard]] const BrowserEngine& engine() const noexcept { return *engine_; }
   [[nodiscard]] std::size_t window_count() const noexcept { return windows_.size(); }
   [[nodiscard]] bool initialized() const noexcept { return initialized_; }
+
+  [[nodiscard]] std::vector<const WindowController*> windows() const {
+    std::vector<const WindowController*> result;
+    result.reserve(windows_.size());
+    for (const auto& window : windows_) result.push_back(window.get());
+    return result;
+  }
 
   [[nodiscard]] WindowController* first_window() noexcept {
     return windows_.empty() ? nullptr : windows_.front().get();
@@ -159,6 +168,7 @@ class BrowserApplication {
   std::unique_ptr<EngineContext> default_context_;
   std::unordered_map<std::string, std::unique_ptr<EngineContext>> private_contexts_;
   std::vector<std::unique_ptr<WindowController>> windows_;
+  std::uint64_t next_window_id_{1};
   bool initialized_{false};
 };
 

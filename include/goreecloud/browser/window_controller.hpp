@@ -32,7 +32,7 @@ class WindowController {
     options.initial_url = std::move(initial_url);
 
     auto view = context_.create_view(options);
-    const auto id = std::string{"tab-"} + std::to_string(next_tab_id_++);
+    const auto id = window_id_ + "-tab-" + std::to_string(next_tab_id_++);
     tabs_.push_back(std::make_unique<Tab>(id, std::move(view)));
     activate(tabs_.size() - 1);
     return *tabs_.back();
@@ -99,6 +99,13 @@ class WindowController {
   [[nodiscard]] std::size_t tab_count() const noexcept { return tabs_.size(); }
   [[nodiscard]] bool private_window() const noexcept { return private_window_; }
   [[nodiscard]] const std::string& window_id() const noexcept { return window_id_; }
+
+  [[nodiscard]] std::vector<const Tab*> tabs() const {
+    std::vector<const Tab*> result;
+    result.reserve(tabs_.size());
+    for (const auto& tab : tabs_) result.push_back(tab.get());
+    return result;
+  }
 
   [[nodiscard]] std::vector<std::string> tab_ids() const {
     std::vector<std::string> ids;
