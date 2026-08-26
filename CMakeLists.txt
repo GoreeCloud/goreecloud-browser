@@ -21,6 +21,10 @@ option(GOREECLOUD_ENABLE_LINUX_GTK_HOST
   "Build the GTK3/X11 GoreeCloud desktop beta host"
   OFF
 )
+option(GOREECLOUD_ENABLE_CURL_DOWNLOAD_TRANSPORT
+  "Build the libcurl-backed Advanced Download Manager HTTP transport"
+  OFF
+)
 
 set(GOREECLOUD_CEF_ROOT "" CACHE PATH
     "Path to an unpacked CEF binary distribution")
@@ -62,6 +66,18 @@ function(goreecloud_apply_warnings target)
     target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
   endif()
 endfunction()
+
+if(GOREECLOUD_ENABLE_CURL_DOWNLOAD_TRANSPORT)
+  find_package(CURL REQUIRED)
+  add_library(goreecloud_browser_download_curl STATIC
+    src/curl_http_download_client.cpp
+  )
+  target_link_libraries(goreecloud_browser_download_curl
+    PUBLIC goreecloud_browser_core CURL::libcurl)
+  target_compile_definitions(goreecloud_browser_download_curl
+    PUBLIC GOREECLOUD_ENABLE_CURL_DOWNLOAD_TRANSPORT=1)
+  goreecloud_apply_warnings(goreecloud_browser_download_curl)
+endif()
 
 if(GOREECLOUD_ENABLE_CHROMIUM)
   add_library(goreecloud_browser_chromium STATIC
@@ -123,6 +139,10 @@ if(GOREECLOUD_ENABLE_CHROMIUM)
   target_compile_definitions(goreecloud_browser PRIVATE GOREECLOUD_ENABLE_CHROMIUM=1)
 else()
   target_compile_definitions(goreecloud_browser PRIVATE GOREECLOUD_ENABLE_CHROMIUM=0 GOREECLOUD_ENABLE_CEF=0)
+endif()
+
+if(GOREECLOUD_ENABLE_CURL_DOWNLOAD_TRANSPORT)
+  target_link_libraries(goreecloud_browser PRIVATE goreecloud_browser_download_curl)
 endif()
 
 if(GOREECLOUD_ENABLE_CEF)
@@ -202,3 +222,4 @@ message(STATUS "Glaze UI Stable ${GOREECLOUD_GLAZE_UI_STABLE_VERSION} @ ${GOREEC
 message(STATUS "Chromium adapter: ${GOREECLOUD_ENABLE_CHROMIUM}")
 message(STATUS "CEF runtime: ${GOREECLOUD_ENABLE_CEF}")
 message(STATUS "Linux GTK beta host: ${GOREECLOUD_ENABLE_LINUX_GTK_HOST}")
+message(STATUS "libcurl download transport: ${GOREECLOUD_ENABLE_CURL_DOWNLOAD_TRANSPORT}")
