@@ -71,6 +71,17 @@ class CefRuntimeView final : public ChromiumRuntimeView {
     if (client_ && client_->browser()) client_->browser()->GetHost()->StopFinding(true);
   }
 
+  bool request_media_probe(int viewport_x,
+                           int viewport_y,
+                           std::uint64_t sequence,
+                           MediaProbeCallback callback) override {
+    if (!client_ || !client_->browser() || !callback) return false;
+    return client_->request_media_probe(viewport_x,
+                                        viewport_y,
+                                        sequence,
+                                        std::move(callback));
+  }
+
   bool attach_surface(const NativeEngineSurface& surface) override {
     surface_ = surface;
     if (client_ && client_->browser()) {
