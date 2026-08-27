@@ -12,8 +12,12 @@ jobs:
   linux-core:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Check out exact source revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact source revision
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DGOREECLOUD_ENABLE_CHROMIUM=OFF -DGOREECLOUD_ENABLE_CEF=OFF -DGOREECLOUD_ENABLE_LINUX_GTK_HOST=OFF
       - name: Build
@@ -24,8 +28,12 @@ jobs:
   linux-core-debug:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Check out exact source revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact source revision
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
       - name: Configure
         run: cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DGOREECLOUD_ENABLE_CHROMIUM=OFF -DGOREECLOUD_ENABLE_CEF=OFF -DGOREECLOUD_ENABLE_LINUX_GTK_HOST=OFF
       - name: Build
@@ -36,8 +44,12 @@ jobs:
   linux-download-curl:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Check out exact source revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact source revision
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
       - name: Install libcurl development package
         run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
       - name: Configure curl download transport
@@ -50,8 +62,12 @@ jobs:
   linux-gtk-beta-shell:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Check out exact source revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact source revision
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
       - name: Install GTK/X11 and libcurl development packages
         run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libx11-dev pkg-config libcurl4-openssl-dev
       - name: Configure beta shell with live downloads
