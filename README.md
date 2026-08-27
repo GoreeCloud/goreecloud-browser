@@ -59,6 +59,14 @@ The browser is structured so that GoreeCloud-owned application layers remain sep
 9. Security, privacy, credential, DNS, networking, search, and synchronization authority boundaries remain explicit.
 10. Browser-owned user-facing surfaces must conform to the latest approved Stable Glaze UI release before production acceptance.
 
+## Wardveil download security
+
+The Advanced Download Manager now has a source-level Wardveil Scan release gate. Completed transfer bytes remain in the Browser-owned `.goreecloud-part-*` staging file until an authoritative, current, correctly scoped Wardveil `clean` finding is bound to the exact SHA-256 digest. The staging file is re-hashed before the existing atomic final rename.
+
+Suspicious downloads are held for review. Malicious or unverifiable downloads remain blocked and cannot be opened through the download controller. A malicious result may produce a non-destructive Wardveil Quarantine handoff, but Browser does not execute canonical quarantine itself and never connects directly to ClamAV. Private Browsing retains malware verification while private download queue state remains non-persistent.
+
+This is source integration evidence, not a deployed malware-protection claim. Production acceptance still requires authenticated Browser-to-Wardveil transport, deployed scanner/signature health, controlled runtime malware tests, concurrency-safe staging release, authorized quarantine evidence, and accepted Glaze UI and Privacy Shield behavior. See [`docs/WARDVEIL_DOWNLOAD_SCANNING.md`](docs/WARDVEIL_DOWNLOAD_SCANNING.md).
+
 ## Initial development phases
 
 ### 0.x — GoreeCloud-owned browser shell
@@ -97,6 +105,7 @@ See:
 
 - [`docs/BETA_0_1.md`](docs/BETA_0_1.md) — beta scope, render-capable gates, deferred work, and promotion requirements.
 - [`docs/MEDIA_HOVER.md`](docs/MEDIA_HOVER.md) — Media Hover interaction, search/AI/OCR, destination, privacy, security, accessibility, and integration contract.
+- [`docs/WARDVEIL_DOWNLOAD_SCANNING.md`](docs/WARDVEIL_DOWNLOAD_SCANNING.md) — download release, evidence binding, fail-closed security states, privacy, quarantine, and production-acceptance boundaries.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architectural boundaries and ownership model.
 - [`docs/ENGINE_LAYER.md`](docs/ENGINE_LAYER.md) — Browser Engine Layer contracts.
 - [`docs/GLAZE_UI_ADOPTION.md`](docs/GLAZE_UI_ADOPTION.md) — current-Stable Glaze UI adoption and acceptance policy.

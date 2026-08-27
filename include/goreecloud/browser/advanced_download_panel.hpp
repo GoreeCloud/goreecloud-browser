@@ -14,7 +14,7 @@
 
 namespace goreecloud::browser {
 
-enum class DownloadPanelFilter { all, active, queued, paused, completed, failed, cancelled };
+enum class DownloadPanelFilter { all, active, queued, paused, verifying, held, blocked, completed, failed, cancelled };
 enum class DownloadPanelSort { queue_order, filename, size, progress, speed };
 
 struct DownloadPanelRow {
@@ -40,6 +40,9 @@ struct AdvancedDownloadPanelModel {
   std::size_t active_count{0};
   std::size_t queued_count{0};
   std::size_t paused_count{0};
+  std::size_t verifying_count{0};
+  std::size_t held_count{0};
+  std::size_t blocked_count{0};
   std::size_t completed_count{0};
   std::size_t failed_count{0};
   double aggregate_bytes_per_second{0.0};
@@ -81,12 +84,16 @@ class AdvancedDownloadPanelBuilder {
       row.can_pause = state == DownloadState::running || state == DownloadState::queued;
       row.can_resume = state == DownloadState::paused;
       row.can_cancel = state == DownloadState::running || state == DownloadState::queued ||
-                       state == DownloadState::paused || state == DownloadState::failed;
+                       state == DownloadState::paused || state == DownloadState::failed ||
+                       state == DownloadState::held || state == DownloadState::blocked;
       row.can_open = state == DownloadState::completed;
       switch (state) {
         case DownloadState::running: ++model.active_count; break;
         case DownloadState::queued: ++model.queued_count; break;
         case DownloadState::paused: ++model.paused_count; break;
+        case DownloadState::verifying: ++model.verifying_count; break;
+        case DownloadState::held: ++model.held_count; break;
+        case DownloadState::blocked: ++model.blocked_count; break;
         case DownloadState::completed: ++model.completed_count; break;
         case DownloadState::failed: ++model.failed_count; break;
         case DownloadState::cancelled: break;
@@ -104,6 +111,9 @@ class AdvancedDownloadPanelBuilder {
         << "Active " << model.active_count
         << "  Queued " << model.queued_count
         << "  Paused " << model.paused_count
+        << "  Verifying " << model.verifying_count
+        << "  Held " << model.held_count
+        << "  Blocked " << model.blocked_count
         << "  Completed " << model.completed_count
         << "  Failed " << model.failed_count << '\n';
     if (model.aggregate_bytes_per_second > 0.0) {
@@ -131,9 +141,12 @@ class AdvancedDownloadPanelBuilder {
   static bool matches(DownloadPanelFilter filter, DownloadState state) {
     switch (filter) {
       case DownloadPanelFilter::all: return true;
-      case DownloadPanelFilter::active: return state == DownloadState::running;
+      case DownloadPanelFilter::active: return state == DownloadState::running || state == DownloadState::verifying;
       case DownloadPanelFilter::queued: return state == DownloadState::queued;
       case DownloadPanelFilter::paused: return state == DownloadState::paused;
+      case DownloadPanelFilter::verifying: return state == DownloadState::verifying;
+      case DownloadPanelFilter::held: return state == DownloadState::held;
+      case DownloadPanelFilter::blocked: return state == DownloadState::blocked;
       case DownloadPanelFilter::completed: return state == DownloadState::completed;
       case DownloadPanelFilter::failed: return state == DownloadState::failed;
       case DownloadPanelFilter::cancelled: return state == DownloadState::cancelled;
@@ -173,6 +186,9 @@ class AdvancedDownloadPanelBuilder {
       case DownloadState::completed: return "Completed";
       case DownloadState::failed: return "Failed";
       case DownloadState::cancelled: return "Cancelled";
+      case DownloadState::verifying: return "Verifying";
+      case DownloadState::held: return "Held for review";
+      case DownloadState::blocked: return "Blocked";
     }
     return "Unknown";
   }

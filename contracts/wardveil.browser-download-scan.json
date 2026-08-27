@@ -1,0 +1,52 @@
+{
+  "contract_version": "0.1.0",
+  "consumer": "GoreeCloud Browser",
+  "integration": "Wardveil Scan download consumer",
+  "wardveil_runtime_contract_version": "0.1.0",
+  "resource_type": "browser_download",
+  "resource_identity": "browser:download:<download_id>",
+  "direct_clamav_access_allowed": false,
+  "download_digest_binding_required": true,
+  "authoritative_scan_record_required": true,
+  "clean_requires_current_unexpired_evidence": true,
+  "clean_requires_evidence_refs": true,
+  "download_release_requires_clean_decision": true,
+  "staged_file_rehash_before_release_required": true,
+  "result_mapping": {
+    "clean": "release_only_when_all_validation_passes",
+    "suspicious": "hold_for_review",
+    "malicious": "block_and_request_quarantine",
+    "unknown": "block_unverified",
+    "unsupported": "block_unverified"
+  },
+  "malicious_digest_match_remains_blocking_after_evidence_expiry": true,
+  "download_states": ["verifying", "held", "blocked", "completed"],
+  "quarantine": {
+    "requires_explicit_executor_authority": true,
+    "is_deletion": false,
+    "browser_consumer_executes_quarantine_directly": false,
+    "blocked_staging_file_is_canonical_quarantine": false
+  },
+  "privacy": {
+    "raw_download_content_in_shared_security_records": false,
+    "source_url_required_in_shared_security_records": false,
+    "suggested_filename_required_in_shared_security_records": false,
+    "credentials_or_session_tokens_in_security_records": false,
+    "data_minimization_required": true
+  },
+  "private_browsing": {
+    "wardveil_verification_remains_required": true,
+    "download_queue_persistence_allowed": false
+  },
+  "production_runtime_status": "unaccepted",
+  "remaining_runtime_acceptance": [
+    "deployed_authenticated_browser_to_wardveil_transport",
+    "deployed_clamav_daemon_and_signature_health_evidence",
+    "controlled_clean_and_eicar_runtime_tests",
+    "timeout_and_scanner_unavailable_runtime_tests",
+    "concurrency_safe_staging_release",
+    "authorized_quarantine_execution_and_recovery_evidence",
+    "glaze_ui_security_state_acceptance",
+    "privacy_shield_data_minimization_acceptance"
+  ]
+}
