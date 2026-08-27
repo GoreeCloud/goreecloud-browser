@@ -63,13 +63,15 @@ class InProcessAdvancedDownloadManagerService final
   DownloadEnqueueResult enqueue(DownloadEnqueueRequest request) override {
     if (request.source_url.empty()) return {false, {}, "Download source URL is empty."};
     DownloadRecord record;
-    record.download_id = next_id();
     record.request = std::move(request);
     record.state = DownloadState::queued;
     record.segment_limit = kMaximumSegmentsPerDownload;
     record.resumable = true;
     {
       std::scoped_lock lock(mutex_);
+      do {
+        record.download_id = next_id();
+      } while (contains_id_locked(record.download_id));
       queue_.push_back(record);
     }
     return {true, record.download_id, "Added to Advanced Download Manager queue."};
@@ -83,7 +85,7 @@ class InProcessAdvancedDownloadManagerService final
       record.state = DownloadState::queued;
     }
     std::scoped_lock lock(mutex_);
-    for (const auto& existing : queue_) if (existing.download_id == record.download_id) return false;
+    if (contains_id_locked(record.download_id)) return false;
     queue_.push_back(std::move(record));
     return true;
   }
@@ -123,6 +125,12 @@ class InProcessAdvancedDownloadManagerService final
   }
 
  private:
+  [[nodiscard]] bool contains_id_locked(std::string_view download_id) const {
+    return std::any_of(queue_.begin(), queue_.end(), [download_id](const auto& record) {
+      return record.download_id == download_id;
+    });
+  }
+
   bool transition(std::string_view download_id,
                   std::initializer_list<DownloadState> allowed,
                   DownloadState next) {
