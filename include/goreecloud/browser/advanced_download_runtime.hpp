@@ -17,6 +17,7 @@
 #include "goreecloud/browser/download_queue_store.hpp"
 #include "goreecloud/browser/file_download_checkpoint_store.hpp"
 #include "goreecloud/browser/http_download_transport.hpp"
+#include "goreecloud/browser/wardveil_download_security.hpp"
 
 namespace goreecloud::browser {
 
@@ -31,11 +32,13 @@ struct LiveDownloadProgress {
 class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerService {
  public:
   AdvancedDownloadRuntimeService(HttpDownloadClient& client,
-                                 std::filesystem::path download_directory)
+                                 std::filesystem::path download_directory,
+                                 WardveilDownloadScanner* wardveil_scanner = nullptr)
       : download_directory_(std::move(download_directory)),
         file_store_(download_directory_),
         checkpoints_(download_directory_ / ".goreecloud-checkpoints"),
         queue_store_(download_directory_ / ".goreecloud-download-state"),
+        wardveil_scanner_(wardveil_scanner ? wardveil_scanner : &unavailable_wardveil_scanner()),
         transport_(client, [this](std::string_view download_id,
                                   std::uint64_t offset,
                                   std::span<const std::byte> bytes) {
@@ -70,26 +73,7 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
       progress.message = "Downloading";
     });
     scheduler_.set_completion_callback([this](const DownloadTransferPlan& plan) {
-      auto found = files_.find(plan.download_id);
-      auto& progress = progress_[plan.download_id];
-      if (found == files_.end()) {
-        mark_failed(plan.download_id, "Download file state is unavailable.");
-        return;
-      }
-      const auto evidence = file_store_.commit(found->second, plan.metadata.total_bytes);
-      if (!evidence.committed) {
-        mark_failed(plan.download_id, evidence.message);
-        return;
-      }
-      progress.completed_bytes = evidence.final_size;
-      progress.total_bytes = evidence.final_size;
-      progress.bytes_per_second = 0.0;
-      progress.state = DownloadState::completed;
-      progress.message = evidence.message;
-      queue_.set_state(plan.download_id, DownloadState::completed);
-      checkpoints_.erase(plan.download_id);
-      scheduled_waiting_.erase(plan.download_id);
-      persist_queue();
+      verify_and_commit(plan);
     });
     scheduler_.set_failure_callback([this](std::string_view download_id) {
       mark_failed(download_id, "Download transfer failed.");
@@ -130,7 +114,8 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
   bool pause(std::string_view download_id) {
     const auto record = queue_.find(download_id);
     if (!record || record->state == DownloadState::completed ||
-        record->state == DownloadState::cancelled) return false;
+        record->state == DownloadState::cancelled || record->state == DownloadState::held ||
+        record->state == DownloadState::blocked || record->state == DownloadState::verifying) return false;
     if (!scheduler_.pause(download_id) || !queue_.set_state(download_id, DownloadState::paused)) return false;
     scheduled_waiting_.erase(std::string{download_id});
     auto& state = progress_[std::string{download_id}];
@@ -156,13 +141,14 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
   bool cancel(std::string_view download_id, bool discard_partial_file = false) {
     const auto record = queue_.find(download_id);
     if (!record || record->state == DownloadState::completed ||
-        record->state == DownloadState::cancelled) return false;
+        record->state == DownloadState::cancelled || record->state == DownloadState::verifying) return false;
     scheduler_.cancel(download_id);
     scheduled_waiting_.erase(std::string{download_id});
     if (!queue_.set_state(download_id, DownloadState::cancelled)) return false;
     checkpoints_.erase(download_id);
     auto found = files_.find(std::string{download_id});
     if (discard_partial_file && found != files_.end()) file_store_.discard(found->second);
+    security_decisions_.erase(std::string{download_id});
     auto& state = progress_[std::string{download_id}];
     state.state = DownloadState::cancelled;
     state.bytes_per_second = 0.0;
@@ -175,11 +161,14 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
     const auto record = queue_.find(download_id);
     if (!record || (record->state != DownloadState::completed &&
                     record->state != DownloadState::failed &&
-                    record->state != DownloadState::cancelled)) return false;
+                    record->state != DownloadState::cancelled &&
+                    record->state != DownloadState::held &&
+                    record->state != DownloadState::blocked)) return false;
     const auto id = std::string{download_id};
     scheduler_.cancel(id);
     scheduled_waiting_.erase(id);
     checkpoints_.erase(id);
+    security_decisions_.erase(id);
     const auto filename = record->request.suggested_filename.value_or(default_filename(record->request.source_url));
     const auto paths = file_store_.prepare(id, filename, 0);
     if (!paths) return false;
@@ -206,6 +195,13 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
     return found->second.final_path;
   }
 
+  [[nodiscard]] std::optional<DownloadSecurityDecision> security_decision(
+      std::string_view download_id) const {
+    const auto found = security_decisions_.find(std::string{download_id});
+    if (found == security_decisions_.end()) return std::nullopt;
+    return found->second;
+  }
+
   void pump() {
     release_due_schedules();
     scheduler_.pump();
@@ -225,6 +221,11 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
   using Clock = std::chrono::steady_clock;
   struct ProgressSample { std::uint64_t bytes{0}; Clock::time_point time{}; };
 
+  static UnavailableWardveilDownloadScanner& unavailable_wardveil_scanner() {
+    static UnavailableWardveilDownloadScanner scanner;
+    return scanner;
+  }
+
   static std::int64_t unix_now_seconds() {
     return std::chrono::duration_cast<std::chrono::seconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
@@ -233,6 +234,87 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
   static bool scheduled_for_future(const DownloadRecord& record) {
     return record.request.scheduled_start_unix_seconds &&
            *record.request.scheduled_start_unix_seconds > unix_now_seconds();
+  }
+
+  void verify_and_commit(const DownloadTransferPlan& plan) {
+    const auto id = plan.download_id;
+    const auto found = files_.find(id);
+    if (found == files_.end()) {
+      mark_failed(id, "Download file state is unavailable.");
+      return;
+    }
+    auto& progress = progress_[id];
+    progress.completed_bytes = plan.completed_bytes;
+    progress.total_bytes = plan.metadata.total_bytes;
+    progress.bytes_per_second = 0.0;
+    progress.state = DownloadState::verifying;
+    progress.message = "Verifying with Wardveil Security";
+    queue_.set_state(id, DownloadState::verifying);
+    persist_queue();
+
+    const auto size = file_store_.partial_size(found->second);
+    if (!size || *size != plan.metadata.total_bytes) {
+      mark_failed(id, "Completed transfer bytes could not be verified.");
+      return;
+    }
+    const auto digest_before = sha256_file(found->second.partial_path);
+    if (!digest_before) {
+      mark_blocked(id, "Wardveil verification could not bind the staged download bytes.");
+      return;
+    }
+    const auto record = queue_.find(id);
+    if (!record) {
+      mark_blocked(id, "Wardveil verification could not bind the download identity.");
+      return;
+    }
+
+    const WardveilDownloadScanRequest request{
+        .resource_id = browser_download_resource_id(id),
+        .resource_digest_sha256 = *digest_before,
+        .size_bytes = *size,
+        .private_session = record->request.private_session,
+    };
+    auto decision = evaluate_wardveil_download_scan(
+        request, wardveil_scanner_->scan(request, found->second.partial_path));
+    security_decisions_[id] = decision;
+
+    if (decision.disposition == DownloadSecurityDisposition::hold_review) {
+      mark_held(id, "Held for Wardveil Security review.");
+      return;
+    }
+    if (!decision.can_release) {
+      mark_blocked(id, decision.quarantine_required
+                           ? "Blocked by Wardveil Security; quarantine authorization is required."
+                           : "Wardveil Security could not verify this download for release.");
+      return;
+    }
+
+    const auto digest_after = sha256_file(found->second.partial_path);
+    if (!digest_after || *digest_after != *digest_before) {
+      decision.disposition = DownloadSecurityDisposition::block_unverified;
+      decision.can_release = false;
+      decision.can_open = false;
+      decision.quarantine_required = false;
+      decision.reason_codes = {"staged_content_changed_after_scan"};
+      security_decisions_[id] = decision;
+      mark_blocked(id, "Download bytes changed after security verification; release was blocked.");
+      return;
+    }
+
+    const auto evidence = file_store_.commit(found->second, plan.metadata.total_bytes);
+    if (!evidence.committed) {
+      mark_failed(id, evidence.message);
+      return;
+    }
+    progress.completed_bytes = evidence.final_size;
+    progress.total_bytes = evidence.final_size;
+    progress.bytes_per_second = 0.0;
+    progress.state = DownloadState::completed;
+    progress.message = "Download verified by Wardveil Security and committed to local storage.";
+    queue_.set_state(id, DownloadState::completed);
+    checkpoints_.erase(id);
+    scheduled_waiting_.erase(id);
+    persist_queue();
   }
 
   void release_due_schedules() {
@@ -265,6 +347,21 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
         continue;
       }
       files_[restored->download_id] = *paths;
+
+      if (record.state == DownloadState::held || record.state == DownloadState::blocked) {
+        const auto size = file_store_.partial_size(*paths).value_or(0);
+        progress_[restored->download_id] = {
+            .completed_bytes = size,
+            .total_bytes = size,
+            .bytes_per_second = 0.0,
+            .state = record.state,
+            .message = record.state == DownloadState::held
+                           ? "Held for Wardveil Security review."
+                           : "Download remains blocked in staging by Wardveil Security.",
+        };
+        continue;
+      }
+
       const auto checkpoint = checkpoints_.load(restored->download_id);
       const bool was_paused = record.state == DownloadState::paused;
       const bool is_scheduled = !was_paused && scheduled_for_future(*restored);
@@ -304,6 +401,30 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
     persist_queue();
   }
 
+  void mark_held(std::string_view download_id, std::string message) {
+    const auto id = std::string{download_id};
+    auto& progress = progress_[id];
+    progress.state = DownloadState::held;
+    progress.bytes_per_second = 0.0;
+    progress.message = std::move(message);
+    checkpoints_.erase(id);
+    scheduled_waiting_.erase(id);
+    queue_.set_state(id, DownloadState::held);
+    persist_queue();
+  }
+
+  void mark_blocked(std::string_view download_id, std::string message) {
+    const auto id = std::string{download_id};
+    auto& progress = progress_[id];
+    progress.state = DownloadState::blocked;
+    progress.bytes_per_second = 0.0;
+    progress.message = std::move(message);
+    checkpoints_.erase(id);
+    scheduled_waiting_.erase(id);
+    queue_.set_state(id, DownloadState::blocked);
+    persist_queue();
+  }
+
   static std::string default_filename(std::string_view url) {
     auto end = url.find_first_of("?#");
     if (end == std::string_view::npos) end = url.size();
@@ -319,11 +440,13 @@ class AdvancedDownloadRuntimeService final : public AdvancedDownloadManagerServi
   LocalDownloadFileStore file_store_;
   FileDownloadCheckpointStore checkpoints_;
   FileDownloadQueueStore queue_store_;
+  WardveilDownloadScanner* wardveil_scanner_{nullptr};
   HttpDownloadTransport transport_;
   DownloadTransferScheduler scheduler_;
   std::unordered_map<std::string, DownloadFilePaths> files_;
   std::unordered_map<std::string, LiveDownloadProgress> progress_;
   std::unordered_map<std::string, ProgressSample> progress_samples_;
+  std::unordered_map<std::string, DownloadSecurityDecision> security_decisions_;
   std::unordered_set<std::string> scheduled_waiting_;
 };
 
