@@ -8,6 +8,7 @@
         android:hardwareAccelerated="true"
         android:label="@string/app_name"
         android:supportsRtl="true"
+        android:theme="@style/Theme.GoreeCloud.Browser"
         android:usesCleartextTraffic="false">
         <activity
             android:name=".BrowserActivity"

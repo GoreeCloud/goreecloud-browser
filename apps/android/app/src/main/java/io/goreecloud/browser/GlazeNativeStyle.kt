@@ -2,16 +2,19 @@ package io.goreecloud.browser
 
 import android.app.Activity
 import android.content.Context
+import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
+import android.os.Build
 import android.view.Gravity
 import android.view.View
 import android.webkit.WebView
-import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 
 /**
@@ -19,8 +22,7 @@ import android.widget.TextView
  *
  * Native controls retain Android semantics while Browser maps the current Glaze
  * material hierarchy, target floor, focus/pressed state, spacing and appearance
- * behavior. This deliberately avoids blur/transparency so the beta has a usable
- * accessibility fallback by construction.
+ * behavior. Blur and transparency are deliberately not required for usability.
  */
 class GlazeNativeStyle(private val context: Context) {
     data class Palette(
@@ -33,58 +35,99 @@ class GlazeNativeStyle(private val context: Context) {
         val textPrimary: Int,
         val textSecondary: Int,
         val outline: Int,
+        val accent: Int,
     )
+
+    private val night = context.resources.configuration.uiMode and
+        Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 
     val palette: Palette = buildPalette()
 
     fun applyWindow(activity: Activity) {
         activity.window.statusBarColor = palette.canvas
-        activity.window.navigationBarColor = palette.canvas
+        activity.window.navigationBarColor = if (!night && Build.VERSION.SDK_INT < Build.VERSION_CODES.O_MR1) {
+            Color.BLACK
+        } else {
+            palette.canvas
+        }
+
+        var flags = activity.window.decorView.systemUiVisibility
+        if (!night) {
+            flags = flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                flags = flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+            }
+        }
+        activity.window.decorView.systemUiVisibility = flags
     }
 
     fun styleCanvas(view: View) {
         view.setBackgroundColor(palette.canvas)
     }
 
-    fun styleStatus(view: TextView) {
-        view.setTextColor(palette.textSecondary)
-        view.textSize = 12f
-        view.setPadding(dp(12), dp(8), dp(12), dp(8))
-        view.background = material(GlazeContract.MaterialLevel.SoftGlaze, dp(16))
-    }
-
-    fun styleNavigationCapsule(view: LinearLayout) {
+    fun styleTopChrome(view: LinearLayout) {
         view.gravity = Gravity.CENTER_VERTICAL
-        view.minimumHeight = dp(GlazeContract.GENERAL_TARGET_DP + 12)
-        view.setPadding(dp(6), dp(6), dp(6), dp(6))
+        view.setPadding(
+            dp(GlazeContract.CHROME_GUTTER_DP),
+            dp(GlazeContract.CHROME_GUTTER_DP),
+            dp(GlazeContract.CHROME_GUTTER_DP),
+            dp(GlazeContract.CHROME_GUTTER_DP),
+        )
         view.background = material(
-            GlazeContract.MaterialLevel.Glaze,
-            dp(GlazeContract.NAVIGATION_CAPSULE_CORNER_DP),
+            GlazeContract.MaterialLevel.Canvas,
+            0,
+            outlined = false,
         )
     }
 
-    fun styleButton(button: Button, role: GlazeContract.ButtonRole) {
+    fun styleOmniboxCapsule(view: LinearLayout) {
+        view.gravity = Gravity.CENTER_VERTICAL
+        view.minimumHeight = dp(GlazeContract.OMNIBOX_HEIGHT_DP)
+        view.setPadding(dp(4), dp(4), dp(4), dp(4))
+        view.background = material(
+            GlazeContract.MaterialLevel.SoftGlaze,
+            dp(GlazeContract.OMNIBOX_CORNER_DP),
+            outlined = true,
+        )
+    }
+
+    fun styleSchemeBadge(view: TextView) {
+        view.gravity = Gravity.CENTER
+        view.setTextColor(palette.textSecondary)
+        view.textSize = 10f
+        view.isAllCaps = true
+        view.minWidth = dp(44)
+        view.minimumWidth = dp(44)
+        view.setPadding(dp(8), 0, dp(8), 0)
+        view.background = material(
+            GlazeContract.MaterialLevel.Surface,
+            dp(18),
+            outlined = false,
+        )
+    }
+
+    fun styleChromeButton(button: ImageButton, role: GlazeContract.ButtonRole) {
         val levels = when (role) {
             GlazeContract.ButtonRole.Quiet ->
-                GlazeContract.MaterialLevel.Surface to GlazeContract.MaterialLevel.SoftGlaze
+                GlazeContract.MaterialLevel.Canvas to GlazeContract.MaterialLevel.SoftGlaze
             GlazeContract.ButtonRole.Soft ->
-                GlazeContract.MaterialLevel.SoftGlaze to GlazeContract.MaterialLevel.Glaze
+                GlazeContract.MaterialLevel.Surface to GlazeContract.MaterialLevel.Glaze
             GlazeContract.ButtonRole.Glaze ->
                 GlazeContract.MaterialLevel.Glaze to GlazeContract.MaterialLevel.DeepGlaze
             GlazeContract.ButtonRole.Emphasis ->
-                GlazeContract.MaterialLevel.DeepGlaze to GlazeContract.MaterialLevel.LiveGlaze
+                GlazeContract.MaterialLevel.Glaze to GlazeContract.MaterialLevel.DeepGlaze
         }
 
-        button.setAllCaps(false)
-        button.gravity = Gravity.CENTER
-        button.setTextColor(palette.textPrimary)
-        button.textSize = 16f
-        button.minWidth = dp(GlazeContract.GENERAL_TARGET_DP)
         button.minimumWidth = dp(GlazeContract.GENERAL_TARGET_DP)
-        button.minHeight = dp(GlazeContract.GENERAL_TARGET_DP)
         button.minimumHeight = dp(GlazeContract.GENERAL_TARGET_DP)
-        button.setPadding(dp(10), 0, dp(10), 0)
-        button.background = interactiveBackground(levels.first, levels.second)
+        button.setPadding(dp(12), dp(12), dp(12), dp(12))
+        button.scaleType = ImageButton.ScaleType.CENTER
+        button.imageTintList = ColorStateList.valueOf(palette.textPrimary)
+        button.background = interactiveBackground(
+            levels.first,
+            levels.second,
+            GlazeContract.CHROME_CONTROL_CORNER_DP,
+        )
     }
 
     fun styleAddressField(field: EditText) {
@@ -93,12 +136,24 @@ class GlazeNativeStyle(private val context: Context) {
         field.textSize = 16f
         field.minHeight = dp(GlazeContract.GENERAL_TARGET_DP)
         field.minimumHeight = dp(GlazeContract.GENERAL_TARGET_DP)
-        field.setPadding(dp(16), 0, dp(16), 0)
-        field.background = interactiveBackground(
+        field.setPadding(dp(10), 0, dp(8), 0)
+        field.background = null
+        field.setSelectAllOnFocus(false)
+    }
+
+    fun styleBottomToolbar(view: LinearLayout) {
+        view.gravity = Gravity.CENTER_VERTICAL
+        view.setPadding(dp(6), 0, dp(6), 0)
+        view.background = material(
             GlazeContract.MaterialLevel.Surface,
-            GlazeContract.MaterialLevel.SoftGlaze,
-            GlazeContract.FIELD_CORNER_DP,
+            0,
+            outlined = false,
         )
+    }
+
+    fun styleProgress(progressBar: ProgressBar) {
+        progressBar.progressTintList = ColorStateList.valueOf(palette.accent)
+        progressBar.progressBackgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
     }
 
     fun styleWebContent(webView: WebView) {
@@ -108,28 +163,34 @@ class GlazeNativeStyle(private val context: Context) {
     private fun interactiveBackground(
         resting: GlazeContract.MaterialLevel,
         active: GlazeContract.MaterialLevel,
-        cornerDp: Int = 24,
+        cornerDp: Int,
     ): StateListDrawable = StateListDrawable().apply {
         addState(
             intArrayOf(android.R.attr.state_pressed),
-            material(active, dp(cornerDp), focused = true),
+            material(active, dp(cornerDp), focused = true, outlined = false),
         )
         addState(
             intArrayOf(android.R.attr.state_focused),
-            material(active, dp(cornerDp), focused = true),
+            material(active, dp(cornerDp), focused = true, outlined = true),
         )
-        addState(intArrayOf(), material(resting, dp(cornerDp)))
+        addState(intArrayOf(), material(resting, dp(cornerDp), outlined = false))
     }
 
     private fun material(
         level: GlazeContract.MaterialLevel,
         cornerRadiusPx: Int,
         focused: Boolean = false,
+        outlined: Boolean = false,
     ): GradientDrawable = GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
         cornerRadius = cornerRadiusPx.toFloat()
         setColor(colorFor(level))
-        setStroke(dp(if (focused) 2 else 1), palette.outline)
+        if (focused || outlined) {
+            setStroke(
+                dp(if (focused) 2 else 1),
+                if (focused) palette.accent else palette.outline,
+            )
+        }
     }
 
     private fun colorFor(level: GlazeContract.MaterialLevel): Int = when (level) {
@@ -142,13 +203,10 @@ class GlazeNativeStyle(private val context: Context) {
     }
 
     private fun buildPalette(): Palette {
-        val night = context.resources.configuration.uiMode and
-            Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
-
         val fallbackCanvas = if (night) Color.rgb(18, 19, 22) else Color.rgb(248, 249, 252)
         val fallbackText = if (night) Color.WHITE else Color.rgb(27, 29, 33)
         val fallbackSecondary = if (night) Color.rgb(194, 198, 207) else Color.rgb(88, 92, 101)
-        val fallbackAccent = if (night) Color.rgb(147, 179, 255) else Color.rgb(45, 96, 220)
+        val fallbackAccent = if (night) Color.rgb(147, 179, 255) else Color.rgb(68, 101, 238)
 
         val canvas = themedColor(android.R.attr.colorBackground, fallbackCanvas)
         val text = themedColor(android.R.attr.textColorPrimary, fallbackText)
@@ -157,14 +215,15 @@ class GlazeNativeStyle(private val context: Context) {
 
         return Palette(
             canvas = canvas,
-            surface = blend(canvas, text, if (night) 0.07f else 0.035f),
-            softGlaze = blend(canvas, accent, if (night) 0.12f else 0.07f),
-            glaze = blend(canvas, accent, if (night) 0.18f else 0.11f),
-            deepGlaze = blend(canvas, accent, if (night) 0.26f else 0.16f),
-            liveGlaze = blend(canvas, accent, if (night) 0.36f else 0.24f),
+            surface = blend(canvas, text, if (night) 0.055f else 0.028f),
+            softGlaze = blend(canvas, accent, if (night) 0.10f else 0.055f),
+            glaze = blend(canvas, accent, if (night) 0.16f else 0.09f),
+            deepGlaze = blend(canvas, accent, if (night) 0.24f else 0.15f),
+            liveGlaze = blend(canvas, accent, if (night) 0.34f else 0.22f),
             textPrimary = text,
             textSecondary = secondary,
-            outline = blend(text, canvas, 0.70f),
+            outline = blend(canvas, text, if (night) 0.20f else 0.13f),
+            accent = accent,
         )
     }
 
