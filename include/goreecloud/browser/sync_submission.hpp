@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -8,6 +9,8 @@
 #include "goreecloud/browser/sync_records.hpp"
 
 namespace goreecloud::browser {
+
+inline constexpr std::size_t kMaxSyncRecordIDBytes = 512;
 
 struct SyncEnvelope {
   std::string dataset;
@@ -36,7 +39,8 @@ inline std::optional<SyncEnvelope> MakeSyncEnvelope(const SyncRecord& record,
                                                     std::uint64_t revision,
                                                     std::string updated_at,
                                                     std::string origin_device) {
-  if (record.dataset.empty() || record.record_id.empty() || record.payload_json.empty() ||
+  if (record.dataset.empty() || record.record_id.empty() ||
+      record.record_id.size() > kMaxSyncRecordIDBytes || record.payload_json.empty() ||
       revision == 0 || updated_at.empty() || origin_device.empty()) {
     return std::nullopt;
   }
@@ -56,7 +60,8 @@ inline std::optional<SyncEnvelope> MakeSyncEnvelope(const SyncRecord& record,
 // Browser never exposes a private key through this contract.
 inline std::optional<SyncProof> SignSyncEnvelope(const SyncEnvelope& envelope,
                                                  const SyncSigner& signer) {
-  if (envelope.dataset.empty() || envelope.record_id.empty() || envelope.revision == 0 ||
+  if (envelope.dataset.empty() || envelope.record_id.empty() ||
+      envelope.record_id.size() > kMaxSyncRecordIDBytes || envelope.revision == 0 ||
       envelope.updated_at.empty() || envelope.origin_device.empty()) {
     return std::nullopt;
   }

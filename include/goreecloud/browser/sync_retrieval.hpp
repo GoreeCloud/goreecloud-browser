@@ -36,6 +36,7 @@ inline bool ValidateSyncRetrievalBatch(const SyncRetrievalBatch& batch,
                                        std::string_view expected_dataset,
                                        std::string_view after = {}) {
   if (expected_dataset.empty() || batch.dataset != expected_dataset ||
+      after.size() > kMaxSyncRecordIDBytes || batch.next_after.size() > kMaxSyncRecordIDBytes ||
       batch.records.size() > kSyncRetrievalPageSize) {
     return false;
   }
@@ -43,8 +44,8 @@ inline bool ValidateSyncRetrievalBatch(const SyncRetrievalBatch& batch,
   std::string_view previous_id = after;
   for (const auto& record : batch.records) {
     if (record.dataset != expected_dataset || record.schema_version < 1 ||
-        record.record_id.empty() || record.revision == 0 || record.updated_at.empty() ||
-        record.origin_device.empty() ||
+        record.record_id.empty() || record.record_id.size() > kMaxSyncRecordIDBytes ||
+        record.revision == 0 || record.updated_at.empty() || record.origin_device.empty() ||
         (!previous_id.empty() && record.record_id <= previous_id)) {
       return false;
     }
