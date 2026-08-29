@@ -4,15 +4,14 @@
 #include <cstdint>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 
+#include "goreecloud/browser/sync_capabilities.hpp"
 #include "goreecloud/browser/sync_records.hpp"
 
 namespace goreecloud::browser {
 
 inline constexpr std::size_t kMaxSyncRecordIDBytes = 512;
-inline constexpr int kBrowserSyncSchemaVersion = 1;
 
 struct SyncEnvelope {
   std::string dataset;
@@ -25,28 +24,20 @@ struct SyncEnvelope {
   std::string payload_json;
 };
 
-inline bool IsBrowserSyncDataset(std::string_view dataset) {
-  return dataset == "browser.tabs" || dataset == "browser.history" ||
-         dataset == "browser.preferences";
-}
-
-inline bool IsBrowserSyncDeleteCapableDataset(std::string_view dataset) {
-  return dataset == "browser.tabs" || dataset == "browser.history";
-}
-
-// Browser accepts only its currently negotiated schema and preserves Privacy
-// Shield data minimization by requiring payload-free tombstones.
+// Browser validates against its advertised capability table and preserves
+// Privacy Shield data minimization by requiring payload-free tombstones.
 inline bool ValidateSyncEnvelopeShape(const SyncEnvelope& envelope) {
-  if (!IsBrowserSyncDataset(envelope.dataset) ||
-      envelope.schema_version != kBrowserSyncSchemaVersion || envelope.record_id.empty() ||
-      envelope.record_id.size() > kMaxSyncRecordIDBytes || envelope.revision == 0 ||
-      envelope.updated_at.empty() || envelope.origin_device.empty()) {
+  const auto capabilities = sync_capabilities();
+  const auto* capability = find_sync_capability(capabilities, envelope.dataset);
+  if (capability == nullptr || envelope.schema_version != capability->schema_version ||
+      envelope.record_id.empty() || envelope.record_id.size() > kMaxSyncRecordIDBytes ||
+      envelope.revision == 0 || envelope.updated_at.empty() || envelope.origin_device.empty()) {
     return false;
   }
   if (envelope.deleted) {
-    return IsBrowserSyncDeleteCapableDataset(envelope.dataset) && envelope.payload_json.empty();
+    return capability->erase && envelope.payload_json.empty();
   }
-  return !envelope.payload_json.empty();
+  return capability->write && !envelope.payload_json.empty();
 }
 
 struct SyncProof {
@@ -86,9 +77,14 @@ inline std::optional<SyncEnvelope> MakeSyncTombstone(std::string dataset,
                                                      std::uint64_t revision,
                                                      std::string updated_at,
                                                      std::string origin_device) {
+  const auto capabilities = sync_capabilities();
+  const auto* capability = find_sync_capability(capabilities, dataset);
+  if (capability == nullptr || !capability->erase) {
+    return std::nullopt;
+  }
   SyncEnvelope envelope{
       .dataset = std::move(dataset),
-      .schema_version = kBrowserSyncSchemaVersion,
+      .schema_version = capability->schema_version,
       .record_id = std::move(record_id),
       .revision = revision,
       .updated_at = std::move(updated_at),
