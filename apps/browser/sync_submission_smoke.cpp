@@ -17,6 +17,10 @@ class FakeSigner final : public SyncSigner {
 };
 
 int main() {
+  const auto capabilities = sync_capabilities();
+  const auto* tab_capability = find_sync_capability(capabilities, "browser.tabs");
+  assert(tab_capability != nullptr);
+
   auto record = MakeTabSyncRecord(TabSyncInput{
       .id = "tab-1", .url = "https://goreecloud.com", .title = "GoreeCloud", .private_mode = false});
   assert(record.has_value());
@@ -24,7 +28,7 @@ int main() {
   auto envelope = MakeSyncEnvelope(*record, 7, "2026-08-26T23:00:00Z", "device-browser");
   assert(envelope.has_value());
   assert(envelope->dataset == "browser.tabs");
-  assert(envelope->schema_version == kBrowserSyncSchemaVersion);
+  assert(envelope->schema_version == tab_capability->schema_version);
   assert(envelope->revision == 7);
   assert(!envelope->deleted);
 
@@ -53,7 +57,7 @@ int main() {
               .has_value());
 
   auto unnegotiated_record = *record;
-  unnegotiated_record.schema_version = kBrowserSyncSchemaVersion + 1;
+  unnegotiated_record.schema_version = tab_capability->schema_version + 1;
   assert(!MakeSyncEnvelope(unnegotiated_record, 8, "2026-08-26T23:01:00Z", "device-browser")
               .has_value());
 
@@ -62,7 +66,7 @@ int main() {
   assert(!SignSyncEnvelope(oversized_envelope, signer).has_value());
 
   auto unnegotiated_envelope = *envelope;
-  unnegotiated_envelope.schema_version = kBrowserSyncSchemaVersion + 1;
+  unnegotiated_envelope.schema_version = tab_capability->schema_version + 1;
   assert(!SignSyncEnvelope(unnegotiated_envelope, signer).has_value());
 
   auto tombstone_with_payload = *tombstone;
