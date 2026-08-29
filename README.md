@@ -6,7 +6,9 @@ GoreeCloud Browser is GoreeCloud's first-party native web browser. The browser p
 
 The repository is now on the **0.1.0-beta.1** development channel. This is the first build-tested GoreeCloud Browser **source and native-shell beta milestone**. The engine-independent core and the Linux GTK/X11 Glaze shell have CI build gates. The CEF/Chromium render-capable desktop path remains under integration and must pass the real-runtime gates in [`docs/BETA_0_1.md`](docs/BETA_0_1.md) before a desktop artifact is described as a render-capable beta.
 
-Beta does **not** mean production-approved. Stable release acceptance still requires real runtime, security, privacy, accessibility, packaging, signing, recovery, compatibility, and sustained-use evidence.
+The repository also includes an **installable Android beta target**. The Android CI path builds the debug-signed package `io.goreecloud.browser.beta` as version `0.1.0-beta.1+android.1` for Android API 26 and newer, targeting API 35. It runs unit tests, Android lint, APK assembly, signature verification, package/label verification, SHA-256 generation, and GitHub Actions artifact upload. Android System WebView/Chromium is used only as the web-engine dependency; GoreeCloud owns the Android browser chrome, navigation/search policy, privacy defaults, permission behavior, and beta capability gates. Downloads remain fail-closed until the Android path can satisfy the existing Wardveil release contract. See [`docs/ANDROID_BETA.md`](docs/ANDROID_BETA.md).
+
+Beta does **not** mean production-approved. Stable release acceptance still requires real runtime, security, privacy, accessibility, packaging, production signing, recovery, compatibility, and sustained-use evidence. The Android APK is an installable test beta, not a production-signed or Stable artifact.
 
 ## Product identity
 
@@ -16,7 +18,7 @@ GoreeCloud Browser is the sole normal user-facing Browser product identity. Upst
 
 GoreeCloud Browser is built against the **latest approved Stable Glaze UI release**. The current Stable baseline is **Glaze UI 1.5.0**, promoted from `GoreeCloud/glaze-ui` at source revision `2e1618397f6ebcdd254a76bfdd7e98846f2c5aa3`.
 
-This is a moving production requirement rather than a permanent version pin. When a newer Glaze UI release becomes Stable, GoreeCloud Browser becomes migration-required until Browser-owned surfaces have adopted and validated that current Stable contract. A superseded Glaze UI baseline cannot satisfy Browser production readiness.
+This is a moving production requirement rather than a permanent version pin. When a newer Glaze UI release becomes Stable, GoreeCloud Browser becomes migration-required until Browser-owned surfaces have adopted and validated that current Stable contract. A superseded Glaze UI baseline cannot satisfy Browser production readiness. The first Android installable beta does not establish complete Android Glaze UI production acceptance.
 
 See [`docs/GLAZE_UI_ADOPTION.md`](docs/GLAZE_UI_ADOPTION.md) for the Browser-specific adoption and validation policy.
 
@@ -30,7 +32,7 @@ The browser is structured so that GoreeCloud-owned application layers remain sep
 
 - **GoreeCloud Browser** — native browser application, browser chrome, tab model, profiles, preferences, history, permissions, downloads, sessions, and product experience.
 - **Browser Engine Layer** — GoreeCloud-owned abstraction between the application and the underlying web engine.
-- **Chromium/Blink** — initial rendering, JavaScript, WebAssembly, Web APIs, media, graphics, accessibility, and web-platform foundation.
+- **Chromium/Blink** — initial rendering, JavaScript, WebAssembly, Web APIs, media, graphics, accessibility, and web-platform foundation. On the first Android beta this role is provided through Android System WebView/Chromium.
 - **Glaze UI** — authoritative GoreeCloud presentation and interaction system for Browser-owned surfaces; Browser must track the current approved Stable release.
 - **GoreeCloud Wayfinder** — first-party Browser feature family for navigation, productivity, organization, downloads, transfers, capture, sessions, synchronization, Browser utilities, content handling, and workflow integration.
 - **Media Hover** — first-party contextual media interaction layer for images, video, regions, visual search, destination-aware saving, AI/OCR workflows, source attribution, privacy enforcement, and security evidence.
@@ -65,7 +67,7 @@ The Advanced Download Manager now has a source-level Wardveil Scan release gate.
 
 Suspicious downloads are held for review. Malicious or unverifiable downloads remain blocked and cannot be opened through the download controller. A malicious result may produce a non-destructive Wardveil Quarantine handoff, but Browser does not execute canonical quarantine itself and never connects directly to ClamAV. Private Browsing retains malware verification while private download queue state remains non-persistent.
 
-This is source integration evidence, not a deployed malware-protection claim. Production acceptance still requires authenticated Browser-to-Wardveil transport, deployed scanner/signature health, controlled runtime malware tests, concurrency-safe staging release, authorized quarantine evidence, and accepted Glaze UI and Privacy Shield behavior. See [`docs/WARDVEIL_DOWNLOAD_SCANNING.md`](docs/WARDVEIL_DOWNLOAD_SCANNING.md).
+This is source integration evidence, not a deployed malware-protection claim. Production acceptance still requires authenticated Browser-to-Wardveil transport, deployed scanner/signature health, controlled runtime malware tests, concurrency-safe staging release, authorized quarantine evidence, and accepted Glaze UI and Privacy Shield behavior. The Android beta blocks downloads until its own path can satisfy this contract rather than creating a bypass. See [`docs/WARDVEIL_DOWNLOAD_SCANNING.md`](docs/WARDVEIL_DOWNLOAD_SCANNING.md).
 
 ## Initial development phases
 
@@ -84,7 +86,8 @@ Replace, patch, or take greater control of engine subsystems only when GoreeClou
 ## Repository layout
 
 ```text
-apps/browser/                 Native application shell
+apps/browser/                 Native desktop application shell
+apps/android/                 Installable Android beta application target
 browser/core/                 Engine-independent browser domain model
 browser/engine/               Browser Engine Layer interfaces
 browser/engine/chromium/      Chromium adapter implementation
@@ -99,11 +102,12 @@ packaging/                    Linux, Flatpak, Windows, and other packaging work
 
 ## Status
 
-GoreeCloud Browser **0.1.0-beta.1** is in active development and is not production-approved. The beta milestone establishes build-tested Browser-owned architecture and a visible Linux Glaze shell. Unless explicitly identified as implemented and validated, documented capabilities remain product requirements or planned capabilities rather than claims of production readiness.
+GoreeCloud Browser **0.1.0-beta.1** is in active development and is not production-approved. The beta milestone establishes build-tested Browser-owned architecture, a visible Linux Glaze shell, and a CI-built installable Android test APK target. Unless explicitly identified as implemented and validated, documented capabilities remain product requirements or planned capabilities rather than claims of production readiness.
 
 See:
 
 - [`docs/BETA_0_1.md`](docs/BETA_0_1.md) — beta scope, render-capable gates, deferred work, and promotion requirements.
+- [`docs/ANDROID_BETA.md`](docs/ANDROID_BETA.md) — Android package, runtime restrictions, CI evidence, signing boundary, and promotion requirements.
 - [`docs/MEDIA_HOVER.md`](docs/MEDIA_HOVER.md) — Media Hover interaction, search/AI/OCR, destination, privacy, security, accessibility, and integration contract.
 - [`docs/WARDVEIL_DOWNLOAD_SCANNING.md`](docs/WARDVEIL_DOWNLOAD_SCANNING.md) — download release, evidence binding, fail-closed security states, privacy, quarantine, and production-acceptance boundaries.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architectural boundaries and ownership model.
