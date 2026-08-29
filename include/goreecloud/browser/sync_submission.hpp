@@ -50,6 +50,10 @@ struct SyncProof {
   std::string signature;
 };
 
+inline bool ValidateSyncProofForEnvelope(const SyncProof& proof, const SyncEnvelope& envelope) {
+  return proof.device_id == envelope.origin_device && !proof.public_key.empty() && !proof.signature.empty();
+}
+
 class SyncSigner {
  public:
   virtual ~SyncSigner() = default;
@@ -107,8 +111,9 @@ inline std::optional<SyncEnvelope> MakeSyncTombstone(std::string dataset,
   return envelope;
 }
 
-// Cryptographic key custody is delegated to the platform identity/secret layer.
-// Browser never exposes a private key through this contract.
+// Cryptographic key custody and signature verification are delegated to the
+// platform identity/secret layer. Browser still rejects structurally invalid
+// signer output before that proof can leave the application boundary.
 inline std::optional<SyncProof> SignSyncEnvelope(const SyncEnvelope& envelope,
                                                  const SyncSigner& signer) {
   if (!ValidateSyncEnvelopeShape(envelope)) {
@@ -119,7 +124,11 @@ inline std::optional<SyncProof> SignSyncEnvelope(const SyncEnvelope& envelope,
   if (capability == nullptr || (envelope.deleted ? !capability->erase : !capability->write)) {
     return std::nullopt;
   }
-  return signer.Sign(envelope);
+  auto proof = signer.Sign(envelope);
+  if (!proof.has_value() || !ValidateSyncProofForEnvelope(*proof, envelope)) {
+    return std::nullopt;
+  }
+  return proof;
 }
 
 }  // namespace goreecloud::browser
