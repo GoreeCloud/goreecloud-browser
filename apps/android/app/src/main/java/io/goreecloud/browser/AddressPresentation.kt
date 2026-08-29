@@ -17,6 +17,4 @@ object AddressPresentation {
         val query = uri.encodedQuery?.let { "?$it" }.orEmpty()
         return host + path + query
     }
-
-    fun restingSelection(text: CharSequence): Int = if (text.isEmpty()) 0 else 0
 }
