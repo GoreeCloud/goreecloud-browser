@@ -31,6 +31,7 @@ class GlazeContractTest {
         assertEquals(GlazeContract.MaterialLevel.SoftGlaze, mapping.omnibox)
         assertEquals(GlazeContract.MaterialLevel.Surface, mapping.addressField)
         assertEquals(GlazeContract.MaterialLevel.Surface, mapping.bottomChrome)
+        assertEquals(GlazeContract.MaterialLevel.SoftGlaze, mapping.browserMenu)
         assertEquals(GlazeContract.Clarity.Balanced, mapping.clarity)
         assertEquals(GlazeContract.Expression.Calm, mapping.expression)
         assertTrue(mapping.noActionBar)
@@ -38,10 +39,16 @@ class GlazeContractTest {
         assertTrue(mapping.effectsFreeFallback)
         assertTrue(mapping.usesNativeControls)
         assertTrue(mapping.usesVectorChromeIcons)
+        assertFalse(mapping.usesPlatformPopupMenu)
+        assertTrue(mapping.scrollAwareTopChrome)
     }
 
     @Test
-    fun fixedMobileChromeStaysWithinFirstBetaViewportBudget() {
+    fun mobileChromeBudgetsExpandedAndCollapsedViewportStates() {
         assertEquals(128, GlazeContract.fixedChromeHeightDp())
+        assertEquals(56, GlazeContract.collapsedChromeHeightDp())
+        assertTrue(
+            GlazeContract.collapsedChromeHeightDp() < GlazeContract.fixedChromeHeightDp(),
+        )
     }
 }
