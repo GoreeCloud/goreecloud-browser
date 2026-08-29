@@ -104,6 +104,11 @@ int main() {
   using goreecloud::browser::SyncEnvelope;
   using goreecloud::browser::SyncRetrievalBatch;
 
+  const auto capabilities = goreecloud::browser::sync_capabilities();
+  const auto* tab_capability =
+      goreecloud::browser::find_sync_capability(capabilities, "browser.tabs");
+  assert(tab_capability != nullptr);
+
   FixtureTransport fixture;
   const auto snapshot = goreecloud::browser::FetchBrowserSyncSnapshot(fixture);
   assert(snapshot.has_value());
@@ -158,7 +163,7 @@ int main() {
       .dataset = "browser.tabs",
       .records = {SyncEnvelope{
           .dataset = "browser.tabs",
-          .schema_version = goreecloud::browser::kBrowserSyncSchemaVersion + 1,
+          .schema_version = tab_capability->schema_version + 1,
           .record_id = "tab-future",
           .revision = 1,
           .updated_at = "2026-08-28T19:00:00Z",
