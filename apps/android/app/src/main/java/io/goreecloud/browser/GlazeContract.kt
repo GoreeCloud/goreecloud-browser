@@ -12,10 +12,13 @@ object GlazeContract {
     const val STABLE_PROMOTION_REVISION = "ff3fff4306bd53ea9c0715a7c0d64265bb038617"
 
     const val GENERAL_TARGET_DP = 48
-    const val ROOT_GUTTER_DP = 12
-    const val CONTROL_GAP_DP = 8
-    const val NAVIGATION_CAPSULE_CORNER_DP = 28
-    const val FIELD_CORNER_DP = 24
+    const val CHROME_GUTTER_DP = 8
+    const val CONTROL_GAP_DP = 6
+    const val OMNIBOX_HEIGHT_DP = 56
+    const val BOTTOM_TOOLBAR_HEIGHT_DP = 56
+    const val OMNIBOX_CORNER_DP = 28
+    const val CHROME_CONTROL_CORNER_DP = 22
+    const val PROGRESS_HEIGHT_DP = 2
 
     enum class MaterialLevel {
         Canvas,
@@ -47,25 +50,36 @@ object GlazeContract {
 
     data class AndroidBrowserMapping(
         val canvas: MaterialLevel,
-        val status: MaterialLevel,
-        val navigation: MaterialLevel,
+        val topChrome: MaterialLevel,
+        val omnibox: MaterialLevel,
         val addressField: MaterialLevel,
+        val bottomChrome: MaterialLevel,
         val clarity: Clarity,
         val expression: Expression,
+        val noActionBar: Boolean,
+        val developerStatusInNormalChrome: Boolean,
         val effectsFreeFallback: Boolean,
         val usesNativeControls: Boolean,
+        val usesVectorChromeIcons: Boolean,
     )
 
     val ANDROID_BROWSER_MAPPING = AndroidBrowserMapping(
         canvas = MaterialLevel.Canvas,
-        status = MaterialLevel.SoftGlaze,
-        navigation = MaterialLevel.Glaze,
+        topChrome = MaterialLevel.Canvas,
+        omnibox = MaterialLevel.SoftGlaze,
         addressField = MaterialLevel.Surface,
+        bottomChrome = MaterialLevel.Surface,
         clarity = Clarity.Balanced,
         expression = Expression.Calm,
+        noActionBar = true,
+        developerStatusInNormalChrome = false,
         effectsFreeFallback = true,
         usesNativeControls = true,
+        usesVectorChromeIcons = true,
     )
 
     fun satisfiesGeneralTargetFloor(sizeDp: Int): Boolean = sizeDp >= GENERAL_TARGET_DP
+
+    fun fixedChromeHeightDp(): Int =
+        OMNIBOX_HEIGHT_DP + (CHROME_GUTTER_DP * 2) + BOTTOM_TOOLBAR_HEIGHT_DP
 }

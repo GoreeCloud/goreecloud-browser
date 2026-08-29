@@ -23,15 +23,25 @@ class GlazeContractTest {
     }
 
     @Test
-    fun androidBrowserMappingUsesNativeAccessibleFallbackSemantics() {
+    fun mobileChromeRemovesDevelopmentScaffoldingFromNormalBrowsing() {
         val mapping = GlazeContract.ANDROID_BROWSER_MAPPING
 
         assertEquals(GlazeContract.MaterialLevel.Canvas, mapping.canvas)
-        assertEquals(GlazeContract.MaterialLevel.Glaze, mapping.navigation)
+        assertEquals(GlazeContract.MaterialLevel.Canvas, mapping.topChrome)
+        assertEquals(GlazeContract.MaterialLevel.SoftGlaze, mapping.omnibox)
         assertEquals(GlazeContract.MaterialLevel.Surface, mapping.addressField)
+        assertEquals(GlazeContract.MaterialLevel.Surface, mapping.bottomChrome)
         assertEquals(GlazeContract.Clarity.Balanced, mapping.clarity)
         assertEquals(GlazeContract.Expression.Calm, mapping.expression)
+        assertTrue(mapping.noActionBar)
+        assertFalse(mapping.developerStatusInNormalChrome)
         assertTrue(mapping.effectsFreeFallback)
         assertTrue(mapping.usesNativeControls)
+        assertTrue(mapping.usesVectorChromeIcons)
+    }
+
+    @Test
+    fun fixedMobileChromeStaysWithinFirstBetaViewportBudget() {
+        assertEquals(128, GlazeContract.fixedChromeHeightDp())
     }
 }
