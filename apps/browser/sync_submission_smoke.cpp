@@ -16,6 +16,15 @@ class FakeSigner final : public SyncSigner {
   }
 };
 
+class WrongDeviceSigner final : public SyncSigner {
+ public:
+  std::optional<SyncProof> Sign(const SyncEnvelope&) const override {
+    return SyncProof{.device_id = "other-device",
+                     .public_key = "platform-public-key",
+                     .signature = "platform-signature"};
+  }
+};
+
 int main() {
   const auto capabilities = sync_capabilities();
   const auto* tab_capability = find_sync_capability(capabilities, "browser.tabs");
@@ -36,6 +45,16 @@ int main() {
   auto proof = SignSyncEnvelope(*envelope, signer);
   assert(proof.has_value());
   assert(proof->device_id == "device-browser");
+  assert(ValidateSyncProofForEnvelope(*proof, *envelope));
+
+  WrongDeviceSigner wrong_device_signer;
+  assert(!SignSyncEnvelope(*envelope, wrong_device_signer).has_value());
+  assert(!ValidateSyncProofForEnvelope(
+      SyncProof{.device_id = envelope->origin_device, .public_key = "", .signature = "platform-signature"},
+      *envelope));
+  assert(!ValidateSyncProofForEnvelope(
+      SyncProof{.device_id = envelope->origin_device, .public_key = "platform-public-key", .signature = ""},
+      *envelope));
 
   auto tombstone = MakeSyncTombstone(
       "browser.tabs", "tab-deleted", 8, "2026-08-26T23:01:00Z", "device-browser");
