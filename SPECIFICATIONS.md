@@ -16,7 +16,8 @@ GoreeCloud Browser is an original GoreeCloud-owned native web browser. GoreeClou
 
 - User-facing identity: GoreeCloud Browser Beta
 - Debug-beta package: `io.goreecloud.browser.beta`
-- Debug-beta version: `0.1.0-beta.1+android.1`
+- Debug-beta version: `0.1.0-beta.1+android.2`
+- Android versionCode: `10002`
 - Minimum Android: API 26
 - Compile/target API: 35
 - Java/Kotlin target: 17

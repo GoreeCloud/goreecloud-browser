@@ -2,7 +2,8 @@
 
 **Target:** Android installable beta APK  
 **Package:** `io.goreecloud.browser.beta`  
-**Version:** `0.1.0-beta.1+android.1`  
+**Version:** `0.1.0-beta.1+android.2`  
+**versionCode:** `10002`  
 **Minimum Android:** 8.0 / API 26  
 **Target Android API:** 35  
 **Current Glaze UI target:** 2.0.0 Stable  
@@ -36,7 +37,7 @@ The Android beta provides:
 
 ## Glaze UI 2.0 Android mapping candidate
 
-The Android shell now records and consumes the current Glaze UI 2.0.0 Stable contract at source level. The mapping is intentionally native rather than a web/CSS skin.
+The `+android.2` beta advances Browser-owned Android chrome onto a source-level native mapping of the current Glaze UI 2.0.0 Stable contract.
 
 Implemented source mapping:
 
@@ -73,7 +74,7 @@ Expected APK path:
 apps/android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The first authoritative post-merge installable baseline was produced from `main` revision `0b64c47440205fb988910841ac89a76c49ea86aa`. That run completed test, lint, assembly, signature/package verification, checksum, and artifact upload successfully. Later Android revisions require their own exact-head evidence; prior success is not inherited automatically.
+The first authoritative post-merge installable `+android.1` baseline was produced from `main` revision `0b64c47440205fb988910841ac89a76c49ea86aa` and completed the full workflow successfully. The `+android.2` Glaze mapping is a new release candidate and must obtain its own exact-head and post-merge evidence; prior success is not inherited automatically.
 
 ## Signing boundary
 
