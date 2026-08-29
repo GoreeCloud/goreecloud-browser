@@ -2,11 +2,14 @@ package io.goreecloud.browser
 
 import android.annotation.TargetApi
 import android.app.Activity
+import android.app.Dialog
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
@@ -14,6 +17,9 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.webkit.CookieManager
@@ -29,7 +35,6 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
-import android.widget.PopupMenu
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -43,6 +48,7 @@ import android.widget.Toast
  */
 class BrowserActivity : Activity() {
     private lateinit var webView: WebView
+    private lateinit var topChrome: LinearLayout
     private lateinit var addressField: EditText
     private lateinit var schemeBadge: TextView
     private lateinit var backButton: ImageButton
@@ -53,6 +59,7 @@ class BrowserActivity : Activity() {
 
     private var currentUrl: String = NavigationResolver.SEARCH_HOME
     private var pageLoading = false
+    private var topChromeVisible = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,7 +125,7 @@ class BrowserActivity : Activity() {
         }
         glaze.styleCanvas(root)
 
-        val topChrome = LinearLayout(this).apply {
+        topChrome = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
         }
         glaze.styleTopChrome(topChrome)
@@ -150,6 +157,7 @@ class BrowserActivity : Activity() {
                 android.text.InputType.TYPE_TEXT_VARIATION_URI
             setOnFocusChangeListener { _, hasFocus ->
                 if (hasFocus) {
+                    setTopChromeVisible(true)
                     setText(currentUrl)
                     selectAll()
                 } else {
@@ -281,7 +289,7 @@ class BrowserActivity : Activity() {
         bottomToolbar.addView(reloadButton, toolbarButtonParams())
 
         val menuButton = chromeButton(R.drawable.ic_more, "Browser menu") {
-            showBrowserMenu(it)
+            showBrowserMenu()
         }
         bottomToolbar.addView(menuButton, toolbarButtonParams())
 
@@ -320,6 +328,20 @@ class BrowserActivity : Activity() {
             setAcceptThirdPartyCookies(webView, false)
         }
 
+        webView.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
+            if (!addressField.hasFocus()) {
+                val delta = scrollY - oldScrollY
+                when {
+                    scrollY <= dp(GlazeContract.CHROME_GUTTER_DP) -> setTopChromeVisible(true)
+                    delta > dp(GlazeContract.SCROLL_DIRECTION_SLOP_DP) &&
+                        scrollY > dp(GlazeContract.AUTO_HIDE_SCROLL_THRESHOLD_DP) ->
+                        setTopChromeVisible(false)
+                    delta < -dp(GlazeContract.SCROLL_DIRECTION_SLOP_DP) ->
+                        setTopChromeVisible(true)
+                }
+            }
+        }
+
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val target = request.url.toString()
@@ -333,6 +355,7 @@ class BrowserActivity : Activity() {
                 super.onPageStarted(view, url, favicon)
                 currentUrl = url
                 pageLoading = true
+                setTopChromeVisible(true)
                 progressBar.visibility = View.VISIBLE
                 if (!addressField.hasFocus()) updateOmniboxPresentation()
                 updateNavigationControls()
@@ -404,6 +427,7 @@ class BrowserActivity : Activity() {
     private fun navigate(input: String) {
         val target = NavigationResolver.resolve(input)
         currentUrl = target
+        setTopChromeVisible(true)
         addressField.clearFocus()
         hideKeyboard()
         updateOmniboxPresentation()
@@ -440,17 +464,21 @@ class BrowserActivity : Activity() {
         schemeBadge.contentDescription = "Address scheme ${schemeBadge.text}"
 
         if (!addressField.hasFocus()) {
-            addressField.setText(displayAddress(currentUrl))
-            addressField.setSelection(addressField.text.length)
+            addressField.setText(AddressPresentation.condensed(currentUrl))
+            addressField.setSelection(0)
+            addressField.post {
+                if (!addressField.hasFocus()) {
+                    addressField.scrollTo(0, 0)
+                }
+            }
         }
     }
 
-    private fun displayAddress(url: String): String {
-        val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return url
-        val host = uri.host ?: return url
-        val path = uri.encodedPath.orEmpty().takeUnless { it == "/" }.orEmpty()
-        val query = uri.encodedQuery?.let { "?$it" }.orEmpty()
-        return host + path + query
+    private fun setTopChromeVisible(visible: Boolean) {
+        if (!::topChrome.isInitialized || topChromeVisible == visible) return
+        topChromeVisible = visible
+        topChrome.clearAnimation()
+        topChrome.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
     private fun updateNavigationControls() {
@@ -485,24 +513,101 @@ class BrowserActivity : Activity() {
         marginEnd = dp(1)
     }
 
-    private fun showBrowserMenu(anchor: View) {
-        PopupMenu(this, anchor).apply {
-            menu.add(0, MENU_HOME, 0, "GoreeCloud Search home")
-            menu.add(0, MENU_COPY_ADDRESS, 1, "Copy page address")
-            menu.add(0, MENU_SHARE_ADDRESS, 2, "Share page")
-            menu.add(0, MENU_BETA_INFO, 3, "About this beta")
-            setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    MENU_HOME -> navigate(NavigationResolver.SEARCH_HOME)
-                    MENU_COPY_ADDRESS -> copyCurrentAddress()
-                    MENU_SHARE_ADDRESS -> shareCurrentAddress()
-                    MENU_BETA_INFO -> showBetaInfo()
-                    else -> return@setOnMenuItemClickListener false
-                }
-                true
-            }
-            show()
+    private fun showBrowserMenu() {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+
+        val container = FrameLayout(this).apply {
+            setPadding(dp(12), 0, dp(12), dp(12))
+            contentDescription = "Browser menu"
         }
+        val sheet = LinearLayout(this)
+        glaze.styleMenuSheet(sheet)
+
+        val title = TextView(this).apply {
+            text = "GoreeCloud Browser"
+        }
+        glaze.styleMenuTitle(title)
+        sheet.addView(
+            title,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ),
+        )
+
+        val subtitle = TextView(this).apply {
+            text = currentPageHost()
+        }
+        glaze.styleMenuSubtitle(subtitle)
+        sheet.addView(
+            subtitle,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ),
+        )
+
+        sheet.addView(
+            menuAction("Copy page address", dialog) { copyCurrentAddress() },
+            menuActionParams(),
+        )
+        sheet.addView(
+            menuAction("Share page", dialog) { shareCurrentAddress() },
+            menuActionParams(),
+        )
+        sheet.addView(
+            menuAction("About this beta", dialog) { showBetaInfo() },
+            menuActionParams(),
+        )
+
+        container.addView(
+            sheet,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+            ),
+        )
+
+        dialog.setContentView(container)
+        dialog.setCanceledOnTouchOutside(true)
+        dialog.show()
+        dialog.window?.apply {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            attributes = attributes.apply {
+                gravity = Gravity.BOTTOM
+                dimAmount = 0.18f
+            }
+            decorView.setPadding(0, 0, 0, 0)
+            setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+        }
+    }
+
+    private fun menuAction(label: String, dialog: Dialog, action: () -> Unit): TextView =
+        TextView(this).apply {
+            text = label
+            contentDescription = label
+            glaze.styleMenuAction(this)
+            setOnClickListener {
+                dialog.dismiss()
+                action()
+            }
+        }
+
+    private fun menuActionParams() = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        dp(GlazeContract.MENU_ACTION_HEIGHT_DP),
+    ).apply {
+        topMargin = dp(4)
+    }
+
+    private fun currentPageHost(): String {
+        val host = runCatching { Uri.parse(currentUrl).host }.getOrNull()
+        return host?.takeIf { it.isNotBlank() } ?: "Current page"
     }
 
     private fun copyCurrentAddress() {
@@ -533,11 +638,4 @@ class BrowserActivity : Activity() {
     }
 
     private fun dp(value: Int): Int = glaze.dp(value)
-
-    companion object {
-        private const val MENU_HOME = 1
-        private const val MENU_COPY_ADDRESS = 2
-        private const val MENU_SHARE_ADDRESS = 3
-        private const val MENU_BETA_INFO = 4
-    }
 }

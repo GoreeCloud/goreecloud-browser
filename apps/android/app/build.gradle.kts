@@ -11,7 +11,7 @@ android {
         applicationId = "io.goreecloud.browser"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10003
+        versionCode = 10004
         versionName = "0.1.0-beta.1"
 
         testInstrumentationRunner = "android.app.Instrumentation"
@@ -22,7 +22,7 @@ android {
             // The CI beta is intentionally a distinct application so it can
             // coexist with a future production-signed GoreeCloud Browser.
             applicationIdSuffix = ".beta"
-            versionNameSuffix = "+android.3"
+            versionNameSuffix = "+android.4"
         }
 
         getByName("release") {

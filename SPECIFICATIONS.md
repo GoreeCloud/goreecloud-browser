@@ -16,8 +16,8 @@ GoreeCloud Browser is an original GoreeCloud-owned native web browser. GoreeClou
 
 - User-facing identity: GoreeCloud Browser Beta
 - Debug-beta package: `io.goreecloud.browser.beta`
-- Debug-beta version: `0.1.0-beta.1+android.2`
-- Android versionCode: `10002`
+- Debug-beta version: `0.1.0-beta.1+android.4`
+- Android versionCode: `10004`
 - Minimum Android: API 26
 - Compile/target API: 35
 - Java/Kotlin target: 17
@@ -37,21 +37,40 @@ The unified address/search field resolves input according to Browser-owned polic
 4. Other text is sent only to GoreeCloud Search.
 5. Non-web schemes are not accepted as ordinary Browser web navigation.
 
+## Android mobile chrome contract
+
+The installed beta uses a Browser-owned two-region mobile shell:
+
+- a 56dp top omnibox inside an 8dp top/bottom chrome gutter;
+- a 56dp persistent bottom navigation toolbar;
+- full-width web content between those regions;
+- Browser-owned vector controls for Back, Forward, Search Home, Reload/Stop, and Browser menu;
+- page-load progress overlaid on web content rather than allocated its own chrome row;
+- unfocused address presentation that removes the scheme while keeping the hostname at the leading edge;
+- complete URL exposure and selection when the omnibox receives focus;
+- scroll-aware top chrome that collapses after meaningful downward page scrolling and returns on upward scrolling, page-top return, omnibox focus, or new navigation;
+- Browser-owned Glaze menu presentation rather than the Android platform-default popup menu.
+
+Expanded fixed Browser chrome is 128dp before Android system bars. The collapsed scrolling state retains only the 56dp bottom navigation toolbar.
+
 ## Android Glaze UI contract
 
 The current source mapping targets Glaze UI 2.0.0 Stable and records the canonical promotion revision `ff3fff4306bd53ea9c0715a7c0d64265bb038617`.
 
 The Android shell maps native controls to:
 
-- Canvas for the root application background;
-- Soft Glaze for bounded status presentation;
-- Glaze for the Navigation Capsule;
-- Surface for the unified address/search field;
+- Canvas for the root application background and top chrome;
+- Soft Glaze for the omnibox and Browser menu sheet;
+- Surface for the address-field role, bottom navigation, and Browser menu actions;
 - Calm expression and Balanced clarity for this beta shell;
 - a 48dp minimum effective target for general interactive controls;
 - semantic native labels and focus/pressed states;
 - effects-free operation without requiring blur/transparency;
-- native light/dark appearance adaptation.
+- native light/dark appearance adaptation;
+- Browser-owned vector icons;
+- explicit no-action-bar and no-development-banner normal-chrome contracts;
+- an explicit prohibition on using the platform-default `PopupMenu` as the Browser menu surface;
+- an explicit scroll-aware top-chrome contract.
 
 This source mapping is not equivalent to native-device Glaze acceptance. Production acceptance requires exact-revision visual, accessibility, text-scaling, contrast, input, responsive/form-factor, performance, and representative real-device evidence.
 
