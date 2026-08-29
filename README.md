@@ -14,7 +14,7 @@ GoreeCloud Browser is the sole normal user-facing Browser product identity. Upst
 
 ## Glaze UI requirement
 
-GoreeCloud Browser is built against the **latest approved Stable Glaze UI release**. The current Stable baseline is **Glaze UI 1.5.0**, promoted from `GoreeCloud/glaze-ui` at source revision `2e1618397f6ebcdd254a76bfdd7e98846f2c5aa3`.
+GoreeCloud Browser is built against the **latest approved Stable Glaze UI release**. The current Stable baseline is **Glaze UI 2.0.0**, promoted from `GoreeCloud/goreecloud-glaze-ui` at source revision `ff3fff4306bd53ea9c0715a7c0d64265bb038617`. Browser source and the Linux GTK beta shell now enforce the 2.0 contract baseline, including the 48 px general interactive target floor; this is adoption evidence, not rendered cross-platform production acceptance.
 
 This is a moving production requirement rather than a permanent version pin. When a newer Glaze UI release becomes Stable, GoreeCloud Browser becomes migration-required until Browser-owned surfaces have adopted and validated that current Stable contract. A superseded Glaze UI baseline cannot satisfy Browser production readiness.
 
