@@ -1,0 +1,72 @@
+# GoreeCloud Browser Features
+
+This file records Browser functionality and implementation state. A listed feature is not a production-readiness claim unless its acceptance state explicitly supports that conclusion.
+
+## Implemented and build-tested foundations
+
+- GoreeCloud-owned engine-independent browser core.
+- Browser Engine Layer abstraction for replaceable rendering/runtime foundations.
+- Linux GTK/X11 native beta shell build path.
+- GoreeCloud Search integration as the sole integrated query authority.
+- Browser-owned Sync submission/retrieval contracts with privacy-safe tombstones, capability/schema validation, pagination, record-ID bounds, and signer-shape validation.
+- Advanced Download Manager core with staged transfer and source-level Wardveil release-gate architecture.
+- Session recovery contracts and protected-storage architecture in the native core.
+- Media Hover architecture and first-party Browser feature contracts.
+
+## Android beta — implemented
+
+- Installable debug-signed APK target.
+- Package `io.goreecloud.browser.beta`.
+- Android API 26 minimum and API 35 target.
+- Android System WebView/Chromium rendering dependency behind GoreeCloud-owned product behavior.
+- Back, Forward, Reload, Go, unified address/search field, progress state, and web-content region.
+- Direct HTTP/HTTPS navigation.
+- HTTPS upgrade for bare hosts.
+- GoreeCloud Search for non-URL input.
+- Browser-intent handling for HTTP/HTTPS links.
+- TLS certificate errors fail closed.
+- Android Safe Browsing enabled with return-to-safety behavior.
+- Mixed-content loading disabled.
+- Third-party cookies disabled by default.
+- WebView file/content access disabled.
+- Website permissions and geolocation denied until Browser-owned policy surfaces are accepted.
+- Downloads blocked until the Android path satisfies the authoritative Wardveil release contract.
+- Unit tests for Browser-owned navigation resolution.
+- CI unit test, Android lint, APK build, signature/package verification, SHA-256, and artifact upload.
+
+## Android beta — Glaze UI 2.0 source mapping candidate
+
+- Explicit current-Stable Glaze UI version/revision metadata.
+- Canvas/Surface/Soft Glaze/Glaze semantic material mapping.
+- Native Navigation Capsule composition.
+- Native Android controls retained for platform semantics.
+- 48dp minimum general interaction target.
+- Light/dark appearance adaptation.
+- Visible pressed/focus state mapping.
+- Calm expression and Balanced clarity for the initial browser shell.
+- Effects-free fallback that does not require blur/transparency.
+- Contract tests for current Glaze version, target floor, and mapping semantics.
+
+This section is source-level mapping evidence only. Native-device Glaze conformance and accessibility acceptance remain pending.
+
+## Planned / incomplete Android capabilities
+
+- Browser-owned tab strip/tab switcher and multi-tab lifecycle.
+- Private Browsing and Close & Forget runtime isolation.
+- Browser-owned website permission prompts.
+- Wardveil-authenticated download staging, scan, release, hold, and quarantine handoff.
+- Full Privacy Shield filtering, consent, data-use, and diagnostics integration.
+- Everkeep backup/recovery/portability integration.
+- GoreeCloud Identity profile/session integration.
+- GoreeCloud Vault credential/passkey/autofill integration.
+- GoreeCloud Sync runtime integration.
+- GoreeCloud DNS and GoreeCloud Network runtime adapters.
+- GoreeCloud Mesh capability coordination.
+- Bookmarks, history, library, settings, downloads UI, Reader Mode, and Wayfinder mobile surfaces.
+- Controlled beta/production signing, managed updates, rollback, and migration.
+- Store packaging and publication.
+- Representative real-device, accessibility, performance, battery, and compatibility acceptance.
+
+## Acceptance principle
+
+Implemented source, successful CI, an installable package, runtime integration, target-environment validation, security validation, accessibility acceptance, and production approval are separate states. Browser documentation must preserve those distinctions.

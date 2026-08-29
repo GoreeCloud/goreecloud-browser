@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
+import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
@@ -19,7 +20,6 @@ import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.net.http.SslError
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -28,11 +28,11 @@ import android.widget.TextView
 import android.widget.Toast
 
 /**
- * First installable Android beta shell for GoreeCloud Browser.
+ * Installable Android beta shell for GoreeCloud Browser.
  *
  * Android System WebView/Chromium is used only as the web-engine dependency.
  * GoreeCloud owns the chrome, navigation/search policy, permission defaults,
- * download gate, and product behavior implemented here.
+ * download gate, Glaze UI native mapping, and product behavior implemented here.
  */
 class BrowserActivity : Activity() {
     private lateinit var webView: WebView
@@ -41,10 +41,13 @@ class BrowserActivity : Activity() {
     private lateinit var forwardButton: Button
     private lateinit var reloadButton: Button
     private lateinit var progressBar: ProgressBar
+    private lateinit var glaze: GlazeNativeStyle
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         title = "GoreeCloud Browser Beta"
+        glaze = GlazeNativeStyle(this)
+        glaze.applyWindow(this)
 
         buildBrowserSurface()
         configureEngine()
@@ -91,26 +94,34 @@ class BrowserActivity : Activity() {
     private fun buildBrowserSurface() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(8), dp(8), dp(8), dp(8))
+            setPadding(
+                dp(GlazeContract.ROOT_GUTTER_DP),
+                dp(GlazeContract.ROOT_GUTTER_DP),
+                dp(GlazeContract.ROOT_GUTTER_DP),
+                dp(GlazeContract.ROOT_GUTTER_DP),
+            )
         }
+        glaze.styleCanvas(root)
 
         val status = TextView(this).apply {
-            text = "Android Beta 0.1 • GoreeCloud Search • downloads security-gated"
-            contentDescription = "GoreeCloud Browser Android beta status"
-            setPadding(dp(4), 0, dp(4), dp(6))
+            text = "Android Beta • Glaze UI 2.0 mapping candidate • Wardveil download release pending"
+            contentDescription = text
         }
+        glaze.styleStatus(status)
         root.addView(
             status,
             LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT,
-            ),
+            ).apply {
+                bottomMargin = dp(GlazeContract.CONTROL_GAP_DP)
+            },
         )
 
-        val toolbar = LinearLayout(this).apply {
+        val navigationCapsule = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = android.view.Gravity.CENTER_VERTICAL
         }
+        glaze.styleNavigationCapsule(navigationCapsule)
 
         backButton = Button(this).apply {
             text = "‹"
@@ -118,7 +129,8 @@ class BrowserActivity : Activity() {
             isEnabled = false
             setOnClickListener { if (webView.canGoBack()) webView.goBack() }
         }
-        toolbar.addView(backButton, compactButtonParams())
+        glaze.styleButton(backButton, GlazeContract.ButtonRole.Quiet)
+        navigationCapsule.addView(backButton, compactButtonParams())
 
         forwardButton = Button(this).apply {
             text = "›"
@@ -126,14 +138,16 @@ class BrowserActivity : Activity() {
             isEnabled = false
             setOnClickListener { if (webView.canGoForward()) webView.goForward() }
         }
-        toolbar.addView(forwardButton, compactButtonParams())
+        glaze.styleButton(forwardButton, GlazeContract.ButtonRole.Quiet)
+        navigationCapsule.addView(forwardButton, compactButtonParams().withStartMargin())
 
         reloadButton = Button(this).apply {
             text = "↻"
             contentDescription = "Reload"
             setOnClickListener { webView.reload() }
         }
-        toolbar.addView(reloadButton, compactButtonParams())
+        glaze.styleButton(reloadButton, GlazeContract.ButtonRole.Soft)
+        navigationCapsule.addView(reloadButton, compactButtonParams().withStartMargin())
 
         addressField = EditText(this).apply {
             hint = "Search GoreeCloud or enter address"
@@ -155,15 +169,16 @@ class BrowserActivity : Activity() {
                 }
             }
         }
-        toolbar.addView(
+        glaze.styleAddressField(addressField)
+        navigationCapsule.addView(
             addressField,
             LinearLayout.LayoutParams(
                 0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
+                dp(GlazeContract.GENERAL_TARGET_DP),
                 1f,
             ).apply {
-                marginStart = dp(6)
-                marginEnd = dp(6)
+                marginStart = dp(GlazeContract.CONTROL_GAP_DP)
+                marginEnd = dp(GlazeContract.CONTROL_GAP_DP)
             },
         )
 
@@ -172,10 +187,11 @@ class BrowserActivity : Activity() {
             contentDescription = "Navigate"
             setOnClickListener { navigate(addressField.text.toString()) }
         }
-        toolbar.addView(goButton, compactButtonParams(dp(60)))
+        glaze.styleButton(goButton, GlazeContract.ButtonRole.Emphasis)
+        navigationCapsule.addView(goButton, compactButtonParams(dp(56)))
 
         root.addView(
-            toolbar,
+            navigationCapsule,
             LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -186,23 +202,30 @@ class BrowserActivity : Activity() {
             max = 100
             progress = 0
             visibility = View.GONE
+            contentDescription = "Page loading progress"
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         }
         root.addView(
             progressBar,
             LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 dp(3),
-            ),
+            ).apply {
+                topMargin = dp(6)
+            },
         )
 
         webView = WebView(this)
+        glaze.styleWebContent(webView)
         root.addView(
             webView,
             LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 0,
                 1f,
-            ),
+            ).apply {
+                topMargin = dp(6)
+            },
         )
 
         setContentView(root)
@@ -340,11 +363,12 @@ class BrowserActivity : Activity() {
         forwardButton.isEnabled = webView.canGoForward()
     }
 
-    private fun compactButtonParams(width: Int = dp(52)) = LinearLayout.LayoutParams(
-        width,
-        LinearLayout.LayoutParams.WRAP_CONTENT,
-    )
+    private fun compactButtonParams(width: Int = dp(GlazeContract.GENERAL_TARGET_DP)) =
+        LinearLayout.LayoutParams(width, dp(GlazeContract.GENERAL_TARGET_DP))
 
-    private fun dp(value: Int): Int =
-        (value * resources.displayMetrics.density).toInt()
+    private fun LinearLayout.LayoutParams.withStartMargin(): LinearLayout.LayoutParams = apply {
+        marginStart = dp(GlazeContract.CONTROL_GAP_DP / 2)
+    }
+
+    private fun dp(value: Int): Int = glaze.dp(value)
 }
