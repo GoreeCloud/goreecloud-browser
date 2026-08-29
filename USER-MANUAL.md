@@ -8,8 +8,8 @@ Current Android beta identity for this source revision:
 
 - Application: **GoreeCloud Browser Beta**
 - Package: `io.goreecloud.browser.beta`
-- Version: `0.1.0-beta.1+android.3`
-- versionCode: `10003`
+- Version: `0.1.0-beta.1+android.4`
+- versionCode: `10004`
 - Minimum Android: Android 8.0 / API 26
 - Target API: 35
 - Rendering dependency: Android System WebView/Chromium
@@ -28,9 +28,7 @@ Do not treat the beta APK as a production release, managed update channel, or lo
 
 ## Mobile browser chrome
 
-The `+android.3` Android shell is designed to use substantially less of the phone viewport than the first installable beta shell.
-
-Normal browsing no longer places an Android Activity title bar or engineering-status banner above the page. The main Browser-owned chrome is split into two compact areas:
+The Android shell uses two Browser-owned chrome regions:
 
 - a top omnibox; and
 - a bottom navigation toolbar.
@@ -39,7 +37,7 @@ The web page occupies the full region between them.
 
 ### Omnibox
 
-The top omnibox reserves most of its width for the unified address/search field. When the field is not being edited, Browser presents a condensed address. Focus the field to expose and select the complete current URL for editing.
+The top omnibox reserves most of its width for the unified address/search field. When the field is not being edited, Browser presents a condensed address with the hostname kept at the leading edge. This prevents a long path such as `/preferences` from horizontally scrolling the field so far that the hostname disappears. Focus the field to expose and select the complete current URL for editing.
 
 The leading `HTTPS`, `HTTP`, or `WEB` label reports the parsed address scheme. It is not a Wardveil verdict, certificate-verification badge, or claim that a page is trustworthy.
 
@@ -48,6 +46,19 @@ Use the arrow action at the right edge of the omnibox or the Android keyboard's 
 Enter a complete `https://` or `http://` URL to navigate directly. A host such as `example.com` is upgraded to HTTPS before navigation.
 
 Text that is not interpreted as a URL is sent to **GoreeCloud Search**, which is the sole integrated search authority for this beta. Browser does not silently fall back to another search provider.
+
+### Scroll-aware chrome
+
+When a page has been scrolled meaningfully downward, Browser can hide the top omnibox to return more vertical space to the page. The 56dp bottom toolbar remains available.
+
+The top omnibox returns when you:
+
+- scroll upward;
+- return near the top of the page;
+- focus the omnibox; or
+- start a new navigation.
+
+This changes presentation only. It does not change the current URL, page history, permission state, or security/privacy policy.
 
 ### Bottom navigation
 
@@ -61,9 +72,19 @@ The bottom toolbar contains:
 
 Back and Forward visibly disable when no matching history action is available.
 
-The current Browser menu includes bounded beta actions for returning Home, copying the current page address, sharing the current page address through Android, and viewing beta information. It is not yet the final Browser settings/menu system.
-
 Page-loading progress is drawn at the top of the web-content region rather than using a separate toolbar row.
+
+### Browser menu
+
+The Browser menu uses a Browser-owned Glaze bottom sheet rather than Android's platform-default popup menu.
+
+The current bounded menu actions are:
+
+- Copy page address;
+- Share page; and
+- About this beta.
+
+Search Home is intentionally not duplicated in the menu because it already has a dedicated control in the bottom toolbar. The current menu is not yet the final Browser settings/menu system.
 
 ## Android Back behavior
 
@@ -75,7 +96,7 @@ The Android beta maps Browser-owned chrome to the current Glaze UI 2.0.0 Stable 
 
 The current source mapping includes Canvas, Surface, and Soft Glaze roles, a 48dp minimum general interaction target, Calm expression, Balanced clarity, native light/dark adaptation, semantic control labels, vector Browser chrome icons, visible pressed/focus treatment, and an effects-free fallback that does not depend on blur, transparency, or animation.
 
-The normal browsing surface explicitly removes the platform action bar and developer-status banner from the chrome. The fixed Browser-owned top/bottom chrome budget is 128dp before Android system bars.
+The normal browsing surface explicitly removes the platform action bar and developer-status banner from the chrome. Expanded fixed Browser-owned chrome is 128dp before Android system bars; the scroll-collapsed state retains only the 56dp bottom toolbar. The Browser menu is also explicitly Browser-owned rather than a platform `PopupMenu` surface.
 
 This remains source-level Glaze 2.0 mapping evidence. It is **not yet native-device Glaze conformance acceptance**. Real-device visual, TalkBack, text-scaling, contrast, input, performance, orientation, foldable/form-factor, and representative hardware validation remain required before production approval.
 
