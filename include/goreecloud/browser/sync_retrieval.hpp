@@ -35,7 +35,9 @@ class AuthenticatedSyncRetrievalTransport {
 inline bool ValidateSyncRetrievalBatch(const SyncRetrievalBatch& batch,
                                        std::string_view expected_dataset,
                                        std::string_view after = {}) {
-  if (expected_dataset.empty() || batch.dataset != expected_dataset ||
+  const auto capabilities = sync_capabilities();
+  const auto* capability = SyncCapabilityFor(expected_dataset, capabilities);
+  if (capability == nullptr || !capability->read || batch.dataset != expected_dataset ||
       after.size() > kMaxSyncRecordIDBytes || batch.next_after.size() > kMaxSyncRecordIDBytes ||
       batch.records.size() > kSyncRetrievalPageSize) {
     return false;
@@ -43,16 +45,9 @@ inline bool ValidateSyncRetrievalBatch(const SyncRetrievalBatch& batch,
 
   std::string_view previous_id = after;
   for (const auto& record : batch.records) {
-    if (record.dataset != expected_dataset || record.schema_version < 1 ||
-        record.record_id.empty() || record.record_id.size() > kMaxSyncRecordIDBytes ||
-        record.revision == 0 || record.updated_at.empty() || record.origin_device.empty() ||
+    if (record.dataset != expected_dataset || record.schema_version != capability->schema_version ||
+        !ValidateSyncEnvelopeShape(record) ||
         (!previous_id.empty() && record.record_id <= previous_id)) {
-      return false;
-    }
-    // Tombstones deliberately carry no application payload. This preserves the
-    // Privacy Shield data-minimization boundary when remote deletions are read.
-    if ((record.deleted && !record.payload_json.empty()) ||
-        (!record.deleted && record.payload_json.empty())) {
       return false;
     }
     previous_id = record.record_id;
