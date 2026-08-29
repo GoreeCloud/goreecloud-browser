@@ -152,6 +152,43 @@ class GlazeNativeStyle(private val context: Context) {
         )
     }
 
+    fun styleMenuSheet(view: LinearLayout) {
+        view.orientation = LinearLayout.VERTICAL
+        view.setPadding(dp(12), dp(12), dp(12), dp(16))
+        view.background = material(
+            GlazeContract.MaterialLevel.SoftGlaze,
+            dp(GlazeContract.MENU_CORNER_DP),
+            outlined = true,
+        )
+    }
+
+    fun styleMenuTitle(view: TextView) {
+        view.setTextColor(palette.textPrimary)
+        view.textSize = 20f
+        view.setPadding(dp(12), dp(8), dp(12), dp(2))
+    }
+
+    fun styleMenuSubtitle(view: TextView) {
+        view.setTextColor(palette.textSecondary)
+        view.textSize = 13f
+        view.setPadding(dp(12), 0, dp(12), dp(10))
+    }
+
+    fun styleMenuAction(view: TextView) {
+        view.gravity = Gravity.CENTER_VERTICAL
+        view.setTextColor(palette.textPrimary)
+        view.textSize = 17f
+        view.minimumHeight = dp(GlazeContract.MENU_ACTION_HEIGHT_DP)
+        view.setPadding(dp(18), 0, dp(18), 0)
+        view.isClickable = true
+        view.isFocusable = true
+        view.background = interactiveBackground(
+            GlazeContract.MaterialLevel.Surface,
+            GlazeContract.MaterialLevel.Glaze,
+            GlazeContract.CHROME_CONTROL_CORNER_DP,
+        )
+    }
+
     fun styleProgress(progressBar: ProgressBar) {
         progressBar.progressTintList = ColorStateList.valueOf(palette.accent)
         progressBar.progressBackgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
