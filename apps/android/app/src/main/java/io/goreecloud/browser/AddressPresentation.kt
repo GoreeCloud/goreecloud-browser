@@ -1,6 +1,6 @@
 package io.goreecloud.browser
 
-import android.net.Uri
+import java.net.URI
 
 /**
  * Presentation-only address helpers for Browser-owned chrome.
@@ -11,10 +11,10 @@ import android.net.Uri
  */
 object AddressPresentation {
     fun condensed(url: String): String {
-        val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return url
+        val uri = runCatching { URI(url) }.getOrNull() ?: return url
         val host = uri.host ?: return url
-        val path = uri.encodedPath.orEmpty().takeUnless { it == "/" }.orEmpty()
-        val query = uri.encodedQuery?.let { "?$it" }.orEmpty()
+        val path = uri.rawPath.orEmpty().takeUnless { it == "/" }.orEmpty()
+        val query = uri.rawQuery?.let { "?$it" }.orEmpty()
         return host + path + query
     }
 }
