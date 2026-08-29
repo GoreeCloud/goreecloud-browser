@@ -8,6 +8,7 @@
 #include <gdk/gdkx.h>
 #include <gtk/gtk.h>
 
+#include "goreecloud/browser/glaze.hpp"
 #include "goreecloud/browser/internal_pages.hpp"
 #include "goreecloud/browser/live_media_hover_coordinator.hpp"
 #include "goreecloud/browser/media_hit_test_provider.hpp"
@@ -17,6 +18,9 @@
 namespace goreecloud::browser::platform {
 namespace {
 
+inline constexpr int kGlazeInteractiveTargetPx =
+    static_cast<int>(kBrowserGlazeCapabilities.minimum_target_px);
+
 void set_accessible_name(GtkWidget* widget, const char* name) {
   gtk_widget_set_tooltip_text(widget, name);
   if (auto* accessible = gtk_widget_get_accessible(widget)) atk_object_set_name(accessible, name);
@@ -24,7 +28,7 @@ void set_accessible_name(GtkWidget* widget, const char* name) {
 
 GtkWidget* make_toolbar_button(const char* visible_label, const char* accessible_name) {
   auto* button = gtk_button_new_with_label(visible_label);
-  gtk_widget_set_size_request(button, 44, 44);
+  gtk_widget_set_size_request(button, kGlazeInteractiveTargetPx, kGlazeInteractiveTargetPx);
   gtk_style_context_add_class(gtk_widget_get_style_context(button), "gc-toolbar-button");
   set_accessible_name(button, accessible_name);
   return button;
@@ -156,12 +160,12 @@ class GtkLinuxGlazeWindowHost::Impl {
     css = gtk_css_provider_new();
     static constexpr const char* kCss = R"CSS(
       window.gc-browser-window { background-color: @theme_bg_color; color: @theme_fg_color; }
-      .gc-tab-strip { padding: 4px 12px; min-height: 44px; background-color: @theme_bg_color; }
+      .gc-tab-strip { padding: 4px 12px; min-height: 48px; background-color: @theme_bg_color; }
       .gc-toolbar { padding: 8px 12px; background-color: @theme_bg_color; }
-      .gc-toolbar-button { min-width: 44px; min-height: 44px; border-radius: 14px; padding: 6px 10px; }
-      .gc-search-shell { min-height: 44px; border-radius: 22px; padding: 2px 6px; background-color: @theme_base_color; border: 1px solid alpha(@theme_fg_color, 0.16); }
-      .gc-search-entry { min-height: 40px; border: none; box-shadow: none; background: transparent; }
-      .gc-search-control { min-width: 44px; min-height: 44px; border-radius: 14px; }
+      .gc-toolbar-button { min-width: 48px; min-height: 48px; border-radius: 16px; padding: 6px 10px; }
+      .gc-search-shell { min-height: 48px; border-radius: 24px; padding: 2px 6px; background-color: @theme_base_color; border: 1px solid alpha(@theme_fg_color, 0.16); }
+      .gc-search-entry { min-height: 48px; border: none; box-shadow: none; background: transparent; }
+      .gc-search-control { min-width: 48px; min-height: 48px; border-radius: 16px; }
       .gc-content-fallback { padding: 32px; }
       window.gc-private-window .gc-toolbar, window.gc-private-window .gc-tab-strip { border-bottom: 1px solid alpha(@theme_selected_bg_color, 0.35); }
     )CSS";
@@ -268,7 +272,7 @@ class GtkLinuxGlazeWindowHost::Impl {
 
   void add_search_control(UnifiedSearchBarControl control, const char* visible, const char* accessible) {
     auto* button = gtk_button_new_with_label(visible);
-    gtk_widget_set_size_request(button, 44, 44);
+    gtk_widget_set_size_request(button, kGlazeInteractiveTargetPx, kGlazeInteractiveTargetPx);
     gtk_style_context_add_class(gtk_widget_get_style_context(button), "gc-search-control");
     set_accessible_name(button, accessible);
     search_control_bindings.emplace(button, control);
