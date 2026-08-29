@@ -24,20 +24,24 @@ struct SyncEnvelope {
   std::string payload_json;
 };
 
-// Browser validates against its advertised capability table and preserves
-// Privacy Shield data minimization by requiring payload-free tombstones.
+inline const SyncCapability* SyncCapabilityFor(std::string_view dataset,
+                                               const std::vector<SyncCapability>& capabilities) {
+  return find_sync_capability(capabilities, dataset);
+}
+
+// Shape validation is direction-neutral. Operation permissions are enforced by
+// the producer/signer/retrieval boundary that uses the envelope.
 inline bool ValidateSyncEnvelopeShape(const SyncEnvelope& envelope) {
   const auto capabilities = sync_capabilities();
-  const auto* capability = find_sync_capability(capabilities, envelope.dataset);
+  const auto* capability = SyncCapabilityFor(envelope.dataset, capabilities);
   if (capability == nullptr || envelope.schema_version != capability->schema_version ||
       envelope.record_id.empty() || envelope.record_id.size() > kMaxSyncRecordIDBytes ||
       envelope.revision == 0 || envelope.updated_at.empty() || envelope.origin_device.empty()) {
     return false;
   }
-  if (envelope.deleted) {
-    return capability->erase && envelope.payload_json.empty();
-  }
-  return capability->write && !envelope.payload_json.empty();
+  // Privacy Shield data minimization: tombstones contain no application data;
+  // live records carry an application payload.
+  return envelope.deleted ? envelope.payload_json.empty() : !envelope.payload_json.empty();
 }
 
 struct SyncProof {
@@ -56,6 +60,11 @@ inline std::optional<SyncEnvelope> MakeSyncEnvelope(const SyncRecord& record,
                                                     std::uint64_t revision,
                                                     std::string updated_at,
                                                     std::string origin_device) {
+  const auto capabilities = sync_capabilities();
+  const auto* capability = SyncCapabilityFor(record.dataset, capabilities);
+  if (capability == nullptr || !capability->write || record.schema_version != capability->schema_version) {
+    return std::nullopt;
+  }
   SyncEnvelope envelope{
       .dataset = record.dataset,
       .schema_version = record.schema_version,
@@ -78,7 +87,7 @@ inline std::optional<SyncEnvelope> MakeSyncTombstone(std::string dataset,
                                                      std::string updated_at,
                                                      std::string origin_device) {
   const auto capabilities = sync_capabilities();
-  const auto* capability = find_sync_capability(capabilities, dataset);
+  const auto* capability = SyncCapabilityFor(dataset, capabilities);
   if (capability == nullptr || !capability->erase) {
     return std::nullopt;
   }
@@ -103,6 +112,11 @@ inline std::optional<SyncEnvelope> MakeSyncTombstone(std::string dataset,
 inline std::optional<SyncProof> SignSyncEnvelope(const SyncEnvelope& envelope,
                                                  const SyncSigner& signer) {
   if (!ValidateSyncEnvelopeShape(envelope)) {
+    return std::nullopt;
+  }
+  const auto capabilities = sync_capabilities();
+  const auto* capability = SyncCapabilityFor(envelope.dataset, capabilities);
+  if (capability == nullptr || (envelope.deleted ? !capability->erase : !capability->write)) {
     return std::nullopt;
   }
   return signer.Sign(envelope);
