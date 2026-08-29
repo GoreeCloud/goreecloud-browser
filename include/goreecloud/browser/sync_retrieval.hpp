@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -8,6 +9,8 @@
 #include "goreecloud/browser/sync_submission.hpp"
 
 namespace goreecloud::browser {
+
+inline constexpr std::size_t kMaxSyncRetrievalRecords = 4096;
 
 struct SyncRetrievalBatch {
   std::string dataset;
@@ -24,7 +27,8 @@ class AuthenticatedSyncRetrievalTransport {
 
 inline bool ValidateSyncRetrievalBatch(const SyncRetrievalBatch& batch,
                                        std::string_view expected_dataset) {
-  if (expected_dataset.empty() || batch.dataset != expected_dataset) {
+  if (expected_dataset.empty() || batch.dataset != expected_dataset ||
+      batch.records.size() > kMaxSyncRetrievalRecords) {
     return false;
   }
   for (const auto& record : batch.records) {
@@ -33,7 +37,10 @@ inline bool ValidateSyncRetrievalBatch(const SyncRetrievalBatch& batch,
         record.origin_device.empty()) {
       return false;
     }
-    if (!record.deleted && record.payload_json.empty()) {
+    // Tombstones deliberately carry no application payload. This preserves the
+    // Privacy Shield data-minimization boundary when remote deletions are read.
+    if ((record.deleted && !record.payload_json.empty()) ||
+        (!record.deleted && record.payload_json.empty())) {
       return false;
     }
   }
