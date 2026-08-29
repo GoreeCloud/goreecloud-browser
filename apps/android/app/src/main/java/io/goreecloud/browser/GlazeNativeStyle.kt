@@ -13,6 +13,7 @@ import android.view.View
 import android.webkit.WebView
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -95,7 +96,7 @@ class GlazeNativeStyle(private val context: Context) {
         view.gravity = Gravity.CENTER
         view.setTextColor(palette.textSecondary)
         view.textSize = 10f
-        view.isAllCaps = true
+        view.setAllCaps(true)
         view.minWidth = dp(44)
         view.minimumWidth = dp(44)
         view.setPadding(dp(8), 0, dp(8), 0)
@@ -121,7 +122,7 @@ class GlazeNativeStyle(private val context: Context) {
         button.minimumWidth = dp(GlazeContract.GENERAL_TARGET_DP)
         button.minimumHeight = dp(GlazeContract.GENERAL_TARGET_DP)
         button.setPadding(dp(12), dp(12), dp(12), dp(12))
-        button.scaleType = ImageButton.ScaleType.CENTER
+        button.scaleType = ImageView.ScaleType.CENTER
         button.imageTintList = ColorStateList.valueOf(palette.textPrimary)
         button.background = interactiveBackground(
             levels.first,
