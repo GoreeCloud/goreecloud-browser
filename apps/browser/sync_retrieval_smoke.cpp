@@ -9,11 +9,12 @@ namespace {
 class FixtureTransport final : public goreecloud::browser::AuthenticatedSyncRetrievalTransport {
  public:
   std::optional<goreecloud::browser::SyncRetrievalBatch> Fetch(
-      std::string_view dataset) const override {
+      std::string_view dataset, std::string_view after, std::size_t limit) const override {
     using goreecloud::browser::SyncEnvelope;
     using goreecloud::browser::SyncRetrievalBatch;
 
-    if (dataset == "browser.tabs") {
+    assert(limit == goreecloud::browser::kSyncRetrievalPageSize);
+    if (dataset == "browser.tabs" && after.empty()) {
       return SyncRetrievalBatch{
           .dataset = "browser.tabs",
           .records = {SyncEnvelope{
@@ -24,11 +25,27 @@ class FixtureTransport final : public goreecloud::browser::AuthenticatedSyncRetr
               .updated_at = "2026-08-26T23:40:00Z",
               .origin_device = "device-1",
               .deleted = false,
-              .payload_json = R"({"url":"https://example.invalid"})",
+              .payload_json = R"({"url":"https://one.invalid"})",
+          }},
+          .next_after = "tab-1",
+      };
+    }
+    if (dataset == "browser.tabs" && after == "tab-1") {
+      return SyncRetrievalBatch{
+          .dataset = "browser.tabs",
+          .records = {SyncEnvelope{
+              .dataset = "browser.tabs",
+              .schema_version = 1,
+              .record_id = "tab-2",
+              .revision = 1,
+              .updated_at = "2026-08-26T23:41:00Z",
+              .origin_device = "device-1",
+              .deleted = false,
+              .payload_json = R"({"url":"https://two.invalid"})",
           }},
       };
     }
-    if (dataset == "browser.history") {
+    if (dataset == "browser.history" && after.empty()) {
       return SyncRetrievalBatch{.dataset = "browser.history", .records = {}};
     }
     return std::nullopt;
@@ -38,7 +55,7 @@ class FixtureTransport final : public goreecloud::browser::AuthenticatedSyncRetr
 class CrossDatasetTransport final : public goreecloud::browser::AuthenticatedSyncRetrievalTransport {
  public:
   std::optional<goreecloud::browser::SyncRetrievalBatch> Fetch(
-      std::string_view dataset) const override {
+      std::string_view dataset, std::string_view, std::size_t) const override {
     if (dataset == "browser.tabs") {
       return goreecloud::browser::SyncRetrievalBatch{
           .dataset = "browser.tabs",
@@ -58,6 +75,28 @@ class CrossDatasetTransport final : public goreecloud::browser::AuthenticatedSyn
   }
 };
 
+class RepeatingContinuationTransport final
+    : public goreecloud::browser::AuthenticatedSyncRetrievalTransport {
+ public:
+  std::optional<goreecloud::browser::SyncRetrievalBatch> Fetch(
+      std::string_view dataset, std::string_view, std::size_t) const override {
+    return goreecloud::browser::SyncRetrievalBatch{
+        .dataset = std::string(dataset),
+        .records = {goreecloud::browser::SyncEnvelope{
+            .dataset = std::string(dataset),
+            .schema_version = 1,
+            .record_id = "record-1",
+            .revision = 1,
+            .updated_at = "2026-08-28T19:00:00Z",
+            .origin_device = "device-1",
+            .deleted = false,
+            .payload_json = "{}",
+        }},
+        .next_after = "record-1",
+    };
+  }
+};
+
 }  // namespace
 
 int main() {
@@ -67,15 +106,19 @@ int main() {
   FixtureTransport fixture;
   const auto snapshot = goreecloud::browser::FetchBrowserSyncSnapshot(fixture);
   assert(snapshot.has_value());
-  assert(snapshot->tabs.records.size() == 1);
+  assert(snapshot->tabs.records.size() == 2);
   assert(snapshot->tabs.records.front().record_id == "tab-1");
+  assert(snapshot->tabs.records.back().record_id == "tab-2");
   assert(snapshot->history.records.empty());
 
   CrossDatasetTransport cross_dataset;
   assert(!goreecloud::browser::FetchBrowserSyncSnapshot(cross_dataset).has_value());
 
+  RepeatingContinuationTransport repeating;
+  assert(!goreecloud::browser::FetchSyncDataset(repeating, "browser.tabs").has_value());
+
   SyncRetrievalBatch oversized{.dataset = "browser.tabs", .records = {}};
-  oversized.records.resize(goreecloud::browser::kMaxSyncRetrievalRecords + 1);
+  oversized.records.resize(goreecloud::browser::kSyncRetrievalPageSize + 1);
   assert(!goreecloud::browser::ValidateSyncRetrievalBatch(oversized, "browser.tabs"));
 
   SyncRetrievalBatch tombstone_with_payload{
