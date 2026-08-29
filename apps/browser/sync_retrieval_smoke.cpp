@@ -1,5 +1,6 @@
 #include <cassert>
 #include <optional>
+#include <string>
 #include <string_view>
 
 #include "goreecloud/browser/sync_retrieval.hpp"
@@ -120,6 +121,38 @@ int main() {
   SyncRetrievalBatch oversized{.dataset = "browser.tabs", .records = {}};
   oversized.records.resize(goreecloud::browser::kSyncRetrievalPageSize + 1);
   assert(!goreecloud::browser::ValidateSyncRetrievalBatch(oversized, "browser.tabs"));
+
+  SyncRetrievalBatch oversized_record_id{
+      .dataset = "browser.tabs",
+      .records = {SyncEnvelope{
+          .dataset = "browser.tabs",
+          .schema_version = 1,
+          .record_id = std::string(goreecloud::browser::kMaxSyncRecordIDBytes + 1, 'r'),
+          .revision = 1,
+          .updated_at = "2026-08-28T19:00:00Z",
+          .origin_device = "device-1",
+          .deleted = false,
+          .payload_json = "{}",
+      }},
+  };
+  assert(!goreecloud::browser::ValidateSyncRetrievalBatch(oversized_record_id,
+                                                          "browser.tabs"));
+
+  SyncRetrievalBatch oversized_cursor{
+      .dataset = "browser.tabs",
+      .records = {SyncEnvelope{
+          .dataset = "browser.tabs",
+          .schema_version = 1,
+          .record_id = "tab-3",
+          .revision = 1,
+          .updated_at = "2026-08-28T19:00:00Z",
+          .origin_device = "device-1",
+          .deleted = false,
+          .payload_json = "{}",
+      }},
+      .next_after = std::string(goreecloud::browser::kMaxSyncRecordIDBytes + 1, 'c'),
+  };
+  assert(!goreecloud::browser::ValidateSyncRetrievalBatch(oversized_cursor, "browser.tabs"));
 
   SyncRetrievalBatch tombstone_with_payload{
       .dataset = "browser.tabs",
