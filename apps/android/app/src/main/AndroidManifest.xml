@@ -4,12 +4,16 @@
 
     <application
         android:allowBackup="false"
-        android:label="GoreeCloud Browser"
+        android:fullBackupContent="false"
+        android:hardwareAccelerated="true"
+        android:label="GoreeCloud Browser Beta"
         android:supportsRtl="true"
         android:usesCleartextTraffic="false">
         <activity
             android:name=".BrowserActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
