@@ -10,8 +10,10 @@ This file records Browser functionality and implementation state. A listed featu
 - GoreeCloud Search integration as the sole integrated query authority.
 - Browser-owned Sync submission/retrieval contracts with privacy-safe tombstones, capability/schema validation, pagination, record-ID bounds, and signer-shape validation.
 - Advanced Download Manager core with staged transfer and source-level Wardveil release-gate architecture.
-- Session recovery contracts and protected-storage architecture in the native core.
+- Privacy-safe native session-recovery checkpoint/candidate core that excludes Private and Isolated Private windows before persistence, validates checkpoint identity/time shape, and only considers the newest checkpoint so older crash state cannot silently resurface after a newer clean or private-only session.
 - Media Hover architecture and first-party Browser feature contracts.
+
+The session-recovery core is not yet a user-ready recovery implementation. Durable authenticated-encrypted checkpoint storage, protected platform key integration, Browser lifecycle wiring, restore execution, Glaze recovery UI, Everkeep continuity integration, and runtime acceptance remain pending.
 
 ## Android beta — implemented
 
