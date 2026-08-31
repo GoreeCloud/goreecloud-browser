@@ -57,6 +57,15 @@ goreecloud::browser::RecoverableWindow window(
   };
 }
 
+goreecloud::browser::SessionCheckpoint checkpoint(std::string id, std::uint64_t created) {
+  return goreecloud::browser::SessionCheckpoint{
+      .checkpoint_id = std::move(id),
+      .created_unix_ms = created,
+      .windows = {window("normal-window", goreecloud::browser::SessionPrivacyMode::normal,
+                         "normal-tab")},
+  };
+}
+
 }  // namespace
 
 int main() {
@@ -92,8 +101,11 @@ int main() {
   newer_private_only.checkpoint_id = "checkpoint-private-only";
   newer_private_only.created_unix_ms = clean.created_unix_ms + 1;
   newer_private_only.windows = {
-      window("private-only", SessionPrivacyMode::private_window, "private-only-tab"),
+      window("", SessionPrivacyMode::private_window, ""),
   };
+  // Private topology is removed before persisted-topology validation, so
+  // malformed private-only state cannot prevent a newer suppression checkpoint
+  // from masking an older crash checkpoint.
   assert(recovery.checkpoint(newer_private_only));
   assert(!recovery.latest_candidate().has_value());
 
@@ -116,6 +128,57 @@ int main() {
   invalid.created_unix_ms = 0;
   assert(!recovery.checkpoint(invalid));
   assert(!recovery.discard(""));
+  assert(!recovery.discard(std::string(kMaxRecoveryIdentifierBytes + 1, 'x')));
+
+  auto duplicate_window = checkpoint("duplicate-window", running.created_unix_ms + 1);
+  duplicate_window.windows.push_back(
+      window("normal-window", SessionPrivacyMode::normal, "other-tab"));
+  assert(!recovery.checkpoint(duplicate_window));
+
+  auto duplicate_tab = checkpoint("duplicate-tab", running.created_unix_ms + 2);
+  duplicate_tab.windows.push_back(
+      window("second-window", SessionPrivacyMode::normal, "normal-tab"));
+  assert(!recovery.checkpoint(duplicate_tab));
+
+  auto missing_active = checkpoint("missing-active", running.created_unix_ms + 3);
+  missing_active.windows.front().active_tab_id = "missing-tab";
+  assert(!recovery.checkpoint(missing_active));
+
+  auto conflicting_active = checkpoint("conflicting-active", running.created_unix_ms + 4);
+  conflicting_active.windows.front().active_tab_id = "normal-tab";
+  conflicting_active.windows.front().tabs.push_back(RecoverableTab{
+      .tab_id = "second-active",
+      .url = "https://example.com/second",
+      .title = "Second",
+      .workspace_id = "workspace-main",
+      .active = true,
+  });
+  assert(!recovery.checkpoint(conflicting_active));
+
+  auto oversized_identifier = checkpoint("oversized-id", running.created_unix_ms + 5);
+  oversized_identifier.windows.front().tabs.front().tab_id =
+      std::string(kMaxRecoveryIdentifierBytes + 1, 't');
+  assert(!recovery.checkpoint(oversized_identifier));
+
+  auto too_many_windows = checkpoint("too-many-windows", running.created_unix_ms + 6);
+  too_many_windows.windows.clear();
+  for (std::size_t i = 0; i <= kMaxRecoveryWindows; ++i) {
+    too_many_windows.windows.push_back(window("window-" + std::to_string(i),
+                                              SessionPrivacyMode::normal,
+                                              "tab-" + std::to_string(i)));
+  }
+  assert(!recovery.checkpoint(too_many_windows));
+
+  auto too_many_tabs = checkpoint("too-many-tabs", running.created_unix_ms + 7);
+  too_many_tabs.windows.front().tabs.clear();
+  for (std::size_t i = 0; i <= kMaxRecoveryTabsPerWindow; ++i) {
+    too_many_tabs.windows.front().tabs.push_back(RecoverableTab{
+        .tab_id = "many-tab-" + std::to_string(i),
+        .url = "https://example.com/",
+        .workspace_id = "workspace-main",
+    });
+  }
+  assert(!recovery.checkpoint(too_many_tabs));
 
   assert(recovery.discard("checkpoint-running"));
   assert(!recovery.latest_candidate().has_value());
