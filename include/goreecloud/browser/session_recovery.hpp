@@ -1,12 +1,19 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
 namespace goreecloud::browser {
+
+inline constexpr std::size_t kMaxRecoveryIdentifierBytes = 512;
+inline constexpr std::size_t kMaxRecoveryWindows = 64;
+inline constexpr std::size_t kMaxRecoveryTabsPerWindow = 512;
+inline constexpr std::size_t kMaxRecoveryTotalTabs = 4096;
 
 enum class SessionPrivacyMode {
   normal,
@@ -88,27 +95,18 @@ class SessionRecoveryCoordinator {
   }
 
   bool checkpoint(SessionCheckpoint checkpoint) {
-    if (!valid_checkpoint(checkpoint)) {
-      return false;
-    }
     checkpoint.exit_state = SessionExitState::running;
-    return store_.write(sanitize_for_persistence(std::move(checkpoint)));
+    return persist_sanitized(std::move(checkpoint));
   }
 
   bool mark_clean_shutdown(SessionCheckpoint checkpoint) {
-    if (!valid_checkpoint(checkpoint)) {
-      return false;
-    }
     checkpoint.exit_state = SessionExitState::clean_shutdown;
-    return store_.write(sanitize_for_persistence(std::move(checkpoint)));
+    return persist_sanitized(std::move(checkpoint));
   }
 
   bool mark_unclean_shutdown(SessionCheckpoint checkpoint) {
-    if (!valid_checkpoint(checkpoint)) {
-      return false;
-    }
     checkpoint.exit_state = SessionExitState::unclean_shutdown;
-    return store_.write(sanitize_for_persistence(std::move(checkpoint)));
+    return persist_sanitized(std::move(checkpoint));
   }
 
   [[nodiscard]] std::optional<SessionRecoveryCandidate> latest_candidate() const {
@@ -138,15 +136,79 @@ class SessionRecoveryCoordinator {
   }
 
   bool discard(const std::string& checkpoint_id) {
-    if (checkpoint_id.empty()) {
+    if (!valid_identifier(checkpoint_id)) {
       return false;
     }
     return store_.erase(checkpoint_id);
   }
 
  private:
+  [[nodiscard]] static bool valid_identifier(const std::string& value) {
+    return !value.empty() && value.size() <= kMaxRecoveryIdentifierBytes;
+  }
+
+  [[nodiscard]] bool persist_sanitized(SessionCheckpoint checkpoint) {
+    checkpoint = sanitize_for_persistence(std::move(checkpoint));
+    if (!valid_checkpoint(checkpoint)) {
+      return false;
+    }
+    return store_.write(checkpoint);
+  }
+
   [[nodiscard]] bool valid_checkpoint(const SessionCheckpoint& checkpoint) const {
-    return !checkpoint.checkpoint_id.empty() && checkpoint.created_unix_ms != 0;
+    if (!valid_identifier(checkpoint.checkpoint_id) || checkpoint.created_unix_ms == 0 ||
+        checkpoint.windows.size() > kMaxRecoveryWindows) {
+      return false;
+    }
+
+    std::unordered_set<std::string> window_ids;
+    std::unordered_set<std::string> tab_ids;
+    std::size_t total_tabs = 0;
+
+    for (const auto& window : checkpoint.windows) {
+      if (!valid_identifier(window.window_id) || !window_ids.insert(window.window_id).second ||
+          window.tabs.size() > kMaxRecoveryTabsPerWindow) {
+        return false;
+      }
+
+      total_tabs += window.tabs.size();
+      if (total_tabs > kMaxRecoveryTotalTabs) {
+        return false;
+      }
+
+      std::size_t active_count = 0;
+      std::optional<std::string> active_flagged_id;
+      for (const auto& tab : window.tabs) {
+        if (!valid_identifier(tab.tab_id) || !tab_ids.insert(tab.tab_id).second) {
+          return false;
+        }
+        if (tab.active) {
+          ++active_count;
+          active_flagged_id = tab.tab_id;
+          if (active_count > 1) {
+            return false;
+          }
+        }
+      }
+
+      if (window.active_tab_id.has_value()) {
+        if (!valid_identifier(*window.active_tab_id)) {
+          return false;
+        }
+        bool found = false;
+        for (const auto& tab : window.tabs) {
+          if (tab.tab_id == *window.active_tab_id) {
+            found = true;
+            break;
+          }
+        }
+        if (!found || (active_flagged_id.has_value() && *active_flagged_id != *window.active_tab_id)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   [[nodiscard]] bool should_persist(SessionPrivacyMode mode) const {
