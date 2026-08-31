@@ -27,6 +27,24 @@ GoreeCloud Browser is an original GoreeCloud-owned native web browser. GoreeClou
 
 The Android beta must remain installable without implying production readiness. CI validates unit tests, Android lint, APK assembly, APK signature/package identity, checksum generation, and artifact upload.
 
+## Native session recovery contract
+
+The engine-independent native core includes a source-level session-recovery checkpoint/candidate contract for normal Browser windows.
+
+The current contract:
+
+- models normal, Private, and Isolated Private window privacy modes but persists only normal-window state;
+- deliberately exposes no policy switch that can enable private-window checkpoint persistence;
+- requires every accepted checkpoint to have a non-empty checkpoint identifier and nonzero capture timestamp;
+- sanitizes checkpoint windows before handing state to a persistence implementation;
+- distinguishes running, clean-shutdown, and unclean-shutdown checkpoint states;
+- treats a newest running or unclean normal-window checkpoint as a recovery candidate;
+- never searches past the newest checkpoint for an older crash candidate, preventing stale crash state from silently resurfacing after a newer clean or private-only checkpoint;
+- masks a newest checkpoint containing only private state into no recoverable candidate;
+- supports explicit checkpoint discard through the abstract recovery-store boundary.
+
+This is a tested source contract only. The repository does not yet claim durable authenticated-encrypted recovery persistence on the current mainline, platform-backed recovery-key protection, complete application lifecycle checkpoint wiring, restore execution, user-facing Glaze recovery UI, Everkeep recovery acceptance, or production recovery behavior.
+
 ## Android navigation contract
 
 The unified address/search field resolves input according to Browser-owned policy:
@@ -86,11 +104,13 @@ Android System WebView remains responsible for its engine/platform security mech
 
 Privacy Shield is the authoritative privacy and data-use governance system. The beta currently uses privacy-protective defaults including third-party-cookie blocking and denied permission/geolocation requests.
 
+The native session-recovery core also excludes Private and Isolated Private windows before persistence. This exclusion is a source-level privacy invariant, not a claim that the complete private-browsing runtime has reached production acceptance.
+
 Complete Privacy Shield consent, filtering, private-browsing, diagnostics, policy, and user-control acceptance remains pending.
 
 ## Continuity boundary
 
-Everkeep is the authoritative resilience, recovery, preservation, portability, and continuity system. The Android beta has not yet completed Everkeep backup/recovery or application-state migration acceptance.
+Everkeep is the authoritative resilience, recovery, preservation, portability, and continuity system. The native session-recovery core establishes a Browser-owned checkpoint/candidate boundary that future Everkeep integration can consume, but durable recovery storage, lifecycle integration, restoration, backup, portability, and migration acceptance remain pending.
 
 ## Identity and integration boundaries
 
