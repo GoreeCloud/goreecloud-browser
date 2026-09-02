@@ -11,7 +11,7 @@ android {
         applicationId = "io.goreecloud.browser"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10004
+        versionCode = 10005
         versionName = "0.1.0-beta.1"
 
         testInstrumentationRunner = "android.app.Instrumentation"
@@ -22,7 +22,7 @@ android {
             // The CI beta is intentionally a distinct application so it can
             // coexist with a future production-signed GoreeCloud Browser.
             applicationIdSuffix = ".beta"
-            versionNameSuffix = "+android.4"
+            versionNameSuffix = "+android.5"
         }
 
         getByName("release") {
@@ -59,6 +59,7 @@ dependencies {
 // Android Beta 0.1 is a real installable test surface, but not a production
 // approval. The Android System WebView/Chromium runtime is an engine dependency;
 // GoreeCloud owns the mobile chrome, navigation policy, privacy defaults, and
-// product behavior. Production signing, full Glaze UI native-device acceptance,
-// Wardveil download release, private browsing isolation, updates/rollback, and
-// real-device sustained-use evidence remain explicit promotion gates.
+// product behavior. Production signing, complete Glaze UI 2.2 native-device
+// acceptance, Wardveil download release, private browsing isolation,
+// updates/rollback, and real-device sustained-use evidence remain explicit
+// promotion gates.

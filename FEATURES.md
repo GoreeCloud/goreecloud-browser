@@ -22,6 +22,7 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 
 - Installable debug-signed APK target.
 - Package `io.goreecloud.browser.beta`.
+- Current migration-candidate identity `0.1.0-beta.1+android.5` / versionCode `10005`.
 - Android API 26 minimum and API 35 target.
 - Android System WebView/Chromium rendering dependency behind GoreeCloud-owned product behavior.
 - Back, Forward, Reload, Go, unified address/search field, progress state, and web-content region.
@@ -39,20 +40,24 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 - Unit tests for Browser-owned navigation resolution.
 - CI unit test, Android lint, APK build, signature/package verification, SHA-256, and artifact upload.
 
-## Android beta — Glaze UI 2.0 source mapping candidate
+## Android beta — Glaze UI 2.2 source mapping candidate
 
-- Explicit current-Stable Glaze UI version/revision metadata.
-- Canvas/Surface/Soft Glaze/Glaze semantic material mapping.
-- Native Navigation Capsule composition.
+- Current Stable Glaze UI version `2.2.0` and Stable release revision `6731098b28dd0393faa878c70d989a221d714a20` recorded in source.
+- Accepted Glaze UI visual source `0411b0f6dd877aea30e2c5674e1acde0105fd97b` recorded as central design-system provenance, not Browser acceptance.
+- Canvas/Surface/Soft Glaze/Glaze semantic material mapping preserved from the successful 2.x Browser shell.
+- Browser-owned chrome explicitly remains in Application scope rather than claiming Universal Search, Control Center, System Panel, or Critical System authority.
+- Ordinary System Glaze budget represented as at most one dominant Glaze panel and up to three small floating Glaze controls.
 - Native Android controls retained for platform semantics.
-- 48dp minimum general interaction target.
+- 48dp minimum general touch-oriented interaction target.
+- 56dp Touch Assistance/far-view target floor recorded where applicable; complete Android runtime mapping remains pending.
 - Light/dark appearance adaptation.
 - Visible pressed/focus state mapping.
-- Calm expression and Balanced clarity for the initial browser shell.
+- Glaze UI 2.2 semantic state-priority contract with disabled state above error, pressed, focus, selected, hover, and rest.
+- Calm expression and Balanced clarity for the current browser shell.
 - Effects-free fallback that does not require blur/transparency.
-- Contract tests for current Glaze version, target floor, and mapping semantics.
+- Contract tests for current Stable provenance, 48dp/56dp target floors, Application authority, System Glaze budget, non-claim of Universal Search/Control Center, and state priority.
 
-This section is source-level mapping evidence only. Native-device Glaze conformance and accessibility acceptance remain pending.
+This section is source-level migration evidence only. A successful build does not automatically establish Browser-specific Glaze UI 2.2 visual, native-device, accessibility, Human Visual Excellence, performance, or production acceptance.
 
 ## Planned / incomplete Android capabilities
 
@@ -67,6 +72,7 @@ This section is source-level mapping evidence only. Native-device Glaze conforma
 - GoreeCloud Sync runtime integration.
 - GoreeCloud DNS and GoreeCloud Network runtime adapters.
 - GoreeCloud Mesh capability coordination.
+- Complete Touch Assistance / far-view Android runtime mapping and native acceptance where supported.
 - Bookmarks, history, library, settings, downloads UI, Reader Mode, and Wayfinder mobile surfaces.
 - Controlled beta/production signing, managed updates, rollback, and migration.
 - Store packaging and publication.
@@ -74,4 +80,4 @@ This section is source-level mapping evidence only. Native-device Glaze conforma
 
 ## Acceptance principle
 
-Implemented source, successful CI, an installable package, runtime integration, target-environment validation, security validation, accessibility acceptance, and production approval are separate states. Browser documentation must preserve those distinctions.
+Implemented source, successful CI, an installable package, runtime integration, target-environment validation, security validation, accessibility acceptance, design-system acceptance, and production approval are separate states. Browser documentation must preserve those distinctions.

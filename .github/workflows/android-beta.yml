@@ -57,11 +57,14 @@ jobs:
         shell: bash
         run: |
           APK="apps/android/app/build/outputs/apk/debug/app-debug.apk"
+          BADGING="apps/android/app/build/outputs/apk/debug/badging.txt"
           test -s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee apps/android/app/build/outputs/apk/debug/badging.txt
-          grep -F "package: name='io.goreecloud.browser.beta'" apps/android/app/build/outputs/apk/debug/badging.txt
-          grep -F "application-label:'GoreeCloud Browser Beta'" apps/android/app/build/outputs/apk/debug/badging.txt
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee "$BADGING"
+          grep -F "package: name='io.goreecloud.browser.beta'" "$BADGING"
+          grep -F "versionCode='10005'" "$BADGING"
+          grep -F "versionName='0.1.0-beta.1+android.5'" "$BADGING"
+          grep -F "application-label:'GoreeCloud Browser Beta'" "$BADGING"
 
       - name: Record SHA-256
         shell: bash

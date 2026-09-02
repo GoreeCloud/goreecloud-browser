@@ -9,15 +9,17 @@ GoreeCloud Browser is an original GoreeCloud-owned native web browser. GoreeClou
 - Browser channel: `0.1.0-beta.1`
 - Production approved: No
 - Stable: No
-- Current mandatory Glaze UI target: `2.0.0`
+- Current mandatory Glaze UI target: `2.2.0`
+- Glaze UI Stable release revision: `6731098b28dd0393faa878c70d989a221d714a20`
+- Android Glaze UI 2.2 source mapping: migration candidate on `+android.5`; native-device acceptance pending
 - Canonical source repository: `GoreeCloud/goreecloud-browser`
 
 ## Android beta
 
 - User-facing identity: GoreeCloud Browser Beta
 - Debug-beta package: `io.goreecloud.browser.beta`
-- Debug-beta version: `0.1.0-beta.1+android.4`
-- Android versionCode: `10004`
+- Debug-beta version on this migration branch: `0.1.0-beta.1+android.5`
+- Android versionCode: `10005`
 - Minimum Android: API 26
 - Compile/target API: 35
 - Java/Kotlin target: 17
@@ -44,6 +46,14 @@ The current contract:
 - supports explicit checkpoint discard through the abstract recovery-store boundary.
 
 This is a tested source contract only. The repository does not yet claim durable authenticated-encrypted recovery persistence on the current mainline, platform-backed recovery-key protection, complete application lifecycle checkpoint wiring, restore execution, user-facing Glaze recovery UI, Everkeep recovery acceptance, or production recovery behavior.
+
+## First-party service capability consumer contract
+
+Authoritative Browser main contains a fail-closed first-party capability consumer boundary integrated through PR #16 as `974786cdccceac7a0198881d4bd5f4e5d4b28c58` from exact validated source `0de830edfdc21fe77de33bf5ec00986510ce4dc2`.
+
+A capability is usable through this generic Browser gate only when the service is available and exactly one matching capability record is present, versioned, current, authoritative, explicitly production-accepted, and—when requested—an exact contract-version match. Duplicate or ambiguous evidence, unversioned records, stale or non-authoritative evidence, wrong capability/version, degraded services, and pre-Stable producer evidence fail closed.
+
+The consumer boundary does not manufacture producer authority, automatically wire every first-party service adapter, establish a live production integration, or qualify Browser as Stable.
 
 ## Android navigation contract
 
@@ -73,15 +83,21 @@ Expanded fixed Browser chrome is 128dp before Android system bars. The collapsed
 
 ## Android Glaze UI contract
 
-The current source mapping targets Glaze UI 2.0.0 Stable and records the canonical promotion revision `ff3fff4306bd53ea9c0715a7c0d64265bb038617`.
+The current migration branch maps Browser-owned Android chrome to Glaze UI 2.2.0 Stable and records Stable release revision `6731098b28dd0393faa878c70d989a221d714a20` plus accepted Glaze UI visual source `0411b0f6dd877aea30e2c5674e1acde0105fd97b`.
+
+The prior authoritative `+android.4` / main `974786cdccceac7a0198881d4bd5f4e5d4b28c58` mapping targeted Glaze UI 2.0.0. That remains historical evidence and rollback input, not current-Stable conformance.
 
 The Android shell maps native controls to:
 
 - Canvas for the root application background and top chrome;
 - Soft Glaze for the omnibox and Browser menu sheet;
 - Surface for the address-field role, bottom navigation, and Browser menu actions;
+- Application scope in the Glaze UI 2.2 System Shell hierarchy; Browser-owned menu/search chrome does not claim Universal Search, Control Center, System Panel, or Critical System authority;
 - Calm expression and Balanced clarity for this beta shell;
-- a 48dp minimum effective target for general interactive controls;
+- a 48dp minimum effective target for ordinary touch-oriented interactive controls;
+- a recorded 56dp target floor for Touch Assistance/far-view contexts where applicable, without claiming an unwired Android Touch Assistance authority mapping;
+- a bounded ordinary composition of at most one dominant Glaze panel and up to three small floating Glaze controls;
+- Glaze UI 2.2 interaction-state priority with disabled state above error, pressed, focus, selected, hover, and rest;
 - semantic native labels and focus/pressed states;
 - effects-free operation without requiring blur/transparency;
 - native light/dark appearance adaptation;
@@ -90,7 +106,7 @@ The Android shell maps native controls to:
 - an explicit prohibition on using the platform-default `PopupMenu` as the Browser menu surface;
 - an explicit scroll-aware top-chrome contract.
 
-This source mapping is not equivalent to native-device Glaze acceptance. Production acceptance requires exact-revision visual, accessibility, text-scaling, contrast, input, responsive/form-factor, performance, and representative real-device evidence.
+This source mapping is not equivalent to native-device Glaze acceptance. Production acceptance requires exact-revision rendered visual review, accessibility/TalkBack evidence, 200% text, contrast, Reduced Motion, Reduced Transparency/effects-free behavior, applicable forced-color/high-contrast behavior, RTL/localization, input, responsive/form-factor, performance, Touch Assistance mapping where supported, and representative real-device evidence.
 
 ## Security boundary
 
@@ -121,7 +137,7 @@ GoreeCloud Identity is authoritative for identity/authentication/authorization. 
 At minimum, Stable Android promotion remains blocked by:
 
 - controlled signing and update/rollback key operations;
-- complete Glaze UI 2.0 native-device acceptance;
+- complete Glaze UI 2.2 native-device visual/accessibility/form-factor acceptance on the exact Browser adoption revision;
 - authenticated Wardveil download verification/release integration;
 - accepted Privacy Shield runtime integration;
 - accepted Everkeep recovery/continuity integration;
@@ -129,7 +145,8 @@ At minimum, Stable Android promotion remains blocked by:
 - Browser-owned permission workflows;
 - required Identity/Vault/Sync/DNS/Network/Mesh adapters;
 - representative supported-device testing;
-- accessibility and text-scaling acceptance;
+- accessibility, RTL/localization, and text-scaling acceptance;
+- Touch Assistance / 56dp runtime mapping where the supported Android product scope requires it;
 - upgrade/downgrade/data-migration acceptance;
 - release provenance and operational recovery evidence.
 

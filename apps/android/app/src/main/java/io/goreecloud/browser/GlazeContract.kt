@@ -1,17 +1,19 @@
 package io.goreecloud.browser
 
 /**
- * Browser-owned native mapping metadata for the current Stable Glaze UI contract.
+ * Browser-owned Android-native mapping metadata for Glaze UI 2.2.0 Stable.
  *
  * This records the semantic contract consumed by the Android shell. It is source
- * mapping evidence only; native-device visual/accessibility acceptance remains a
- * separate promotion gate.
+ * mapping evidence only; rendered/native-device visual and accessibility
+ * acceptance remain separate promotion gates.
  */
 object GlazeContract {
-    const val VERSION = "2.0.0"
-    const val STABLE_PROMOTION_REVISION = "ff3fff4306bd53ea9c0715a7c0d64265bb038617"
+    const val VERSION = "2.2.0"
+    const val STABLE_RELEASE_REVISION = "6731098b28dd0393faa878c70d989a221d714a20"
+    const val ACCEPTED_VISUAL_SOURCE = "0411b0f6dd877aea30e2c5674e1acde0105fd97b"
 
     const val GENERAL_TARGET_DP = 48
+    const val TOUCH_ASSISTANCE_TARGET_DP = 56
     const val CHROME_GUTTER_DP = 8
     const val CONTROL_GAP_DP = 6
     const val OMNIBOX_HEIGHT_DP = 56
@@ -23,6 +25,9 @@ object GlazeContract {
     const val PROGRESS_HEIGHT_DP = 2
     const val AUTO_HIDE_SCROLL_THRESHOLD_DP = 72
     const val SCROLL_DIRECTION_SLOP_DP = 6
+
+    const val MAX_DOMINANT_GLAZE_PANELS = 1
+    const val MAX_SMALL_FLOATING_GLAZE_CONTROLS = 3
 
     enum class MaterialLevel {
         Canvas,
@@ -52,6 +57,30 @@ object GlazeContract {
         Emphasis,
     }
 
+    /**
+     * Glaze UI 2.2 system-level hierarchy. Browser-owned chrome remains within
+     * Application scope; it does not relabel local Browser search/menu surfaces
+     * as Universal Search, Control Center, System Panel, or Critical System UI.
+     */
+    enum class ShellSurface {
+        Workspace,
+        Application,
+        SystemOverlay,
+        SystemPanel,
+        CriticalSystem,
+    }
+
+    enum class InteractionState {
+        Rest,
+        Hover,
+        Focus,
+        Pressed,
+        Selected,
+        Disabled,
+        Loading,
+        Error,
+    }
+
     data class AndroidBrowserMapping(
         val canvas: MaterialLevel,
         val topChrome: MaterialLevel,
@@ -59,8 +88,13 @@ object GlazeContract {
         val addressField: MaterialLevel,
         val bottomChrome: MaterialLevel,
         val browserMenu: MaterialLevel,
+        val shellSurface: ShellSurface,
         val clarity: Clarity,
         val expression: Expression,
+        val dominantGlazePanels: Int,
+        val smallFloatingGlazeControls: Int,
+        val declaresUniversalSearch: Boolean,
+        val declaresControlCenter: Boolean,
         val noActionBar: Boolean,
         val developerStatusInNormalChrome: Boolean,
         val effectsFreeFallback: Boolean,
@@ -77,8 +111,13 @@ object GlazeContract {
         addressField = MaterialLevel.Surface,
         bottomChrome = MaterialLevel.Surface,
         browserMenu = MaterialLevel.SoftGlaze,
+        shellSurface = ShellSurface.Application,
         clarity = Clarity.Balanced,
         expression = Expression.Calm,
+        dominantGlazePanels = 1,
+        smallFloatingGlazeControls = 1,
+        declaresUniversalSearch = false,
+        declaresControlCenter = false,
         noActionBar = true,
         developerStatusInNormalChrome = false,
         effectsFreeFallback = true,
@@ -88,7 +127,29 @@ object GlazeContract {
         scrollAwareTopChrome = true,
     )
 
+    fun targetFloorDp(touchAssistance: Boolean): Int =
+        if (touchAssistance) TOUCH_ASSISTANCE_TARGET_DP else GENERAL_TARGET_DP
+
     fun satisfiesGeneralTargetFloor(sizeDp: Int): Boolean = sizeDp >= GENERAL_TARGET_DP
+
+    fun satisfiesTouchAssistanceTargetFloor(sizeDp: Int): Boolean =
+        sizeDp >= TOUCH_ASSISTANCE_TARGET_DP
+
+    fun satisfiesSystemGlazeBudget(mapping: AndroidBrowserMapping): Boolean =
+        mapping.dominantGlazePanels in 0..MAX_DOMINANT_GLAZE_PANELS &&
+            mapping.smallFloatingGlazeControls in 0..MAX_SMALL_FLOATING_GLAZE_CONTROLS
+
+    /** Higher value means higher Glaze UI 2.2 presentation priority. */
+    fun statePriority(state: InteractionState): Int = when (state) {
+        InteractionState.Rest -> 0
+        InteractionState.Hover -> 1
+        InteractionState.Selected -> 2
+        InteractionState.Focus -> 3
+        InteractionState.Pressed -> 4
+        InteractionState.Loading -> 5
+        InteractionState.Error -> 6
+        InteractionState.Disabled -> 7
+    }
 
     fun fixedChromeHeightDp(): Int =
         OMNIBOX_HEIGHT_DP + (CHROME_GUTTER_DP * 2) + BOTTOM_TOOLBAR_HEIGHT_DP

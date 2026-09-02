@@ -6,9 +6,11 @@ GoreeCloud Browser is GoreeCloud's first-party native web browser. The browser p
 
 The repository is on the **0.1.0-beta.1** development channel. This is a build-tested GoreeCloud Browser **source and native-shell beta milestone**. The engine-independent core and Linux GTK/X11 shell have CI build gates. The CEF/Chromium render-capable desktop path remains under integration and must pass the real-runtime gates in [`docs/BETA_0_1.md`](docs/BETA_0_1.md) before a desktop artifact is described as a render-capable beta.
 
-The repository also includes a **real installable Android beta target**. The current Android source targets the debug-signed package `io.goreecloud.browser.beta` as version `0.1.0-beta.1+android.4` / versionCode `10004` for Android API 26 and newer, targeting API 35. The Android workflow runs unit tests, Android lint, APK assembly, signature verification, package/label verification, SHA-256 generation, and GitHub Actions artifact upload. Android System WebView/Chromium is used only as the web-engine dependency; GoreeCloud owns the Android browser chrome, navigation/search policy, privacy defaults, permission behavior, Glaze UI mapping, and beta capability gates. Downloads remain fail-closed until the Android path can satisfy the existing Wardveil release contract. See [`docs/ANDROID_BETA.md`](docs/ANDROID_BETA.md).
+The repository also includes a **real installable Android beta target**. This Glaze UI 2.2 migration branch targets the debug-signed package `io.goreecloud.browser.beta` as version `0.1.0-beta.1+android.5` / versionCode `10005` for Android API 26 and newer, targeting API 35. The Android workflow runs unit tests, Android lint, APK assembly, signature verification, package/label verification, SHA-256 generation, and GitHub Actions artifact upload. Android System WebView/Chromium is used only as the web-engine dependency; GoreeCloud owns the Android browser chrome, navigation/search policy, privacy defaults, permission behavior, Glaze UI mapping, and beta capability gates. Downloads remain fail-closed until the Android path can satisfy the existing Wardveil release contract. See [`docs/ANDROID_BETA.md`](docs/ANDROID_BETA.md).
 
-The `+android.4` source is a real-device polish iteration over the compact **Glaze UI 2.0.0 native mobile-chrome mapping**. It keeps the no-action-bar/no-development-banner shell, full-width top omnibox, vector navigation icons, separate 56dp bottom navigation toolbar, overlaid progress indicator, 48dp interaction-target floor, light/dark adaptation, focus/pressed states, and effects-free fallback behavior. It additionally keeps long unfocused addresses anchored at the hostname, collapses the top omnibox after meaningful downward page scrolling to reclaim viewport, and replaces the Android platform popup with a Browser-owned Glaze menu sheet. This remains source mapping and installable-beta work, not native-device Glaze acceptance; representative visual, accessibility, form-factor, performance, and sustained real-device evidence remains required.
+The previously integrated `+android.4` source is the accepted real-device polish iteration over the compact **Glaze UI 2.0.0 native mobile-chrome mapping**. The new `+android.5` branch is a bounded migration candidate to **Glaze UI 2.2.0 Stable**. It preserves the no-action-bar/no-development-banner shell, full-width top omnibox, vector navigation icons, separate 56dp bottom navigation toolbar, overlaid progress indicator, 48dp ordinary interaction-target floor, light/dark adaptation, focus/pressed states, effects-free fallback behavior, leading-hostname address presentation, scroll-aware top-chrome collapse, and Browser-owned menu sheet. The 2.2 contract additionally records the current Stable release revision, Application-scope shell authority, the one-dominant-panel System Glaze budget, a 56dp Touch Assistance/far-view floor where applicable, and deterministic Glaze 2.2 state priority. Browser does not relabel its local search or menu as Universal Search, Control Center, System Panel, or Critical System UI.
+
+This remains source mapping and installable-beta work, not native-device Glaze acceptance. Representative rendered visual, TalkBack/accessibility, 200% text, RTL/localization, contrast, Reduced Motion, Reduced Transparency/effects-free behavior, applicable high-contrast/forced-color behavior, form-factor, performance, Touch Assistance mapping, and sustained real-device evidence remain required.
 
 Beta does **not** mean production-approved. Stable release acceptance still requires real runtime, security, privacy, accessibility, packaging, production signing, recovery, compatibility, and sustained-use evidence. The Android APK is an installable test beta, not a production-signed or Stable artifact.
 
@@ -18,9 +20,11 @@ GoreeCloud Browser is the sole normal user-facing Browser product identity. Upst
 
 ## Glaze UI requirement
 
-GoreeCloud Browser is built against the **latest approved Stable Glaze UI release**. The current Stable baseline is **Glaze UI 2.0.0**, promoted from `GoreeCloud/goreecloud-glaze-ui` at source revision `ff3fff4306bd53ea9c0715a7c0d64265bb038617`.
+GoreeCloud Browser is built against the **latest approved Stable Glaze UI release**. The current Stable authority is **Glaze UI 2.2.0**, released from `GoreeCloud/goreecloud-glaze-ui` at Stable source revision `6731098b28dd0393faa878c70d989a221d714a20`; the accepted Glaze visual source is `0411b0f6dd877aea30e2c5674e1acde0105fd97b`.
 
-This is a moving production requirement rather than a permanent version pin. When a newer Glaze UI release becomes Stable, GoreeCloud Browser becomes migration-required until Browser-owned surfaces have adopted and validated that current Stable contract. A superseded Glaze UI baseline cannot satisfy Browser production readiness. Source mapping alone also does not establish product-specific native or real-device acceptance.
+This is a moving production requirement rather than a permanent version pin. When a newer Glaze UI release becomes Stable, GoreeCloud Browser becomes migration-required until Browser-owned surfaces have adopted and validated that current Stable contract. A superseded Glaze UI baseline cannot satisfy Browser production readiness. Central Glaze Stable status also does not auto-promote Browser: repository-local source validation, rendered/native/accessibility evidence, and Browser production acceptance remain required.
+
+The last integrated Android baseline on authoritative Browser main before this branch is `+android.4`, whose source mapping targeted Glaze UI 2.0.0. That evidence remains valid history and rollback input; it is not rewritten as 2.2 conformance. This branch is the explicit repository-local migration candidate.
 
 See [`docs/GLAZE_UI_ADOPTION.md`](docs/GLAZE_UI_ADOPTION.md) for the Browser-specific adoption and validation policy.
 
@@ -49,6 +53,12 @@ The browser is structured so that GoreeCloud-owned application layers remain sep
 - **GoreeCloud DNS** — DNS resolution, resolver policy, DNS privacy, filtering where approved, and Browser DNS integration.
 - **GoreeCloud Network** — networking and private-connectivity authority.
 - **GoreeCloud Mesh** — coordination and governance layer between GoreeCloud Browser and other first-party GoreeCloud applications and services.
+
+## First-party capability acceptance boundary
+
+Browser authoritative main includes a fail-closed generic first-party capability consumer boundary. A service capability is considered usable through that gate only when exactly one matching record is present and is versioned, current, authoritative, available, explicitly production-accepted, and version-compatible when an exact contract is requested. Duplicate/ambiguous, stale, unversioned, non-authoritative, degraded, wrong-version, or pre-Stable producer evidence is rejected.
+
+This consumer boundary does not create producer authority. Search, Vault, Sync, Identity, Mesh, Privacy Shield, Wardveil Security, Everkeep, DNS, Network, Bookmarks, and other first-party services retain their independent contracts and lifecycle evidence.
 
 ## Design principles
 
@@ -115,7 +125,7 @@ packaging/                    Linux, Flatpak, Windows, and other packaging work
 
 ## Status
 
-GoreeCloud Browser **0.1.0-beta.1** is in active development and is not production-approved. The beta milestone establishes build-tested Browser-owned architecture, a visible Linux native shell, and a CI-built installable Android test APK target. Unless explicitly identified as implemented and validated, documented capabilities remain product requirements or planned capabilities rather than claims of production readiness.
+GoreeCloud Browser **0.1.0-beta.1** is in active development and is not production-approved. The beta milestone establishes build-tested Browser-owned architecture, a visible Linux native shell, and a CI-built installable Android test APK target. The `+android.5` Glaze UI 2.2 migration remains a candidate until exact-head CI and application-specific rendered/native/accessibility evidence are complete. Unless explicitly identified as implemented and validated, documented capabilities remain product requirements or planned capabilities rather than claims of production readiness.
 
 See:
 

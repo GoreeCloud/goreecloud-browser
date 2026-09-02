@@ -2,18 +2,21 @@
 
 **Target:** Android installable beta APK  
 **Package:** `io.goreecloud.browser.beta`  
-**Candidate version:** `0.1.0-beta.1+android.4`  
-**Candidate versionCode:** `10004`  
+**Candidate version:** `0.1.0-beta.1+android.5`  
+**Candidate versionCode:** `10005`  
 **Minimum Android:** 8.0 / API 26  
 **Target Android API:** 35  
-**Current Glaze UI target:** 2.0.0 Stable  
+**Current Glaze UI target:** 2.2.0 Stable  
+**Glaze UI Stable release revision:** `6731098b28dd0393faa878c70d989a221d714a20`  
 **Production approved:** No
 
 ## Purpose
 
 This target is a real installable GoreeCloud Browser beta for Android. Android System WebView/Chromium is a replaceable web-engine dependency; GoreeCloud owns the Android browser chrome, navigation/search policy, privacy defaults, security gates, design-system mapping, and product behavior.
 
-The `+android.4` slice is a real-device polish iteration based on screenshots from the installed `+android.3` beta. It preserves the successful compact two-region shell while correcting long-address presentation, reclaiming page viewport during scrolling, and replacing the remaining platform-default Browser menu with a Browser-owned Glaze surface. These changes remain beta UI work and do not establish production design acceptance.
+The `+android.5` slice is a bounded repository-local migration from Browser's previously integrated Glaze UI 2.0 Android mapping to the current Glaze UI 2.2.0 Stable contract. It deliberately preserves the successful `+android.4` mobile chrome instead of visually rewriting the product for novelty. The migration adds current Stable provenance and the 2.2 semantic constraints that apply to this Android scope. It is not a claim of rendered/native-device Glaze acceptance.
+
+The previous authoritative `+android.4` evidence remains historical rollback and comparison input. Central Glaze UI 2.2 Stable promotion does not auto-promote Browser.
 
 ## Implemented beta behavior
 
@@ -51,30 +54,38 @@ The Android beta uses a compact native mobile structure:
 - Reload switching to Stop while a page is loading;
 - loading progress overlaid at the top of web content instead of consuming another row;
 - omnibox display text condensed when unfocused while the complete URL is exposed for editing on focus;
-- unfocused long addresses are reset to the leading edge so the hostname remains visible rather than horizontally scrolling to the path suffix;
+- unfocused long addresses reset to the leading edge so the hostname remains visible;
 - Android Back dismisses omnibox editing before navigating page history;
 - the expanded fixed normal chrome budget is 128dp before system bars;
 - after meaningful downward page scrolling, the top omnibox can collapse so only the 56dp bottom toolbar remains fixed; upward scrolling, returning to the top, focusing the omnibox, or starting navigation restores the top chrome;
 - the Browser menu is a Browser-owned Glaze bottom sheet rather than an Android platform `PopupMenu`;
 - the menu removes the redundant Search Home action because Home already has a dedicated toolbar control, and retains bounded actions for copying the current address, sharing the page, and viewing beta information.
 
-The Browser menu is not a substitute for the future full Settings, tabs, private-browsing, permissions, downloads, security, privacy, or account surfaces. Those features remain separately capability-gated.
+The Browser menu is not a substitute for future full Settings, tabs, private-browsing, permissions, downloads, security, privacy, or account surfaces. Those features remain separately capability-gated.
 
-## Glaze UI 2.0 Android mapping
+## Glaze UI 2.2 Android mapping
 
-The Android shell maps Browser-owned chrome to the current Glaze UI 2.0.0 Stable contract using native Android controls.
+The Android shell maps Browser-owned chrome to the current Glaze UI 2.2.0 Stable contract using native Android controls.
 
-The `+android.4` source mapping uses:
+The source contract records:
 
+- Stable version `2.2.0`;
+- Stable release revision `6731098b28dd0393faa878c70d989a221d714a20`;
+- accepted Glaze UI visual source `0411b0f6dd877aea30e2c5674e1acde0105fd97b`;
 - application background → Canvas;
 - top chrome → Canvas;
 - omnibox capsule → Soft Glaze;
 - address field semantics → Surface;
 - bottom navigation chrome → Surface;
 - Browser menu sheet → Soft Glaze with Surface actions;
-- native Android controls for platform semantics and ergonomics;
-- general interactive target floor → 48dp;
+- Browser-owned chrome → **Application** scope in the Glaze UI 2.2 System Shell hierarchy;
+- no claim that the local omnibox/search path is Glaze UI Universal Search;
+- no claim that the Browser menu is Control Center, System Panel, or Critical System UI;
+- ordinary System Glaze budget → at most one dominant Glaze panel plus up to three small floating Glaze controls;
+- general touch-oriented target floor → 48dp;
+- Touch Assistance/far-view target floor where applicable → 56dp;
 - Calm expression and Balanced clarity;
+- Glaze UI 2.2 semantic state priority with disabled above error, pressed, focus, selected, hover, and rest;
 - native light/dark appearance adaptation;
 - pressed/focused state treatment;
 - semantic accessibility labels;
@@ -85,7 +96,9 @@ The `+android.4` source mapping uses:
 - an explicit contract that the Browser menu is not the platform-default popup surface;
 - an explicit scroll-aware top-chrome contract that can reduce fixed Browser chrome from 128dp expanded to 56dp collapsed.
 
-This is **not** a claim of complete Glaze UI Android acceptance. Native-device visual quality, TalkBack behavior, large-text reflow, contrast, focus, orientation, foldable/safe-area behavior, performance, and representative hardware acceptance remain separate gates.
+The 56dp Touch Assistance/far-view floor is now represented in the Browser source contract, but this branch does **not** claim that Android has a complete GoreeCloud Touch Assistance runtime preference/OS mapping. That wiring and its native evidence remain a promotion gate.
+
+This is **not** a claim of complete Glaze UI Android acceptance. Native-device visual quality, TalkBack behavior, 200% text/large-text reflow, RTL/localization, contrast, focus, Reduced Motion, Reduced Transparency/effects-free behavior, applicable high-contrast/forced-color behavior, orientation, foldable/safe-area behavior, performance, Touch Assistance behavior, and representative hardware acceptance remain separate gates.
 
 ## APK build and evidence
 
@@ -105,7 +118,9 @@ Expected APK path:
 apps/android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The authoritative `+android.3` predecessor was produced from signed `main` revision `d1e386c41665a3dce0de41145fae32752e7a1bc3`. Post-merge Android workflow run `33269086720` passed unit tests, lint, APK assembly, signature/package verification, checksum generation, and artifact upload; Browser Core CI run `33269086689` passed all four declared jobs. The `+android.4` real-device polish candidate is materially changed and must obtain its own exact-head and post-merge evidence; prior success is not inherited automatically.
+The authoritative `+android.4` predecessor was integrated before the current Glaze UI 2.2 migration and retains its own exact-revision evidence. The `+android.5` migration candidate is materially changed and must obtain its own exact-head workflow evidence; prior `+android.4` success is not inherited automatically.
+
+A successful `+android.5` CI run will prove only that the exact candidate source built a structurally valid debug-signed APK and passed the checks actually run. It will not by itself satisfy rendered visual, accessibility, real-device, production-signing, or Stable acceptance.
 
 ## Signing boundary
 
@@ -133,7 +148,9 @@ These behaviors do not establish complete Wardveil Security or Privacy Shield ac
 The Android beta does not yet claim:
 
 - production or Stable readiness;
-- complete Glaze UI 2.0 Android acceptance;
+- complete Glaze UI 2.2 Android native-device acceptance;
+- product-specific Human Visual Excellence acceptance for this exact adoption revision;
+- complete Touch Assistance runtime mapping/acceptance;
 - production GoreeCloud Identity/Vault/Sync integration;
 - private-browsing runtime isolation and Close & Forget acceptance;
 - Android Wardveil download verification/release or quarantine handoff;
@@ -153,7 +170,7 @@ The Android beta does not yet claim:
 Before Android can be described as production-approved or Stable, GoreeCloud must add and accept at minimum:
 
 1. Controlled GoreeCloud beta/production signing and key-recovery procedures.
-2. Exact-revision Glaze UI 2.0 Android visual/accessibility/form-factor acceptance.
+2. Exact-revision Glaze UI 2.2 Android visual/accessibility/form-factor acceptance, including product-specific Human Visual Excellence where required.
 3. Wardveil Browser-to-scan authenticated transport and Android download release/quarantine evidence.
 4. Privacy Shield Android policy/consent/filtering integration.
 5. Everkeep Android recovery/continuity integration.
@@ -162,9 +179,10 @@ Before Android can be described as production-approved or Stable, GoreeCloud mus
 8. Browser-owned permission prompts and Android runtime-permission mapping.
 9. Full mobile browser surfaces required for the supported release scope, including accepted tab/session/settings behavior.
 10. Real-device tests across supported Android versions, screen sizes, WebView versions, network transitions, background/restore, and sustained use.
-11. Signed upgrade/downgrade/rollback and application-data migration tests.
-12. Release artifact provenance, checksums, release notes, and production acceptance evidence.
+11. 200% text, RTL/localization, Reduced Motion, Reduced Transparency, Increased Contrast, applicable forced-color/high-contrast behavior, and Touch Assistance/far-view acceptance where supported.
+12. Signed upgrade/downgrade/rollback and application-data migration tests.
+13. Release artifact provenance, checksums, release notes, and production acceptance evidence.
 
 ## Status language
 
-A passing CI workflow proves that the exact source revision produced a structurally valid installable debug-signed APK and passed the checks actually run. It does not by itself prove production security, privacy, performance, compatibility, accessibility, recovery, or Stable qualification.
+A passing CI workflow proves that the exact source revision produced a structurally valid installable debug-signed APK and passed the checks actually run. It does not by itself prove production security, privacy, performance, compatibility, accessibility, recovery, Glaze UI native-device acceptance, or Stable qualification.
