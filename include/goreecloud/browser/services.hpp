@@ -34,9 +34,11 @@ struct ServiceHealth {
 
 // service_capability_available intentionally fails closed. A healthy transport
 // alone is not sufficient for Browser to invoke a first-party capability: the
-// producer must identify the exact capability as current, authoritative, and
-// explicitly production-accepted. When an expected contract version is
-// supplied, the version must match exactly.
+// producer must identify exactly one matching capability with a non-empty
+// contract version and mark it current, authoritative, and explicitly
+// production-accepted. Duplicate matching capability IDs are ambiguous and are
+// rejected even when one record looks acceptable. When an expected contract
+// version is supplied, the version must match exactly.
 [[nodiscard]] inline bool service_capability_available(
     const ServiceHealth& health,
     std::string_view capability_id,
@@ -44,18 +46,27 @@ struct ServiceHealth {
   if (health.status != ServiceStatus::available || capability_id.empty()) {
     return false;
   }
+
+  const CapabilityEvidence* match = nullptr;
   for (const auto& capability : health.capabilities) {
-    if (capability.id != capability_id || !capability.authoritative || !capability.current ||
-        !capability.production_accepted) {
+    if (capability.id != capability_id) {
       continue;
     }
-    if (!expected_contract_version.empty() &&
-        capability.contract_version != expected_contract_version) {
-      continue;
+    if (match != nullptr) {
+      return false;
     }
-    return true;
+    match = &capability;
   }
-  return false;
+
+  if (match == nullptr || match->contract_version.empty() || !match->authoritative ||
+      !match->current || !match->production_accepted) {
+    return false;
+  }
+  if (!expected_contract_version.empty() &&
+      match->contract_version != expected_contract_version) {
+    return false;
+  }
+  return true;
 }
 
 struct SearchRequest {
@@ -162,4 +173,4 @@ class WardveilService {
   [[nodiscard]] virtual ProtectionState state_for(std::string_view url) const = 0;
 };
 
-}  // namespace goreecloud::browser
+}  // namespace goreecloud::browser {
