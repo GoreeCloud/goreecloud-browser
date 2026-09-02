@@ -14,10 +14,46 @@ enum class ServiceStatus {
   available,
 };
 
+// CapabilityEvidence is Browser's transport-neutral consumer view of a
+// first-party GoreeCloud service capability. The producing service remains the
+// authority for its capability and contract version; Browser only decides
+// whether the supplied evidence is strong enough to use the integration.
+struct CapabilityEvidence {
+  std::string id;
+  std::string contract_version;
+  bool authoritative{false};
+  bool current{false};
+};
+
 struct ServiceHealth {
   ServiceStatus status{ServiceStatus::unavailable};
   std::string detail;
+  std::vector<CapabilityEvidence> capabilities;
 };
+
+// service_capability_available intentionally fails closed. A healthy transport
+// alone is not sufficient for Browser to invoke a first-party capability: the
+// producer must also identify the exact capability as current and authoritative.
+// When an expected contract version is supplied, the version must match exactly.
+[[nodiscard]] inline bool service_capability_available(
+    const ServiceHealth& health,
+    std::string_view capability_id,
+    std::string_view expected_contract_version = {}) {
+  if (health.status != ServiceStatus::available || capability_id.empty()) {
+    return false;
+  }
+  for (const auto& capability : health.capabilities) {
+    if (capability.id != capability_id || !capability.authoritative || !capability.current) {
+      continue;
+    }
+    if (!expected_contract_version.empty() &&
+        capability.contract_version != expected_contract_version) {
+      continue;
+    }
+    return true;
+  }
+  return false;
+}
 
 struct SearchRequest {
   std::string query;
