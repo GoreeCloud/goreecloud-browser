@@ -173,4 +173,4 @@ class WardveilService {
   [[nodiscard]] virtual ProtectionState state_for(std::string_view url) const = 0;
 };
 
-}  // namespace goreecloud::browser {
+}  // namespace goreecloud::browser
