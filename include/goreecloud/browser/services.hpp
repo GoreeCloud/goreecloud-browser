@@ -23,6 +23,7 @@ struct CapabilityEvidence {
   std::string contract_version;
   bool authoritative{false};
   bool current{false};
+  bool production_accepted{false};
 };
 
 struct ServiceHealth {
@@ -33,8 +34,9 @@ struct ServiceHealth {
 
 // service_capability_available intentionally fails closed. A healthy transport
 // alone is not sufficient for Browser to invoke a first-party capability: the
-// producer must also identify the exact capability as current and authoritative.
-// When an expected contract version is supplied, the version must match exactly.
+// producer must identify the exact capability as current, authoritative, and
+// explicitly production-accepted. When an expected contract version is
+// supplied, the version must match exactly.
 [[nodiscard]] inline bool service_capability_available(
     const ServiceHealth& health,
     std::string_view capability_id,
@@ -43,7 +45,8 @@ struct ServiceHealth {
     return false;
   }
   for (const auto& capability : health.capabilities) {
-    if (capability.id != capability_id || !capability.authoritative || !capability.current) {
+    if (capability.id != capability_id || !capability.authoritative || !capability.current ||
+        !capability.production_accepted) {
       continue;
     }
     if (!expected_contract_version.empty() &&
