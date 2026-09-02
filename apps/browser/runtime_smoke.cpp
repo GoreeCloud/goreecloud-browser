@@ -53,6 +53,20 @@ int main() {
     assert(!service_capability_available(search_health, "search.query", "2"));
     assert(!service_capability_available(search_health, "vault.secrets", "1"));
 
+    search_health.capabilities.front().contract_version.clear();
+    assert(!service_capability_available(search_health, "search.query"));
+    search_health.capabilities.front().contract_version = "1";
+
+    search_health.capabilities.push_back(CapabilityEvidence{
+        .id = "search.query",
+        .contract_version = "1",
+        .authoritative = false,
+        .current = true,
+        .production_accepted = false,
+    });
+    assert(!service_capability_available(search_health, "search.query", "1"));
+    search_health.capabilities.pop_back();
+
     search_health.capabilities.front().current = false;
     assert(!service_capability_available(search_health, "search.query", "1"));
     search_health.capabilities.front().current = true;
