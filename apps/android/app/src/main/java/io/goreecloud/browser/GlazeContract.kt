@@ -146,9 +146,9 @@ object GlazeContract {
         InteractionState.Selected -> 2
         InteractionState.Focus -> 3
         InteractionState.Pressed -> 4
-        InteractionState.Disabled -> 5
-        InteractionState.Loading -> 6
-        InteractionState.Error -> 7
+        InteractionState.Loading -> 5
+        InteractionState.Error -> 6
+        InteractionState.Disabled -> 7
     }
 
     fun fixedChromeHeightDp(): Int =
