@@ -15,6 +15,7 @@
 #include "goreecloud/browser/media_probe_result_tracker.hpp"
 #include "goreecloud/browser/media_target_detector.hpp"
 #include "goreecloud/browser/omnibox_controller.hpp"
+#include "goreecloud/browser/services.hpp"
 #include "goreecloud/browser/toolbar.hpp"
 #include "goreecloud/browser/unified_search_bar.hpp"
 #include "goreecloud/browser/version.hpp"
@@ -34,6 +35,47 @@ int main() {
   static_assert(!kMediaHoverPassiveOcrAllowed);
   static_assert(!kMediaDetectorMayOverrideProtectedMedia);
   static_assert(kDefaultMediaHoverQuickLabels.size() == 4);
+
+  {
+    ServiceHealth search_health;
+    search_health.status = ServiceStatus::available;
+    search_health.capabilities.push_back(CapabilityEvidence{
+        .id = "search.query",
+        .contract_version = "1",
+        .authoritative = true,
+        .current = true,
+        .production_accepted = false,
+    });
+    assert(!service_capability_available(search_health, "search.query", "1"));
+
+    search_health.capabilities.front().production_accepted = true;
+    assert(service_capability_available(search_health, "search.query", "1"));
+    assert(!service_capability_available(search_health, "search.query", "2"));
+    assert(!service_capability_available(search_health, "vault.secrets", "1"));
+
+    search_health.capabilities.front().contract_version.clear();
+    assert(!service_capability_available(search_health, "search.query"));
+    search_health.capabilities.front().contract_version = "1";
+
+    search_health.capabilities.push_back(CapabilityEvidence{
+        .id = "search.query",
+        .contract_version = "1",
+        .authoritative = false,
+        .current = true,
+        .production_accepted = false,
+    });
+    assert(!service_capability_available(search_health, "search.query", "1"));
+    search_health.capabilities.pop_back();
+
+    search_health.capabilities.front().current = false;
+    assert(!service_capability_available(search_health, "search.query", "1"));
+    search_health.capabilities.front().current = true;
+    search_health.capabilities.front().authoritative = false;
+    assert(!service_capability_available(search_health, "search.query", "1"));
+    search_health.capabilities.front().authoritative = true;
+    search_health.status = ServiceStatus::degraded;
+    assert(!service_capability_available(search_health, "search.query", "1"));
+  }
 
   {
     char executable[] = "goreecloud-browser";

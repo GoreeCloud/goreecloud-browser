@@ -14,10 +14,60 @@ enum class ServiceStatus {
   available,
 };
 
+// CapabilityEvidence is Browser's transport-neutral consumer view of a
+// first-party GoreeCloud service capability. The producing service remains the
+// authority for its capability and contract version; Browser only decides
+// whether the supplied evidence is strong enough to use the integration.
+struct CapabilityEvidence {
+  std::string id;
+  std::string contract_version;
+  bool authoritative{false};
+  bool current{false};
+  bool production_accepted{false};
+};
+
 struct ServiceHealth {
   ServiceStatus status{ServiceStatus::unavailable};
   std::string detail;
+  std::vector<CapabilityEvidence> capabilities;
 };
+
+// service_capability_available intentionally fails closed. A healthy transport
+// alone is not sufficient for Browser to invoke a first-party capability: the
+// producer must identify exactly one matching capability with a non-empty
+// contract version and mark it current, authoritative, and explicitly
+// production-accepted. Duplicate matching capability IDs are ambiguous and are
+// rejected even when one record looks acceptable. When an expected contract
+// version is supplied, the version must match exactly.
+[[nodiscard]] inline bool service_capability_available(
+    const ServiceHealth& health,
+    std::string_view capability_id,
+    std::string_view expected_contract_version = {}) {
+  if (health.status != ServiceStatus::available || capability_id.empty()) {
+    return false;
+  }
+
+  const CapabilityEvidence* match = nullptr;
+  for (const auto& capability : health.capabilities) {
+    if (capability.id != capability_id) {
+      continue;
+    }
+    if (match != nullptr) {
+      return false;
+    }
+    match = &capability;
+  }
+
+  if (match == nullptr || match->contract_version.empty() || !match->authoritative ||
+      !match->current || !match->production_accepted) {
+    return false;
+  }
+  if (!expected_contract_version.empty() &&
+      match->contract_version != expected_contract_version) {
+    return false;
+  }
+  return true;
+}
 
 struct SearchRequest {
   std::string query;
