@@ -8,22 +8,29 @@ import org.junit.Test
 class GlazeContractTest {
     @Test
     fun androidBrowserTargetsCurrentStableGlazeContract() {
-        assertEquals("2.0.0", GlazeContract.VERSION)
+        assertEquals("2.2.0", GlazeContract.VERSION)
         assertEquals(
-            "ff3fff4306bd53ea9c0715a7c0d64265bb038617",
-            GlazeContract.STABLE_PROMOTION_REVISION,
+            "6731098b28dd0393faa878c70d989a221d714a20",
+            GlazeContract.STABLE_RELEASE_REVISION,
+        )
+        assertEquals(
+            "0411b0f6dd877aea30e2c5674e1acde0105fd97b",
+            GlazeContract.ACCEPTED_VISUAL_SOURCE,
         )
     }
 
     @Test
-    fun generalInteractiveTargetFloorIsEnforced() {
+    fun touchTargetFloorsMatchGlaze22AccessibilityContract() {
+        assertEquals(48, GlazeContract.targetFloorDp(touchAssistance = false))
+        assertEquals(56, GlazeContract.targetFloorDp(touchAssistance = true))
         assertTrue(GlazeContract.satisfiesGeneralTargetFloor(48))
-        assertTrue(GlazeContract.satisfiesGeneralTargetFloor(56))
         assertFalse(GlazeContract.satisfiesGeneralTargetFloor(47))
+        assertTrue(GlazeContract.satisfiesTouchAssistanceTargetFloor(56))
+        assertFalse(GlazeContract.satisfiesTouchAssistanceTargetFloor(55))
     }
 
     @Test
-    fun mobileChromeRemovesDevelopmentScaffoldingFromNormalBrowsing() {
+    fun mobileChromePreservesApplicationAuthorityAndGlazeBudget() {
         val mapping = GlazeContract.ANDROID_BROWSER_MAPPING
 
         assertEquals(GlazeContract.MaterialLevel.Canvas, mapping.canvas)
@@ -32,8 +39,18 @@ class GlazeContractTest {
         assertEquals(GlazeContract.MaterialLevel.Surface, mapping.addressField)
         assertEquals(GlazeContract.MaterialLevel.Surface, mapping.bottomChrome)
         assertEquals(GlazeContract.MaterialLevel.SoftGlaze, mapping.browserMenu)
+        assertEquals(GlazeContract.ShellSurface.Application, mapping.shellSurface)
         assertEquals(GlazeContract.Clarity.Balanced, mapping.clarity)
         assertEquals(GlazeContract.Expression.Calm, mapping.expression)
+        assertTrue(GlazeContract.satisfiesSystemGlazeBudget(mapping))
+        assertFalse(mapping.declaresUniversalSearch)
+        assertFalse(mapping.declaresControlCenter)
+    }
+
+    @Test
+    fun mobileChromeRemovesDevelopmentScaffoldingFromNormalBrowsing() {
+        val mapping = GlazeContract.ANDROID_BROWSER_MAPPING
+
         assertTrue(mapping.noActionBar)
         assertFalse(mapping.developerStatusInNormalChrome)
         assertTrue(mapping.effectsFreeFallback)
@@ -41,6 +58,34 @@ class GlazeContractTest {
         assertTrue(mapping.usesVectorChromeIcons)
         assertFalse(mapping.usesPlatformPopupMenu)
         assertTrue(mapping.scrollAwareTopChrome)
+    }
+
+    @Test
+    fun interactionPriorityKeepsDisabledAboveErrorAndFocus() {
+        assertTrue(
+            GlazeContract.statePriority(GlazeContract.InteractionState.Disabled) >
+                GlazeContract.statePriority(GlazeContract.InteractionState.Error),
+        )
+        assertTrue(
+            GlazeContract.statePriority(GlazeContract.InteractionState.Error) >
+                GlazeContract.statePriority(GlazeContract.InteractionState.Pressed),
+        )
+        assertTrue(
+            GlazeContract.statePriority(GlazeContract.InteractionState.Pressed) >
+                GlazeContract.statePriority(GlazeContract.InteractionState.Focus),
+        )
+        assertTrue(
+            GlazeContract.statePriority(GlazeContract.InteractionState.Focus) >
+                GlazeContract.statePriority(GlazeContract.InteractionState.Selected),
+        )
+        assertTrue(
+            GlazeContract.statePriority(GlazeContract.InteractionState.Selected) >
+                GlazeContract.statePriority(GlazeContract.InteractionState.Hover),
+        )
+        assertTrue(
+            GlazeContract.statePriority(GlazeContract.InteractionState.Hover) >
+                GlazeContract.statePriority(GlazeContract.InteractionState.Rest),
+        )
     }
 
     @Test
