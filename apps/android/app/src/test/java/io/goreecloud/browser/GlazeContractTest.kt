@@ -8,19 +8,24 @@ import org.junit.Test
 class GlazeContractTest {
     @Test
     fun androidBrowserTargetsCurrentStableGlazeContract() {
-        assertEquals("2.2.0", GlazeContract.VERSION)
+        assertEquals("1.1.0", GlazeContract.VERSION)
+        assertEquals("v1.1.0", GlazeContract.STABLE_TAG)
         assertEquals(
-            "6731098b28dd0393faa878c70d989a221d714a20",
+            "15cc76d2bcd4065552dc31c77145b63f34d9e7b2",
             GlazeContract.STABLE_RELEASE_REVISION,
         )
         assertEquals(
-            "0411b0f6dd877aea30e2c5674e1acde0105fd97b",
+            "8ea1f789bbabf943c3359514dc1506b24fa3c51b",
             GlazeContract.ACCEPTED_VISUAL_SOURCE,
+        )
+        assertEquals(
+            "contracts/v1.1/optical-refinement.json",
+            GlazeContract.OPTICAL_CONTRACT,
         )
     }
 
     @Test
-    fun touchTargetFloorsMatchGlaze22AccessibilityContract() {
+    fun touchTargetFloorsMatchV11AccessibilityContract() {
         assertEquals(48, GlazeContract.targetFloorDp(touchAssistance = false))
         assertEquals(56, GlazeContract.targetFloorDp(touchAssistance = true))
         assertTrue(GlazeContract.satisfiesGeneralTargetFloor(48))
@@ -42,9 +47,29 @@ class GlazeContractTest {
         assertEquals(GlazeContract.ShellSurface.Application, mapping.shellSurface)
         assertEquals(GlazeContract.Clarity.Balanced, mapping.clarity)
         assertEquals(GlazeContract.Expression.Calm, mapping.expression)
+        assertEquals(GlazeContract.DensityProfile.Standard, mapping.density)
         assertTrue(GlazeContract.satisfiesSystemGlazeBudget(mapping))
         assertFalse(mapping.declaresUniversalSearch)
         assertFalse(mapping.declaresControlCenter)
+    }
+
+    @Test
+    fun v11OpticalAtmosphereRemainsBoundedAndNonAuthoritative() {
+        val mapping = GlazeContract.ANDROID_BROWSER_MAPPING
+
+        assertEquals("upper-left", GlazeContract.OPTICAL_LIGHT_ORIGIN)
+        assertEquals("deep-teal", GlazeContract.ATMOSPHERE_PRIMARY)
+        assertEquals("soft-amber", GlazeContract.ATMOSPHERE_SECONDARY)
+        assertEquals(
+            setOf(
+                GlazeContract.Appearance.Light,
+                GlazeContract.Appearance.Dark,
+                GlazeContract.Appearance.DeepDark,
+            ),
+            mapping.supportedAppearances,
+        )
+        assertFalse(mapping.nestedBackdropBlur)
+        assertFalse(mapping.environmentalColorSamplingRequired)
     }
 
     @Test
@@ -61,7 +86,7 @@ class GlazeContractTest {
     }
 
     @Test
-    fun interactionPriorityKeepsDisabledAboveErrorAndFocus() {
+    fun semanticPriorityKeepsDisabledAboveErrorAndFocus() {
         assertTrue(
             GlazeContract.statePriority(GlazeContract.InteractionState.Disabled) >
                 GlazeContract.statePriority(GlazeContract.InteractionState.Error),

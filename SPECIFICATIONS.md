@@ -9,17 +9,19 @@ GoreeCloud Browser is an original GoreeCloud-owned native web browser. GoreeClou
 - Browser channel: `0.1.0-beta.1`
 - Production approved: No
 - Stable: No
-- Current mandatory Glaze UI target: `2.2.0`
-- Glaze UI Stable release revision: `6731098b28dd0393faa878c70d989a221d714a20`
-- Android Glaze UI 2.2 source mapping: migration candidate on `+android.5`; native-device acceptance pending
+- Current mandatory GLAZE UI target: `1.1.0`
+- GLAZE UI Stable tag: `v1.1.0`
+- GLAZE UI Stable release revision: `15cc76d2bcd4065552dc31c77145b63f34d9e7b2`
+- Approved V1.1 visual source: `8ea1f789bbabf943c3359514dc1506b24fa3c51b`
+- Android V1.1 source mapping: migration candidate on `+android.6`; downstream native-device acceptance pending
 - Canonical source repository: `GoreeCloud/goreecloud-browser`
 
 ## Android beta
 
 - User-facing identity: GoreeCloud Browser Beta
 - Debug-beta package: `io.goreecloud.browser.beta`
-- Debug-beta version on this migration branch: `0.1.0-beta.1+android.5`
-- Android versionCode: `10005`
+- Debug-beta version on this migration branch: `0.1.0-beta.1+android.6`
+- Android versionCode: `10006`
 - Minimum Android: API 26
 - Compile/target API: 35
 - Java/Kotlin target: 17
@@ -27,7 +29,7 @@ GoreeCloud Browser is an original GoreeCloud-owned native web browser. GoreeClou
 - Beta signing: Android debug signing for fresh-install testing
 - Production signing material: not stored in source control and not yet accepted
 
-The Android beta must remain installable without implying production readiness. CI validates unit tests, Android lint, APK assembly, APK signature/package identity, checksum generation, and artifact upload.
+The Android beta must remain installable without implying production readiness. CI validates unit tests, Android lint, APK assembly, APK signature/package/version identity, checksum generation, and artifact upload.
 
 ## Native session recovery contract
 
@@ -41,19 +43,17 @@ The current contract:
 - sanitizes checkpoint windows before handing state to a persistence implementation;
 - distinguishes running, clean-shutdown, and unclean-shutdown checkpoint states;
 - treats a newest running or unclean normal-window checkpoint as a recovery candidate;
-- never searches past the newest checkpoint for an older crash candidate, preventing stale crash state from silently resurfacing after a newer clean or private-only checkpoint;
+- never searches past the newest checkpoint for an older crash candidate;
 - masks a newest checkpoint containing only private state into no recoverable candidate;
 - supports explicit checkpoint discard through the abstract recovery-store boundary.
 
-This is a tested source contract only. The repository does not yet claim durable authenticated-encrypted recovery persistence on the current mainline, platform-backed recovery-key protection, complete application lifecycle checkpoint wiring, restore execution, user-facing Glaze recovery UI, Everkeep recovery acceptance, or production recovery behavior.
+This is a tested source contract only. Durable authenticated-encrypted recovery persistence, platform-backed recovery-key protection, complete application lifecycle wiring, restore execution, user-facing GLAZE UI recovery UI, Everkeep recovery acceptance, and production recovery behavior remain pending.
 
 ## First-party service capability consumer contract
 
-Authoritative Browser main contains a fail-closed first-party capability consumer boundary integrated through PR #16 as `974786cdccceac7a0198881d4bd5f4e5d4b28c58` from exact validated source `0de830edfdc21fe77de33bf5ec00986510ce4dc2`.
+Authoritative Browser source contains a fail-closed first-party capability consumer boundary. A capability is usable through this generic Browser gate only when the service is available and exactly one matching capability record is present, versioned, current, authoritative, explicitly production-accepted, and—when requested—an exact contract-version match.
 
-A capability is usable through this generic Browser gate only when the service is available and exactly one matching capability record is present, versioned, current, authoritative, explicitly production-accepted, and—when requested—an exact contract-version match. Duplicate or ambiguous evidence, unversioned records, stale or non-authoritative evidence, wrong capability/version, degraded services, and pre-Stable producer evidence fail closed.
-
-The consumer boundary does not manufacture producer authority, automatically wire every first-party service adapter, establish a live production integration, or qualify Browser as Stable.
+Duplicate or ambiguous evidence, unversioned records, stale/non-authoritative evidence, wrong capability/version, degraded services, and pre-Stable producer evidence fail closed. The consumer boundary does not manufacture producer authority, automatically wire every first-party service adapter, establish live production integration, or qualify Browser as Stable.
 
 ## Android navigation contract
 
@@ -73,7 +73,7 @@ The installed beta uses a Browser-owned two-region mobile shell:
 - a 56dp persistent bottom navigation toolbar;
 - full-width web content between those regions;
 - Browser-owned vector controls for Back, Forward, Search Home, Reload/Stop, and Browser menu;
-- page-load progress overlaid on web content rather than allocated its own chrome row;
+- page-load progress overlaid on web content;
 - unfocused address presentation that removes the scheme while keeping the hostname at the leading edge;
 - complete URL exposure and selection when the omnibox receives focus;
 - scroll-aware top chrome that collapses after meaningful downward page scrolling and returns on upward scrolling, page-top return, omnibox focus, or new navigation;
@@ -81,32 +81,33 @@ The installed beta uses a Browser-owned two-region mobile shell:
 
 Expanded fixed Browser chrome is 128dp before Android system bars. The collapsed scrolling state retains only the 56dp bottom navigation toolbar.
 
-## Android Glaze UI contract
+## GLAZE UI V1.1 Android contract
 
-The current migration branch maps Browser-owned Android chrome to Glaze UI 2.2.0 Stable and records Stable release revision `6731098b28dd0393faa878c70d989a221d714a20` plus accepted Glaze UI visual source `0411b0f6dd877aea30e2c5674e1acde0105fd97b`.
+This migration maps Browser-owned Android chrome to the sole current Stable consumer target, GLAZE UI V1.1 (`1.1.0`). The source records Stable release revision `15cc76d2bcd4065552dc31c77145b63f34d9e7b2`, approved V1.1 visual source `8ea1f789bbabf943c3359514dc1506b24fa3c51b`, and optical contract `contracts/v1.1/optical-refinement.json`.
 
-The prior authoritative `+android.4` / main `974786cdccceac7a0198881d4bd5f4e5d4b28c58` mapping targeted Glaze UI 2.0.0. That remains historical evidence and rollback input, not current-Stable conformance.
+Browser preserves the working mobile-shell structure while applying the current authority contract:
 
-The Android shell maps native controls to:
-
-- Canvas for the root application background and top chrome;
+- Canvas for the root background and top chrome;
 - Soft Glaze for the omnibox and Browser menu sheet;
-- Surface for the address-field role, bottom navigation, and Browser menu actions;
-- Application scope in the Glaze UI 2.2 System Shell hierarchy; Browser-owned menu/search chrome does not claim Universal Search, Control Center, System Panel, or Critical System authority;
-- Calm expression and Balanced clarity for this beta shell;
-- a 48dp minimum effective target for ordinary touch-oriented interactive controls;
-- a recorded 56dp target floor for Touch Assistance/far-view contexts where applicable, without claiming an unwired Android Touch Assistance authority mapping;
-- a bounded ordinary composition of at most one dominant Glaze panel and up to three small floating Glaze controls;
-- Glaze UI 2.2 interaction-state priority with disabled state above error, pressed, focus, selected, hover, and rest;
-- semantic native labels and focus/pressed states;
+- Surface for the address-field role and bottom navigation;
+- Application System Shell scope; Browser menu/search chrome does not claim Universal Search, Control Center, System Panel, or Critical System authority;
+- Calm expression and Balanced clarity;
+- 48dp ordinary interaction floor;
+- 56dp Touch Assistance floor where applicable, without claiming an unwired Android preference/OS mapping;
+- at most one dominant Glaze panel plus three small floating Glaze controls;
+- Light, Dark, and Deep Dark structural appearance targets;
+- upper-left optical light direction;
+- bounded Deep Teal + Soft Amber atmosphere subordinate to neutral structure and semantic/accessibility authority;
+- no nested backdrop blur;
+- no required Environmental Color Memory, environmental-content sampling, or remote color derivation;
+- semantic native labels and visible focus/state treatment;
 - effects-free operation without requiring blur/transparency;
-- native light/dark appearance adaptation;
 - Browser-owned vector icons;
-- explicit no-action-bar and no-development-banner normal-chrome contracts;
-- an explicit prohibition on using the platform-default `PopupMenu` as the Browser menu surface;
-- an explicit scroll-aware top-chrome contract.
+- explicit no-action-bar, no-development-banner, Browser-owned-menu, and scroll-aware top-chrome contracts.
 
-This source mapping is not equivalent to native-device Glaze acceptance. Production acceptance requires exact-revision rendered visual review, accessibility/TalkBack evidence, 200% text, contrast, Reduced Motion, Reduced Transparency/effects-free behavior, applicable forced-color/high-contrast behavior, RTL/localization, input, responsive/form-factor, performance, Touch Assistance mapping where supported, and representative real-device evidence.
+The inherited semantic-state ordering remains represented in the Browser contract. Disabled and error semantics continue to override lower-priority interaction presentation. V1.1 atmosphere cannot change security, privacy, identity, recovery, coordination, Search, or Sync truth.
+
+This mapping is not native-device downstream acceptance. Production acceptance requires exact-revision rendered visual review, TalkBack/accessibility evidence, 200% text, contrast/high-contrast behavior, Reduced Motion, Reduced Transparency/effects-free behavior, RTL/localization, responsive/form-factor behavior, performance, Touch Assistance mapping where supported, and representative physical-device evidence.
 
 ## Security boundary
 
@@ -114,19 +115,19 @@ Wardveil Security is the authoritative GoreeCloud security system. Android Brows
 
 Current Android beta security behavior includes TLS fail-closed handling, Android Safe Browsing, mixed-content blocking, disabled WebView file/content access, default-denied site permissions, and a blocked download path until Android can satisfy the Browser-to-Wardveil release contract.
 
-Android System WebView remains responsible for its engine/platform security mechanisms; Wardveil remains responsible for GoreeCloud security evaluation, protection, evidence, and response where integrated.
+Android System WebView remains responsible for engine/platform security mechanisms; Wardveil remains responsible for GoreeCloud security evaluation, protection, evidence, and response where integrated.
 
 ## Privacy boundary
 
 Privacy Shield is the authoritative privacy and data-use governance system. The beta currently uses privacy-protective defaults including third-party-cookie blocking and denied permission/geolocation requests.
 
-The native session-recovery core also excludes Private and Isolated Private windows before persistence. This exclusion is a source-level privacy invariant, not a claim that the complete private-browsing runtime has reached production acceptance.
+The native session-recovery core excludes Private and Isolated Private windows before persistence. This is a source-level privacy invariant, not complete private-browsing runtime acceptance.
 
 Complete Privacy Shield consent, filtering, private-browsing, diagnostics, policy, and user-control acceptance remains pending.
 
 ## Continuity boundary
 
-Everkeep is the authoritative resilience, recovery, preservation, portability, and continuity system. The native session-recovery core establishes a Browser-owned checkpoint/candidate boundary that future Everkeep integration can consume, but durable recovery storage, lifecycle integration, restoration, backup, portability, and migration acceptance remain pending.
+Everkeep is authoritative for resilience, recovery, preservation, portability, and continuity. The native session-recovery core establishes a Browser-owned checkpoint/candidate boundary that future Everkeep integration can consume, but durable recovery storage, lifecycle integration, restoration, backup, portability, and migration acceptance remain pending.
 
 ## Identity and integration boundaries
 
@@ -137,16 +138,16 @@ GoreeCloud Identity is authoritative for identity/authentication/authorization. 
 At minimum, Stable Android promotion remains blocked by:
 
 - controlled signing and update/rollback key operations;
-- complete Glaze UI 2.2 native-device visual/accessibility/form-factor acceptance on the exact Browser adoption revision;
+- complete GLAZE UI V1.1 native-device visual/accessibility/form-factor acceptance on the exact Browser revision;
 - authenticated Wardveil download verification/release integration;
 - accepted Privacy Shield runtime integration;
 - accepted Everkeep recovery/continuity integration;
 - private-browsing isolation and Close & Forget evidence;
 - Browser-owned permission workflows;
-- required Identity/Vault/Sync/DNS/Network/Mesh adapters;
+- required Identity/Vault/Sync/DNS/Network/Mesh/Search adapters with accepted producer evidence;
 - representative supported-device testing;
 - accessibility, RTL/localization, and text-scaling acceptance;
-- Touch Assistance / 56dp runtime mapping where the supported Android product scope requires it;
+- Touch Assistance runtime mapping where the supported Android scope requires it;
 - upgrade/downgrade/data-migration acceptance;
 - release provenance and operational recovery evidence.
 
