@@ -18,6 +18,12 @@ This is an adoption baseline, not a permanent pin. A newer Stable promotion make
 
 GLAZE UI V1.1 became the sole current consumer target on September 3, 2026. Browser's previously integrated Glaze UI 2.2.0 source mapping is therefore historical. Central design-system Stable status does not auto-promote Browser. The `+android.6` branch records a fresh repository-local migration and still requires exact-revision Browser evidence.
 
+## Current Stable-line blocker
+
+The immutable `v1.1.0` / `1.1.0` Stable CSS graph has a known import-closure defect in the authoritative Glaze repository. `1.1.0` remains the current Stable consumer target until a governed replacement is actually promoted, but that known defect prevents Browser from treating this source mapping as complete current conformance. The corrective `1.1.1` line is still a non-consumer-eligible release candidate at this checkpoint.
+
+Browser must therefore fail closed on final GLAZE UI acceptance: after a corrected immutable Stable release is published, Browser must explicitly re-pin the approved Stable revision and repeat all applicable source, rendered/native visual, accessibility, form-factor, artifact, and production acceptance. Neither this branch nor earlier `1.1.0` evidence may be carried forward automatically.
+
 ## V1.1 contract applied by Browser
 
 Browser preserves the core rule: **solid where users read or make explicit critical decisions; glazed where users interact with transient navigation, command, search, control, or feedback chrome.**
