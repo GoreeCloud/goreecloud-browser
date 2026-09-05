@@ -1,0 +1,147 @@
+schema_version: '0.2'
+
+component:
+  type: application
+  id: goreecloud-browser
+  product_name: GoreeCloud Browser
+  repository: GoreeCloud/goreecloud-browser
+
+lifecycle: development
+version: 0.1.0-beta.1
+
+supported_platforms:
+  - linux
+  - android
+
+api:
+  versions: []
+  endpoints: []
+
+platform_systems:
+  manager:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - README.md
+      - SPECIFICATIONS.md
+    notes: GoreeCloud Manager operational visibility is applicable to Browser, but no accepted Manager runtime integration or Browser operational-status publication exists.
+  privacy_shield:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - README.md
+      - SPECIFICATIONS.md
+    notes: Browser has privacy-protective source defaults and explicit Privacy Shield authority boundaries, but accepted producer-authoritative Privacy Shield runtime decisions and complete Browser privacy acceptance remain unavailable.
+  wardveil_security:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - SPECIFICATIONS.md
+      - docs/WARDVEIL_DOWNLOAD_SCANNING.md
+    notes: Browser contains a fail-closed source-level Wardveil download-release contract and Android downloads remain blocked rather than bypassing it, but authenticated runtime Wardveil integration, scanner health, quarantine evidence, and production security acceptance are incomplete.
+  everkeep:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - SPECIFICATIONS.md
+      - docs/BETA_0_1.md
+    notes: Browser has source-level normal-session recovery/checkpoint boundaries and excludes Private and Isolated Private state before persistence, but accepted Everkeep backup, durable protected recovery storage, restore execution, migration, rollback, and production continuity acceptance remain incomplete.
+  glaze_ui:
+    result: applicable-migration-required
+    version: '2.2.0'
+    evidence:
+      - README.md
+      - SPECIFICATIONS.md
+      - docs/GLAZE_UI_ADOPTION.md
+    notes: Authoritative Browser main still maps Android Browser-owned presentation to the superseded Glaze UI 2.2.0 line. Current published Stable consumer authority is V1.1 / 1.1.0, so migration is required. Draft PR #18 contains a Development V1.1 source mapping, but it is unmerged and downstream acceptance is incomplete; the published 1.1.0 source also has the known immutable import-closure defect pending a corrected consumer-eligible Stable release.
+  mesh:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - README.md
+      - SPECIFICATIONS.md
+    notes: Browser has a source-level fail-closed first-party capability consumer boundary, but accepted GoreeCloud Mesh registration, discovery, transport, event, dependency, and runtime coordination evidence are incomplete.
+    capabilities: []
+    dependencies: []
+    published_events: []
+    consumed_events: []
+  identity:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - README.md
+      - SPECIFICATIONS.md
+    notes: GoreeCloud Identity remains authoritative for Browser profiles, synchronization identity, device authorization, account-bound preferences, authentication, and authorization; accepted runtime Identity integration is incomplete.
+
+health:
+  health_endpoint: null
+  readiness_endpoint: null
+
+continuity:
+  backup:
+    required: true
+    requirements:
+      - Protect approved durable normal-profile Browser state through the accepted Everkeep recovery model while excluding Private and Isolated Private browsing state from ordinary persistence and backup.
+      - Keep credentials, passkeys, reusable secrets, and other Vault-owned protected material outside ordinary Browser backup payloads unless an explicitly protected recovery contract requires them.
+  restore:
+    required: true
+    requirements:
+      - Validate restoration of supported Browser-owned durable state into a clean environment before Stable or production acceptance.
+      - Verify protected recovery storage, session checkpoint restoration, migration compatibility, failure handling, and rollback against the exact release candidate.
+  export:
+    required: true
+    requirements:
+      - Provide documented user-controlled export for portable Browser-owned user data that is approved for export, such as history, preferences, and local Browser state where applicable.
+      - Exclude credentials, passkeys, Wardveil trust evidence, private browsing state, and unrelated protected platform-system data from ordinary exports.
+  portability:
+    required: true
+    requirements:
+      - Keep Browser-owned canonical user state in documented GoreeCloud schemas rather than relying on Chromium profile formats as the permanent source of truth.
+      - Preserve migration paths across supported engine and platform implementations for portable approved data.
+
+external_dependencies:
+  - name: android-system-webview-chromium
+    purpose: Rendering-engine dependency for the Android beta; GoreeCloud Browser retains ownership of Browser chrome, navigation/search policy, state, privacy/security integration, and application behavior.
+    required: true
+    version_constraint: null
+  - name: chromium-cef
+    purpose: Rendering-engine foundation for the desktop render-capable path while GoreeCloud-owned Browser layers remain separated behind explicit engine interfaces.
+    required: false
+    version_constraint: null
+
+compatibility:
+  platform_contract: '0.2'
+  glaze_ui_required: '1.1.0'
+  requires:
+    - goreecloud-platform-contract==0.2
+    - glaze-ui==1.1.0
+  provides:
+    - browser-engine-layer
+    - browser-native-shell-beta
+
+ evidence:
+  acceptance_tests: []
+  release: []
+
+conformance:
+  status: nonconformant
+  validated_at: null
+  evidence:
+    - README.md
+    - SPECIFICATIONS.md
+    - docs/BETA_0_1.md
+    - docs/ANDROID_BETA.md
+    - docs/GLAZE_UI_ADOPTION.md
+    - docs/WARDVEIL_DOWNLOAD_SCANNING.md
+  blockers:
+    - GoreeCloud Manager operational integration and acceptance are incomplete.
+    - Producer-authoritative Privacy Shield runtime integration and complete Browser privacy acceptance are incomplete.
+    - Authenticated Wardveil Security runtime download verification, scanner health, quarantine evidence, and production security acceptance are incomplete.
+    - Everkeep protected durable backup, clean-environment restore, migration, rollback, and production continuity acceptance are incomplete.
+    - Authoritative Browser main still targets superseded Glaze UI 2.2.0; current published Stable V1.1 / 1.1.0 migration and downstream Browser acceptance remain incomplete, and the known immutable 1.1.0 import-closure defect still requires a corrected consumer-eligible Stable release before current conformance can be claimed.
+    - GoreeCloud Mesh registration, discovery, transport, dependency/event integration, and runtime acceptance are incomplete.
+    - GoreeCloud Identity profile, session, authorization, synchronization identity, and device-authorization integration are incomplete.
+    - Browser does not expose accepted health/readiness interfaces for GoreeCloud Manager or platform observability.
+    - Desktop render-capable CEF/Chromium integration and its real-runtime acceptance remain incomplete.
+    - Android production signing, representative-device acceptance, accessibility, localization/RTL, migration, update, rollback, and release provenance remain incomplete.
+    - No Stable or production-approved GoreeCloud Browser release evidence is declared.
