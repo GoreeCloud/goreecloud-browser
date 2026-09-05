@@ -2,103 +2,100 @@
 
 **Target:** Android installable beta APK  
 **Package:** `io.goreecloud.browser.beta`  
-**Candidate version:** `0.1.0-beta.1+android.5`  
-**Candidate versionCode:** `10005`  
+**Candidate version:** `0.1.0-beta.1+android.6`  
+**Candidate versionCode:** `10006`  
 **Minimum Android:** 8.0 / API 26  
 **Target Android API:** 35  
-**Current Glaze UI target:** 2.2.0 Stable  
-**Glaze UI Stable release revision:** `6731098b28dd0393faa878c70d989a221d714a20`  
+**Current GLAZE UI target:** 1.1.0 Stable  
+**GLAZE UI Stable tag:** `v1.1.0`  
+**GLAZE UI Stable release revision:** `15cc76d2bcd4065552dc31c77145b63f34d9e7b2`  
 **Production approved:** No
 
 ## Purpose
 
 This target is a real installable GoreeCloud Browser beta for Android. Android System WebView/Chromium is a replaceable web-engine dependency; GoreeCloud owns the Android browser chrome, navigation/search policy, privacy defaults, security gates, design-system mapping, and product behavior.
 
-The `+android.5` slice is a bounded repository-local migration from Browser's previously integrated Glaze UI 2.0 Android mapping to the current Glaze UI 2.2.0 Stable contract. It deliberately preserves the successful `+android.4` mobile chrome instead of visually rewriting the product for novelty. The migration adds current Stable provenance and the 2.2 semantic constraints that apply to this Android scope. It is not a claim of rendered/native-device Glaze acceptance.
+The `+android.6` slice is a bounded repository-local migration from Browser's historical Glaze UI 2.2 Android mapping to the current GLAZE UI V1.1 Stable contract. It deliberately preserves the successful mobile chrome instead of visually rewriting the product for version churn. It updates design-system authority and records the V1.1 semantic, optical, appearance, accessibility, and effects-fallback constraints applicable to the current Android scope.
 
-The previous authoritative `+android.4` evidence remains historical rollback and comparison input. Central Glaze UI 2.2 Stable promotion does not auto-promote Browser.
+The previous authoritative `+android.5` / Glaze UI 2.2 revision remains historical rollback and comparison input. Central GLAZE UI V1.1 Stable promotion does not auto-promote Browser.
 
 ## Implemented beta behavior
 
 The Android beta provides:
 
-- GoreeCloud Browser Beta application identity and launcher activity.
-- HTTP/HTTPS browser intent handling.
-- direct URL navigation independent from search.
-- bare-host HTTPS upgrade.
-- GoreeCloud Search as the sole query authority for non-URL input.
-- JavaScript and DOM storage for modern web compatibility.
-- cleartext application traffic disabled by the Android manifest.
-- mixed-content loading disabled.
-- Android Safe Browsing enabled; Safe Browsing hits return to safety.
-- TLS/certificate errors cancelled rather than bypassed.
-- third-party cookies disabled by default.
-- WebView file/content access disabled.
-- website permission requests and geolocation denied by default until Browser-owned permission and platform-policy surfaces are accepted.
-- downloads blocked until Android can satisfy the existing Wardveil download verification/release contract.
-- unit tests for unified address/search policy, unfocused address presentation, and Glaze Android mapping contracts.
+- GoreeCloud Browser Beta application identity and launcher activity;
+- HTTP/HTTPS browser intent handling;
+- direct URL navigation independent from search;
+- bare-host HTTPS upgrade;
+- GoreeCloud Search as the sole query authority for non-URL input;
+- JavaScript and DOM storage for modern web compatibility;
+- cleartext application traffic disabled by the Android manifest;
+- mixed-content loading disabled;
+- Android Safe Browsing enabled with return-to-safety behavior;
+- TLS/certificate errors cancelled rather than bypassed;
+- third-party cookies disabled by default;
+- WebView file/content access disabled;
+- website permission requests and geolocation denied by default until Browser-owned permission and platform-policy surfaces are accepted;
+- downloads blocked until Android can satisfy the existing Wardveil download verification/release contract;
+- unit tests for unified address/search policy, unfocused address presentation, and GLAZE UI Android mapping contracts;
 - CI build, lint, unit-test, APK signature verification, package/label verification, SHA-256 generation, and artifact upload.
 
-## Mobile browser chrome candidate
+## Mobile browser chrome
 
-The Android beta uses a compact native mobile structure:
+The beta preserves the current compact native mobile structure:
 
-- no Android Activity action bar in the normal browsing surface;
+- no Android Activity action bar in normal browsing;
 - no developer/status banner occupying the browsing viewport;
-- a dedicated top omnibox with the majority of horizontal space reserved for address/search editing;
-- a compact scheme indicator that reports `HTTPS`, `HTTP`, or generic web state without manufacturing security evidence;
-- an integrated Go control using a vector icon rather than a large text button;
-- full-width web content between the two chrome regions;
-- a separate 56dp bottom toolbar for Back, Forward, GoreeCloud Search Home, Reload/Stop, and Browser menu;
-- vector navigation icons rather than font glyphs;
-- Reload switching to Stop while a page is loading;
-- loading progress overlaid at the top of web content instead of consuming another row;
-- omnibox display text condensed when unfocused while the complete URL is exposed for editing on focus;
-- unfocused long addresses reset to the leading edge so the hostname remains visible;
-- Android Back dismisses omnibox editing before navigating page history;
-- the expanded fixed normal chrome budget is 128dp before system bars;
-- after meaningful downward page scrolling, the top omnibox can collapse so only the 56dp bottom toolbar remains fixed; upward scrolling, returning to the top, focusing the omnibox, or starting navigation restores the top chrome;
-- the Browser menu is a Browser-owned Glaze bottom sheet rather than an Android platform `PopupMenu`;
-- the menu removes the redundant Search Home action because Home already has a dedicated toolbar control, and retains bounded actions for copying the current address, sharing the page, and viewing beta information.
+- a dedicated top omnibox with most horizontal space reserved for address/search editing;
+- a compact `HTTPS` / `HTTP` / `WEB` scheme indicator that does not manufacture security evidence;
+- a vector Go control;
+- full-width web content between chrome regions;
+- a 56dp bottom toolbar for Back, Forward, GoreeCloud Search Home, Reload/Stop, and Browser menu;
+- vector navigation icons;
+- page progress overlaid at the top of content;
+- full URL exposure on omnibox focus and leading-hostname anchoring when unfocused;
+- Android Back dismissing omnibox editing before page-history navigation;
+- 128dp expanded fixed Browser chrome before system bars;
+- scroll-aware top-chrome collapse to a 56dp bottom-toolbar-only state;
+- a Browser-owned Glaze bottom-sheet menu rather than platform `PopupMenu`.
 
-The Browser menu is not a substitute for future full Settings, tabs, private-browsing, permissions, downloads, security, privacy, or account surfaces. Those features remain separately capability-gated.
+The Browser menu is not a substitute for future full Settings, tabs, private-browsing, permissions, downloads, security, privacy, or account surfaces.
 
-## Glaze UI 2.2 Android mapping
+## GLAZE UI V1.1 Android mapping
 
-The Android shell maps Browser-owned chrome to the current Glaze UI 2.2.0 Stable contract using native Android controls.
+The current Browser source mapping records:
 
-The source contract records:
-
-- Stable version `2.2.0`;
-- Stable release revision `6731098b28dd0393faa878c70d989a221d714a20`;
-- accepted Glaze UI visual source `0411b0f6dd877aea30e2c5674e1acde0105fd97b`;
+- Stable version `1.1.0` and tag `v1.1.0`;
+- Stable release revision `15cc76d2bcd4065552dc31c77145b63f34d9e7b2`;
+- approved V1.1 visual source `8ea1f789bbabf943c3359514dc1506b24fa3c51b`;
+- optical contract `contracts/v1.1/optical-refinement.json`;
 - application background → Canvas;
 - top chrome → Canvas;
 - omnibox capsule → Soft Glaze;
-- address field semantics → Surface;
+- address-field semantics → Surface;
 - bottom navigation chrome → Surface;
-- Browser menu sheet → Soft Glaze with Surface actions;
-- Browser-owned chrome → **Application** scope in the Glaze UI 2.2 System Shell hierarchy;
-- no claim that the local omnibox/search path is Glaze UI Universal Search;
+- Browser menu sheet → Soft Glaze;
+- Browser-owned chrome → Application System Shell scope;
+- no claim that the local omnibox/search path is Universal Search;
 - no claim that the Browser menu is Control Center, System Panel, or Critical System UI;
-- ordinary System Glaze budget → at most one dominant Glaze panel plus up to three small floating Glaze controls;
-- general touch-oriented target floor → 48dp;
-- Touch Assistance/far-view target floor where applicable → 56dp;
+- at most one dominant Glaze panel plus three small floating Glaze controls;
+- 48dp ordinary interaction floor and 56dp Touch Assistance floor where applicable;
+- Light, Dark, and Deep Dark appearance targets;
 - Calm expression and Balanced clarity;
-- Glaze UI 2.2 semantic state priority with disabled above error, pressed, focus, selected, hover, and rest;
-- native light/dark appearance adaptation;
-- pressed/focused state treatment;
-- semantic accessibility labels;
+- upper-left optical light direction;
+- bounded Deep Teal + Soft Amber atmosphere with neutral structure dominant;
+- no nested backdrop-blur stack;
+- no required Environmental Color Memory or content sampling;
+- visible semantic focus/state treatment;
 - effects-free fallback that does not require blur, transparency, or animation;
 - vector icons for Browser-owned chrome;
-- an explicit no-action-bar contract;
-- an explicit contract that development-status text is not part of normal browsing chrome;
-- an explicit contract that the Browser menu is not the platform-default popup surface;
-- an explicit scroll-aware top-chrome contract that can reduce fixed Browser chrome from 128dp expanded to 56dp collapsed.
+- explicit no-action-bar, no-development-status, Browser-owned-menu, and scroll-aware-chrome contracts.
 
-The 56dp Touch Assistance/far-view floor is now represented in the Browser source contract, but this branch does **not** claim that Android has a complete GoreeCloud Touch Assistance runtime preference/OS mapping. That wiring and its native evidence remain a promotion gate.
+Protected semantic meaning, focus, accessibility, and required boundaries override atmosphere. GLAZE UI presentation does not manufacture security, privacy, identity, recovery, coordination, Search, or Sync truth.
 
-This is **not** a claim of complete Glaze UI Android acceptance. Native-device visual quality, TalkBack behavior, 200% text/large-text reflow, RTL/localization, contrast, focus, Reduced Motion, Reduced Transparency/effects-free behavior, applicable high-contrast/forced-color behavior, orientation, foldable/safe-area behavior, performance, Touch Assistance behavior, and representative hardware acceptance remain separate gates.
+The 56dp Touch Assistance floor is represented in source, but this branch does not claim a complete GoreeCloud Touch Assistance runtime preference or OS mapping.
+
+This is **not** complete downstream GLAZE UI acceptance. Native-device visual quality, TalkBack, 200% text/large-text reflow, RTL/localization, Reduced Motion, Reduced Transparency/effects-free behavior, contrast/high-contrast behavior, orientation, foldable/safe-area behavior, performance, Touch Assistance behavior, and representative physical-hardware acceptance remain separate gates.
 
 ## APK build and evidence
 
@@ -110,7 +107,7 @@ The workflow uses Java 17, Android API 35, Android Build Tools 35.0.0, and Gradl
 gradle --no-daemon clean testDebugUnitTest lintDebug assembleDebug
 ```
 
-It then verifies the generated APK with Android `apksigner`, checks package/application identity with `aapt`, records a SHA-256 checksum, and uploads the APK as a GitHub Actions artifact tied to the exact source revision.
+It verifies the generated APK with Android `apksigner`, checks package/application/version identity with `aapt`, records a SHA-256 checksum, and uploads the APK as a GitHub Actions artifact tied to the exact source revision.
 
 Expected APK path:
 
@@ -118,21 +115,15 @@ Expected APK path:
 apps/android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The authoritative `+android.4` predecessor was integrated before the current Glaze UI 2.2 migration and retains its own exact-revision evidence. The `+android.5` migration candidate is materially changed and must obtain its own exact-head workflow evidence; prior `+android.4` success is not inherited automatically.
-
-A successful `+android.5` CI run will prove only that the exact candidate source built a structurally valid debug-signed APK and passed the checks actually run. It will not by itself satisfy rendered visual, accessibility, real-device, production-signing, or Stable acceptance.
+Historical `+android.5` build evidence is not inherited by this materially changed `+android.6` candidate. Exact-head workflow evidence is required again.
 
 ## Signing boundary
 
-The CI beta uses Android debug signing so the APK is installable without placing a GoreeCloud production private key in source control.
-
-Debug signing is **not** the production signing authority. Fresh CI environments may use different debug certificates, so arbitrary CI artifacts are not guaranteed to upgrade one another. Until controlled GoreeCloud beta signing is provisioned through an approved secret/signing service, CI APKs should be treated as fresh-install beta artifacts.
-
-Production signing material must never be committed to the repository.
+CI uses Android debug signing so the APK is installable without placing a GoreeCloud production private key in source control. Debug signing is not production signing authority, and arbitrary CI artifacts may not have upgrade-compatible certificates. Production signing material must never be committed to the repository.
 
 ## Security and privacy boundaries
 
-The beta deliberately fails closed where platform integration is incomplete:
+The beta fails closed where platform integration is incomplete:
 
 - downloads remain unavailable until Wardveil verification/release is integrated;
 - site permission and geolocation requests are denied rather than silently granted;
@@ -141,48 +132,30 @@ The beta deliberately fails closed where platform integration is incomplete:
 - third-party cookies are disabled;
 - local file/content access from WebView is disabled.
 
-These behaviors do not establish complete Wardveil Security or Privacy Shield acceptance. Android engine-level Safe Browsing is also not a substitute for GoreeCloud Wardveil runtime evidence. The omnibox scheme indicator is presentation of the parsed URL scheme, not a security-verification badge.
+These behaviors do not establish complete Wardveil Security or Privacy Shield acceptance. Android engine-level Safe Browsing is not a substitute for GoreeCloud Wardveil runtime evidence. The omnibox scheme indicator is parsed-URL presentation, not a Wardveil or certificate-verification badge.
 
 ## Deliberate beta restrictions
 
-The Android beta does not yet claim:
-
-- production or Stable readiness;
-- complete Glaze UI 2.2 Android native-device acceptance;
-- product-specific Human Visual Excellence acceptance for this exact adoption revision;
-- complete Touch Assistance runtime mapping/acceptance;
-- production GoreeCloud Identity/Vault/Sync integration;
-- private-browsing runtime isolation and Close & Forget acceptance;
-- Android Wardveil download verification/release or quarantine handoff;
-- complete Privacy Shield filtering and consent surfaces;
-- Everkeep backup/recovery acceptance;
-- Android DNS/Network/Mesh service integration;
-- Browser-owned website permission UI;
-- file upload/download acceptance;
-- multi-tab product acceptance or tab-management UI in this Android slice;
-- controlled production signing or managed beta signing continuity;
-- Play Store or other store publication;
-- signed update/downgrade/rollback and application-data migration acceptance;
-- sustained real-device accessibility, performance, battery, or compatibility evidence.
+The Android beta does not yet claim production/Stable readiness, complete GLAZE UI V1.1 downstream acceptance, complete Touch Assistance runtime mapping, production first-party service integration, Private Browsing acceptance, Android Wardveil download release, complete Privacy Shield behavior, Everkeep acceptance, Browser-owned website permission UI, accepted multi-tab product UI, controlled production signing, managed update/rollback, store publication, or sustained real-device acceptance.
 
 ## Promotion gates
 
 Before Android can be described as production-approved or Stable, GoreeCloud must add and accept at minimum:
 
 1. Controlled GoreeCloud beta/production signing and key-recovery procedures.
-2. Exact-revision Glaze UI 2.2 Android visual/accessibility/form-factor acceptance, including product-specific Human Visual Excellence where required.
+2. Exact-revision GLAZE UI V1.1 Browser visual/accessibility/form-factor acceptance.
 3. Wardveil Browser-to-scan authenticated transport and Android download release/quarantine evidence.
 4. Privacy Shield Android policy/consent/filtering integration.
 5. Everkeep Android recovery/continuity integration.
 6. Private Browsing request-context/storage isolation and Close & Forget behavior.
-7. GoreeCloud Identity, Vault, Sync, DNS, Network, Mesh, and other required adapters.
+7. Required Identity, Vault, Sync, DNS, Network, Mesh, Search, and other adapters with their own accepted producer evidence.
 8. Browser-owned permission prompts and Android runtime-permission mapping.
-9. Full mobile browser surfaces required for the supported release scope, including accepted tab/session/settings behavior.
-10. Real-device tests across supported Android versions, screen sizes, WebView versions, network transitions, background/restore, and sustained use.
-11. 200% text, RTL/localization, Reduced Motion, Reduced Transparency, Increased Contrast, applicable forced-color/high-contrast behavior, and Touch Assistance/far-view acceptance where supported.
+9. Full mobile surfaces required for the release scope, including accepted tab/session/settings behavior.
+10. Representative real-device tests across supported Android versions, screen sizes, WebView versions, network transitions, background/restore, and sustained use.
+11. 200% text, RTL/localization, Reduced Motion, Reduced Transparency, Increased Contrast/high-contrast behavior, and Touch Assistance acceptance where supported.
 12. Signed upgrade/downgrade/rollback and application-data migration tests.
 13. Release artifact provenance, checksums, release notes, and production acceptance evidence.
 
 ## Status language
 
-A passing CI workflow proves that the exact source revision produced a structurally valid installable debug-signed APK and passed the checks actually run. It does not by itself prove production security, privacy, performance, compatibility, accessibility, recovery, Glaze UI native-device acceptance, or Stable qualification.
+A passing CI workflow proves only that the exact source revision produced a structurally valid installable debug-signed APK and passed the checks actually run. It does not by itself prove production security, privacy, performance, compatibility, accessibility, recovery, GLAZE UI native-device acceptance, or Stable qualification.
