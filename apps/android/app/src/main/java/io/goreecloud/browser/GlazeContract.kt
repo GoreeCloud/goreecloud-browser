@@ -30,6 +30,7 @@ object GlazeContract {
     const val PROGRESS_HEIGHT_DP = 2
     const val AUTO_HIDE_SCROLL_THRESHOLD_DP = 72
     const val SCROLL_DIRECTION_SLOP_DP = 6
+    const val LARGE_TEXT_ACCEPTANCE_FONT_SCALE = 2.0f
 
     const val MAX_DOMINANT_GLAZE_PANELS = 1
     const val MAX_SMALL_FLOATING_GLAZE_CONTROLS = 3
@@ -127,6 +128,7 @@ object GlazeContract {
         val scrollAwareTopChrome: Boolean,
         val nestedBackdropBlur: Boolean,
         val environmentalColorSamplingRequired: Boolean,
+        val textBearingChromeUsesContentHeight: Boolean,
     )
 
     val ANDROID_BROWSER_MAPPING = AndroidBrowserMapping(
@@ -154,6 +156,7 @@ object GlazeContract {
         scrollAwareTopChrome = true,
         nestedBackdropBlur = false,
         environmentalColorSamplingRequired = false,
+        textBearingChromeUsesContentHeight = true,
     )
 
     fun targetFloorDp(touchAssistance: Boolean): Int =
@@ -180,8 +183,15 @@ object GlazeContract {
         InteractionState.Disabled -> 7
     }
 
-    fun fixedChromeHeightDp(): Int =
+    /**
+     * Baseline expanded chrome at normal text scale. Text-bearing top chrome may
+     * grow above this value when Android font scaling requires more content height.
+     */
+    fun baselineExpandedChromeHeightDp(): Int =
         OMNIBOX_HEIGHT_DP + (CHROME_GUTTER_DP * 2) + BOTTOM_TOOLBAR_HEIGHT_DP
+
+    @Deprecated("Use baselineExpandedChromeHeightDp; large text may grow above the baseline")
+    fun fixedChromeHeightDp(): Int = baselineExpandedChromeHeightDp()
 
     fun collapsedChromeHeightDp(): Int = BOTTOM_TOOLBAR_HEIGHT_DP
 }
