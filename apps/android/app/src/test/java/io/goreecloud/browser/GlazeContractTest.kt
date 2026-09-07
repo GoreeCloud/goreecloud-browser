@@ -94,7 +94,7 @@ class GlazeContractTest {
     fun textBearingChromeCanGrowForLargeText() {
         val mapping = GlazeContract.ANDROID_BROWSER_MAPPING
 
-        assertEquals(2.0f, GlazeContract.LARGE_TEXT_ACCEPTANCE_FONT_SCALE)
+        assertEquals(2.0f, GlazeContract.LARGE_TEXT_ACCEPTANCE_FONT_SCALE, 0.0f)
         assertTrue(mapping.textBearingChromeUsesContentHeight)
         assertEquals(128, GlazeContract.baselineExpandedChromeHeightDp())
         assertEquals(56, GlazeContract.collapsedChromeHeightDp())
