@@ -124,7 +124,38 @@ class NavigationResolverTest {
     }
 
     @Test
-    fun nonWebSchemeNeedsUserGestureForExternalHandoff() {
+    fun localAndActiveContentSchemesNeverQualifyForExternalHandoff() {
+        val blocked = listOf(
+            "about:blank",
+            "blob:https://example.com/id",
+            "content://com.example.provider/item/1",
+            "data:text/plain,hello",
+            "file:///sdcard/example.html",
+            "javascript:alert(1)",
+        )
+
+        blocked.forEach { target ->
+            assertFalse(
+                "Local/active-content scheme escaped Browser: $target",
+                NavigationResolver.shouldHandOffExternally(target, hasUserGesture = true),
+            )
+        }
+    }
+
+    @Test
+    fun externalSchemeRequiresParsedSchemeAndUserGesture() {
+        assertTrue(
+            NavigationResolver.shouldHandOffExternally(
+                "mailto:person@example.com",
+                hasUserGesture = true,
+            ),
+        )
+        assertTrue(
+            NavigationResolver.shouldHandOffExternally(
+                "tel:+15551234567",
+                hasUserGesture = true,
+            ),
+        )
         assertTrue(
             NavigationResolver.shouldHandOffExternally(
                 "intent://example",
@@ -135,6 +166,12 @@ class NavigationResolverTest {
             NavigationResolver.shouldHandOffExternally(
                 "intent://example",
                 hasUserGesture = false,
+            ),
+        )
+        assertFalse(
+            NavigationResolver.shouldHandOffExternally(
+                "not a scheme",
+                hasUserGesture = true,
             ),
         )
     }
