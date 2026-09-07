@@ -2,8 +2,8 @@
 
 **Target:** Android installable beta APK  
 **Package:** `io.goreecloud.browser.beta`  
-**Candidate version:** `0.1.0-beta.1+android.7`  
-**Candidate versionCode:** `10007`  
+**Candidate version:** `0.1.0-beta.1+android.8`  
+**Candidate versionCode:** `10008`  
 **Minimum Android:** 8.0 / API 26  
 **Target Android API:** 35  
 **Current GLAZE UI target:** 1.2.0 Stable  
@@ -15,9 +15,9 @@
 
 This target is a real installable GoreeCloud Browser beta for Android. Android System WebView/Chromium is a replaceable web-engine dependency; GoreeCloud owns the Android browser chrome, navigation/search policy, privacy defaults, security gates, design-system mapping, and product behavior.
 
-The `+android.7` slice advances the repository-local migration to the current GLAZE UI V1.2 Stable contract. It deliberately preserves the successful mobile chrome instead of visually rewriting the product for version churn, while replacing the superseded V1.1 chromatic atmosphere mapping with V1.2 neutral Frosted/Living Glaze authority.
+The `+android.8` slice is stacked on the repository-local GLAZE UI V1.2 Stable migration and preserves that neutral-material mapping while hardening Browser-owned chrome accessibility. When Android reports that an accessibility service is enabled, the primary top omnibox remains visible instead of being removed from the view/accessibility tree by page-scroll auto-hide. The Browser consumes only the platform boolean accessibility-enabled state; it does not enumerate accessibility services or inspect accessibility/user content.
 
-The historical `+android.5` / Glaze UI 2.2 and intermediate `+android.6` / V1.1 mapping remain rollback/comparison inputs only. Central GLAZE UI V1.2 Stable promotion does not auto-promote Browser.
+The historical `+android.5` / Glaze UI 2.2, intermediate `+android.6` / V1.1, and parent `+android.7` / V1.2-only mapping remain rollback/comparison inputs. Central GLAZE UI V1.2 Stable promotion and this source hardening do not auto-promote Browser.
 
 ## Implemented beta behavior
 
@@ -37,7 +37,8 @@ The Android beta provides:
 - WebView file/content access disabled;
 - website permission requests and geolocation denied by default until Browser-owned permission and platform-policy surfaces are accepted;
 - downloads blocked until Android can satisfy the existing Wardveil download verification/release contract;
-- unit tests for unified address/search policy, unfocused address presentation, and GLAZE UI Android mapping contracts;
+- accessibility-aware top-chrome visibility that keeps the omnibox available while Android accessibility services are enabled without enumerating those services;
+- unit tests for unified address/search policy, unfocused address presentation, accessibility-aware chrome visibility, and GLAZE UI Android mapping contracts;
 - CI build, lint, unit-test, APK signature verification, package/label verification, SHA-256 generation, and artifact upload.
 
 ## Mobile browser chrome
@@ -56,10 +57,13 @@ The beta preserves the current compact native mobile structure:
 - full URL exposure on omnibox focus and leading-hostname anchoring when unfocused;
 - Android Back dismissing omnibox editing before page-history navigation;
 - 128dp expanded fixed Browser chrome before system bars;
-- scroll-aware top-chrome collapse to a 56dp bottom-toolbar-only state;
+- scroll-aware top-chrome collapse to a 56dp bottom-toolbar-only state when accessibility services are not active;
+- top-chrome persistence while Android reports an accessibility service enabled, including immediate restoration if accessibility is enabled while the Activity is active;
 - a Browser-owned Glaze bottom-sheet menu rather than platform `PopupMenu`.
 
 The Browser menu is not a substitute for future full Settings, tabs, private-browsing, permissions, downloads, security, privacy, or account surfaces.
+
+The accessibility-aware collapse policy is source/runtime-policy hardening, not assistive-technology acceptance. Representative TalkBack, Switch Access, Voice Access, focus-order, announcement-quality, and physical-device behavior remain separate validation gates.
 
 ## GLAZE UI V1.2 Android mapping
 
@@ -91,13 +95,13 @@ The current Browser source mapping records:
 - visible semantic focus/state treatment;
 - effects-free fallback that does not require blur, transparency, or animation;
 - vector icons for Browser-owned chrome;
-- explicit no-action-bar, no-development-status, Browser-owned-menu, and scroll-aware-chrome contracts.
+- explicit no-action-bar, no-development-status, Browser-owned-menu, and accessibility-aware scroll-chrome contracts.
 
 Protected semantic meaning, focus, accessibility, and required boundaries override atmosphere. GLAZE UI presentation does not manufacture security, privacy, identity, recovery, coordination, Search, or Sync truth.
 
 The 56dp Touch Assistance floor is represented in source, but this branch does not claim a complete GoreeCloud Touch Assistance runtime preference or OS mapping.
 
-This is **not** complete downstream GLAZE UI acceptance. Native-device visual quality, TalkBack, 200% text/large-text reflow, RTL/localization, Reduced Motion, Reduced Transparency/effects-free behavior, contrast/high-contrast behavior, orientation, foldable/safe-area behavior, performance, Touch Assistance behavior, and representative physical-hardware acceptance remain separate gates.
+This is **not** complete downstream GLAZE UI acceptance. Native-device visual quality, TalkBack, Switch Access, Voice Access, 200% text/large-text reflow, RTL/localization, Reduced Motion, Reduced Transparency/effects-free behavior, contrast/high-contrast behavior, orientation, foldable/safe-area behavior, performance, Touch Assistance behavior, and representative physical-hardware acceptance remain separate gates.
 
 ## APK build and evidence
 
@@ -117,7 +121,7 @@ Expected APK path:
 apps/android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Historical `+android.5` and intermediate `+android.6` build evidence are not inherited by this materially changed `+android.7` candidate. Exact-head workflow evidence is required again.
+Historical `+android.5`, intermediate `+android.6`, and parent `+android.7` build evidence are not inherited by this materially changed `+android.8` candidate. Exact-head workflow evidence is required again.
 
 ## Signing boundary
 
@@ -133,6 +137,8 @@ The beta fails closed where platform integration is incomplete:
 - mixed content is not permitted;
 - third-party cookies are disabled;
 - local file/content access from WebView is disabled.
+
+The accessibility chrome policy reads only `AccessibilityManager.isEnabled` and listens only for enabled/disabled state changes. It does not enumerate installed or enabled accessibility services, retain accessibility state, inspect accessibility event content, or add network/telemetry behavior.
 
 These behaviors do not establish complete Wardveil Security or Privacy Shield acceptance. Android engine-level Safe Browsing is not a substitute for GoreeCloud Wardveil runtime evidence. The omnibox scheme indicator is parsed-URL presentation, not a Wardveil or certificate-verification badge.
 
@@ -154,7 +160,7 @@ Before Android can be described as production-approved or Stable, GoreeCloud mus
 8. Browser-owned permission prompts and Android runtime-permission mapping.
 9. Full mobile surfaces required for the release scope, including accepted tab/session/settings behavior.
 10. Representative real-device tests across supported Android versions, screen sizes, WebView versions, network transitions, background/restore, and sustained use.
-11. 200% text, RTL/localization, Reduced Motion, Reduced Transparency, Increased Contrast/high-contrast behavior, and Touch Assistance acceptance where supported.
+11. TalkBack, Switch Access, Voice Access, 200% text, RTL/localization, Reduced Motion, Reduced Transparency, Increased Contrast/high-contrast behavior, and Touch Assistance acceptance where supported.
 12. Signed upgrade/downgrade/rollback and application-data migration tests.
 13. Release artifact provenance, checksums, release notes, and production acceptance evidence.
 
