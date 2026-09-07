@@ -640,7 +640,10 @@ class BrowserActivity : Activity() {
     private fun copyCurrentAddress() {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(
-            ClipData.newPlainText(getString(R.string.page_address_clip_label), currentUrl),
+            ClipData.newPlainText(
+                getString(R.string.page_address_clip_label),
+                AddressDisclosurePolicy.forExternalUse(currentUrl),
+            ),
         )
         Toast.makeText(this, getString(R.string.page_address_copied), Toast.LENGTH_SHORT).show()
     }
@@ -648,7 +651,7 @@ class BrowserActivity : Activity() {
     private fun shareCurrentAddress() {
         val share = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, currentUrl)
+            putExtra(Intent.EXTRA_TEXT, AddressDisclosurePolicy.forExternalUse(currentUrl))
         }
         startActivity(Intent.createChooser(share, getString(R.string.share_page)))
     }
