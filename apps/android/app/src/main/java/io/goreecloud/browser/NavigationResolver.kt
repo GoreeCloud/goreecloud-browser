@@ -54,6 +54,10 @@ object NavigationResolver {
         if (value.contains("://")) return false
 
         val authority = value.substringBefore('/').substringBefore('?').substringBefore('#')
+        // Unschemed userinfo is ambiguous with ordinary email-shaped search text.
+        // Require an explicit HTTP(S) scheme before Browser accepts userinfo.
+        if (authority.contains('@')) return false
+
         val hostPart = authorityHost(authority) ?: return false
 
         return hostPart.equals("localhost", ignoreCase = true) ||
