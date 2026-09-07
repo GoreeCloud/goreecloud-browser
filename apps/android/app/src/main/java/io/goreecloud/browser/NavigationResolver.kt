@@ -13,6 +13,15 @@ object NavigationResolver {
     const val SEARCH_HOME = "https://search.goreecloud.com/"
     private const val SEARCH_ENDPOINT = "https://search.goreecloud.com/search?q="
 
+    private val LOCAL_OR_ACTIVE_CONTENT_SCHEMES = setOf(
+        "about",
+        "blob",
+        "content",
+        "data",
+        "file",
+        "javascript",
+    )
+
     fun resolve(rawInput: String): String {
         val input = rawInput.trim()
         if (input.isEmpty()) return SEARCH_HOME
@@ -38,11 +47,16 @@ object NavigationResolver {
 
     /**
      * External Android handoff is reserved for an explicit user gesture on a
-     * non-web scheme. HTTP(S) attempts stay Browser-owned even when malformed,
-     * so rejected web navigation cannot escape the Browser fail-closed path.
+     * parsed non-web scheme that is not Browser-local or active content.
+     * HTTP(S), malformed/no-scheme targets, and local/active-content schemes
+     * stay Browser-owned so they cannot escape the fail-closed path.
      */
-    fun shouldHandOffExternally(url: String, hasUserGesture: Boolean): Boolean =
-        hasUserGesture && !hasHttpScheme(url)
+    fun shouldHandOffExternally(url: String, hasUserGesture: Boolean): Boolean {
+        if (!hasUserGesture || hasHttpScheme(url)) return false
+
+        val scheme = runCatching { URI(url).scheme?.lowercase() }.getOrNull() ?: return false
+        return scheme !in LOCAL_OR_ACTIVE_CONTENT_SCHEMES
+    }
 
     private fun hasHttpScheme(value: String): Boolean {
         return value.startsWith("https:", ignoreCase = true) ||
