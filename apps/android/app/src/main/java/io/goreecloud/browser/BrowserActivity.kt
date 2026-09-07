@@ -154,8 +154,8 @@ class BrowserActivity : Activity() {
         glaze.styleOmniboxCapsule(omnibox)
 
         schemeBadge = TextView(this).apply {
-            text = "HTTPS"
-            contentDescription = "Address scheme HTTPS"
+            text = getString(R.string.scheme_https)
+            contentDescription = getString(R.string.address_scheme_description, text)
         }
         glaze.styleSchemeBadge(schemeBadge)
         omnibox.addView(
@@ -167,8 +167,8 @@ class BrowserActivity : Activity() {
         )
 
         addressField = EditText(this).apply {
-            hint = "Search GoreeCloud or enter address"
-            contentDescription = "Unified search and address bar"
+            hint = getString(R.string.omnibox_hint)
+            contentDescription = getString(R.string.omnibox_description)
             isSingleLine = true
             imeOptions = EditorInfo.IME_ACTION_GO
             inputType = android.text.InputType.TYPE_CLASS_TEXT or
@@ -208,7 +208,7 @@ class BrowserActivity : Activity() {
 
         val goButton = ImageButton(this).apply {
             setImageResource(R.drawable.ic_go)
-            contentDescription = "Navigate"
+            contentDescription = getString(R.string.navigate)
             setOnClickListener { navigate(addressField.text.toString()) }
         }
         glaze.styleChromeButton(goButton, GlazeContract.ButtonRole.Emphasis)
@@ -252,7 +252,7 @@ class BrowserActivity : Activity() {
             max = 100
             progress = 0
             visibility = View.GONE
-            contentDescription = "Page loading progress"
+            contentDescription = getString(R.string.page_loading_progress)
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         }
         glaze.styleProgress(progressBar)
@@ -279,22 +279,22 @@ class BrowserActivity : Activity() {
         }
         glaze.styleBottomToolbar(bottomToolbar)
 
-        backButton = chromeButton(R.drawable.ic_back, "Back") {
+        backButton = chromeButton(R.drawable.ic_back, R.string.back) {
             if (webView.canGoBack()) webView.goBack()
         }
         bottomToolbar.addView(backButton, toolbarButtonParams())
 
-        forwardButton = chromeButton(R.drawable.ic_forward, "Forward") {
+        forwardButton = chromeButton(R.drawable.ic_forward, R.string.forward) {
             if (webView.canGoForward()) webView.goForward()
         }
         bottomToolbar.addView(forwardButton, toolbarButtonParams())
 
-        val homeButton = chromeButton(R.drawable.ic_home, "GoreeCloud Search home") {
+        val homeButton = chromeButton(R.drawable.ic_home, R.string.search_home) {
             navigate(NavigationResolver.SEARCH_HOME)
         }
         bottomToolbar.addView(homeButton, toolbarButtonParams())
 
-        reloadButton = chromeButton(R.drawable.ic_reload, "Reload") {
+        reloadButton = chromeButton(R.drawable.ic_reload, R.string.reload) {
             if (pageLoading) {
                 webView.stopLoading()
                 pageLoading = false
@@ -306,7 +306,7 @@ class BrowserActivity : Activity() {
         }
         bottomToolbar.addView(reloadButton, toolbarButtonParams())
 
-        val menuButton = chromeButton(R.drawable.ic_more, "Browser menu") {
+        val menuButton = chromeButton(R.drawable.ic_more, R.string.browser_menu) {
             showBrowserMenu()
         }
         bottomToolbar.addView(menuButton, toolbarButtonParams())
@@ -396,7 +396,7 @@ class BrowserActivity : Activity() {
                 handler.cancel()
                 Toast.makeText(
                     this@BrowserActivity,
-                    "Blocked: the site certificate could not be verified.",
+                    getString(R.string.ssl_error_blocked),
                     Toast.LENGTH_LONG,
                 ).show()
             }
@@ -411,7 +411,7 @@ class BrowserActivity : Activity() {
                 callback.backToSafety(true)
                 Toast.makeText(
                     this@BrowserActivity,
-                    "Blocked by Android Safe Browsing.",
+                    getString(R.string.safe_browsing_blocked),
                     Toast.LENGTH_LONG,
                 ).show()
             }
@@ -440,7 +440,7 @@ class BrowserActivity : Activity() {
         webView.setDownloadListener { _, _, _, _, _ ->
             Toast.makeText(
                 this,
-                "Downloads are unavailable until the Android Wardveil release gate is integrated.",
+                getString(R.string.downloads_unavailable),
                 Toast.LENGTH_LONG,
             ).show()
         }
@@ -471,7 +471,7 @@ class BrowserActivity : Activity() {
         if (external.resolveActivity(packageManager) != null) {
             startActivity(external)
         } else {
-            Toast.makeText(this, "No app can open this link.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.no_app_can_open_link), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -479,11 +479,11 @@ class BrowserActivity : Activity() {
         val uri = runCatching { Uri.parse(currentUrl) }.getOrNull()
         val scheme = uri?.scheme?.lowercase()
         schemeBadge.text = when (scheme) {
-            "https" -> "HTTPS"
-            "http" -> "HTTP"
-            else -> "WEB"
+            "https" -> getString(R.string.scheme_https)
+            "http" -> getString(R.string.scheme_http)
+            else -> getString(R.string.scheme_web)
         }
-        schemeBadge.contentDescription = "Address scheme ${schemeBadge.text}"
+        schemeBadge.contentDescription = getString(R.string.address_scheme_description, schemeBadge.text)
 
         if (!addressField.hasFocus()) {
             addressField.setText(AddressPresentation.condensed(currentUrl))
@@ -509,7 +509,9 @@ class BrowserActivity : Activity() {
 
         if (::reloadButton.isInitialized) {
             reloadButton.setImageResource(if (pageLoading) R.drawable.ic_stop else R.drawable.ic_reload)
-            reloadButton.contentDescription = if (pageLoading) "Stop loading" else "Reload"
+            reloadButton.contentDescription = getString(
+                if (pageLoading) R.string.stop_loading else R.string.reload,
+            )
         }
     }
 
@@ -518,10 +520,10 @@ class BrowserActivity : Activity() {
         button.alpha = if (enabled) 1f else 0.38f
     }
 
-    private fun chromeButton(icon: Int, description: String, action: (View) -> Unit): ImageButton =
+    private fun chromeButton(icon: Int, descriptionRes: Int, action: (View) -> Unit): ImageButton =
         ImageButton(this).apply {
             setImageResource(icon)
-            contentDescription = description
+            contentDescription = getString(descriptionRes)
             setOnClickListener(action)
             glaze.styleChromeButton(this, GlazeContract.ButtonRole.Quiet)
         }
@@ -541,13 +543,13 @@ class BrowserActivity : Activity() {
 
         val container = FrameLayout(this).apply {
             setPadding(dp(12), 0, dp(12), dp(12))
-            contentDescription = "Browser menu"
+            contentDescription = getString(R.string.browser_menu)
         }
         val sheet = LinearLayout(this)
         glaze.styleMenuSheet(sheet)
 
         val title = TextView(this).apply {
-            text = "GoreeCloud Browser"
+            text = getString(R.string.browser_name)
         }
         glaze.styleMenuTitle(title)
         sheet.addView(
@@ -571,15 +573,15 @@ class BrowserActivity : Activity() {
         )
 
         sheet.addView(
-            menuAction("Copy page address", dialog) { copyCurrentAddress() },
+            menuAction(R.string.copy_page_address, dialog) { copyCurrentAddress() },
             menuActionParams(),
         )
         sheet.addView(
-            menuAction("Share page", dialog) { shareCurrentAddress() },
+            menuAction(R.string.share_page, dialog) { shareCurrentAddress() },
             menuActionParams(),
         )
         sheet.addView(
-            menuAction("About this beta", dialog) { showBetaInfo() },
+            menuAction(R.string.about_beta, dialog) { showBetaInfo() },
             menuActionParams(),
         )
 
@@ -609,8 +611,9 @@ class BrowserActivity : Activity() {
         }
     }
 
-    private fun menuAction(label: String, dialog: Dialog, action: () -> Unit): TextView =
+    private fun menuAction(labelRes: Int, dialog: Dialog, action: () -> Unit): TextView =
         TextView(this).apply {
+            val label = getString(labelRes)
             text = label
             contentDescription = label
             glaze.styleMenuAction(this)
@@ -629,13 +632,15 @@ class BrowserActivity : Activity() {
 
     private fun currentPageHost(): String {
         val host = runCatching { Uri.parse(currentUrl).host }.getOrNull()
-        return host?.takeIf { it.isNotBlank() } ?: "Current page"
+        return host?.takeIf { it.isNotBlank() } ?: getString(R.string.current_page)
     }
 
     private fun copyCurrentAddress() {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText("Page address", currentUrl))
-        Toast.makeText(this, "Page address copied.", Toast.LENGTH_SHORT).show()
+        clipboard.setPrimaryClip(
+            ClipData.newPlainText(getString(R.string.page_address_clip_label), currentUrl),
+        )
+        Toast.makeText(this, getString(R.string.page_address_copied), Toast.LENGTH_SHORT).show()
     }
 
     private fun shareCurrentAddress() {
@@ -643,13 +648,13 @@ class BrowserActivity : Activity() {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, currentUrl)
         }
-        startActivity(Intent.createChooser(share, "Share page"))
+        startActivity(Intent.createChooser(share, getString(R.string.share_page)))
     }
 
     private fun showBetaInfo() {
         Toast.makeText(
             this,
-            "GoreeCloud Browser ${BuildConfig.VERSION_NAME}. Installable beta; production signing, downloads, site permissions, and full platform acceptance remain pending.",
+            getString(R.string.beta_info, BuildConfig.VERSION_NAME),
             Toast.LENGTH_LONG,
         ).show()
     }
