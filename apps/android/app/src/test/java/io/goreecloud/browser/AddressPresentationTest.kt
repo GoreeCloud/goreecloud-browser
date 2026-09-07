@@ -21,6 +21,22 @@ class AddressPresentationTest {
     }
 
     @Test
+    fun condensedAddressPreservesExplicitPort() {
+        assertEquals(
+            "example.com:8443/path?q=browser",
+            AddressPresentation.condensed("https://example.com:8443/path?q=browser"),
+        )
+    }
+
+    @Test
+    fun condensedAddressPreservesExplicitDefaultPort() {
+        assertEquals(
+            "example.com:443",
+            AddressPresentation.condensed("https://example.com:443/"),
+        )
+    }
+
+    @Test
     fun rootPathIsNotShown() {
         assertEquals(
             "search.goreecloud.com",
