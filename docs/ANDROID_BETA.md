@@ -2,8 +2,8 @@
 
 **Target:** Android installable beta APK  
 **Package:** `io.goreecloud.browser.beta`  
-**Candidate version:** `0.1.0-beta.1+android.12`  
-**Candidate versionCode:** `10012`  
+**Candidate version:** `0.1.0-beta.1+android.13`  
+**Candidate versionCode:** `10013`  
 **Minimum Android:** 8.0 / API 26  
 **Target Android API:** 35  
 **Current GLAZE UI target:** 1.2.0 Stable  
@@ -15,13 +15,13 @@
 
 This target is a real installable GoreeCloud Browser beta for Android. Android System WebView/Chromium is a replaceable web-engine dependency; GoreeCloud owns the Android browser chrome, navigation/search policy, privacy defaults, security gates, design-system mapping, and product behavior.
 
-The `+android.12` slice is stacked on the V1.2 migration, `+android.8` accessibility-chrome hardening, `+android.9` large-text content-height hardening, `+android.10` RTL directionality hardening, and `+android.11` localization-resource foundation. It enables Android's generated `en-XA` and `ar-XB` pseudolocales only for the debug beta build type and extends the localization source contract so that debug-only boundary fails closed if removed or copied into the release build type.
+The `+android.13` slice is stacked on the V1.2 migration, `+android.8` accessibility-chrome hardening, `+android.9` large-text content-height hardening, `+android.10` RTL directionality hardening, `+android.11` localization-resource foundation, and `+android.12` debug pseudolocale testability. It hardens the condensed unfocused address presentation by removing Unicode bidi-formatting controls while preserving ordinary RTL letters and leaving the authoritative full `currentUrl` unchanged for focused editing and navigation.
 
-Android CI verifies the generated debug APK itself: `aapt` badging must contain pseudolocalized `application-label-en-XA` and `application-label-ar-XB` resources and list both `en-XA` and `ar-XB` locales before the artifact can be uploaded.
+The inherited `+android.12` debug build still generates Android `en-XA` and `ar-XB` pseudolocales only for the debug beta build type. Android CI verifies the generated debug APK itself: `aapt` badging must contain pseudolocalized `application-label-en-XA` and `application-label-ar-XB` resources and list both `en-XA` and `ar-XB` locales before the artifact can be uploaded.
 
-This is localization testability only. Pseudolocales are synthetic Android test resources, not translations. This slice does not establish rendered pseudolocale behavior, translation completeness/quality, locale fallback/plural/grammar behavior, bidirectional URL/address-field behavior, rendered RTL layout, combined locale + large-text behavior, or representative locale/device acceptance.
+This remains localization/directionality testability and source/runtime hardening only. Pseudolocales are synthetic Android test resources, not translations. The bidi sanitizer is presentation-only and is not a complete URL-spoofing, IDN/confusable, or bidirectional-editing solution. This slice does not establish rendered pseudolocale behavior, translation completeness/quality, locale fallback/plural/grammar behavior, rendered RTL layout, combined locale + large-text behavior, or representative locale/device acceptance.
 
-Historical `+android.5` / Glaze UI 2.2, intermediate `+android.6` / V1.1, parent `+android.7` / V1.2-only mapping, `+android.8` accessibility-chrome candidate, `+android.9` large-text candidate, `+android.10` RTL-directionality candidate, and `+android.11` localization-resource candidate remain rollback/comparison inputs. Central GLAZE UI V1.2 Stable promotion and these source hardening slices do not auto-promote Browser.
+Historical `+android.5` / Glaze UI 2.2, intermediate `+android.6` / V1.1, parent `+android.7` / V1.2-only mapping, `+android.8` accessibility-chrome candidate, `+android.9` large-text candidate, `+android.10` RTL-directionality candidate, `+android.11` localization-resource candidate, and `+android.12` pseudolocale-testability candidate remain rollback/comparison inputs. Central GLAZE UI V1.2 Stable promotion and these source hardening slices do not auto-promote Browser.
 
 ## Implemented beta behavior
 
@@ -46,10 +46,12 @@ The Android beta provides:
 - application-level Android RTL support and native auto-mirroring for directional Back/Forward vector controls;
 - Browser-owned visible/accessibility natural-language chrome copy sourced from Android string resources, with protocol/status tokens explicitly non-translatable;
 - debug-only Android pseudolocale generation for `en-XA` and `ar-XB`;
-- unit tests for unified address/search policy, unfocused address presentation, accessibility-aware chrome visibility, GLAZE UI Android mapping/large-text source contracts, bounded RTL directionality source requirements, localization-resource source requirements, and the debug-only pseudolocale build boundary;
+- presentation-only removal of Unicode bidi-formatting controls from the condensed unfocused address, including LRM/RLM, Arabic Letter Mark, embedding/override controls, and isolate controls;
+- preservation of ordinary RTL letters in presentation text and preservation of the untouched authoritative `currentUrl` when the omnibox is focused;
+- unit tests for unified address/search policy, address presentation and bidi-control sanitization, accessibility-aware chrome visibility, GLAZE UI Android mapping/large-text source contracts, bounded RTL directionality source requirements, localization-resource source requirements, debug-only pseudolocale build boundary, and focused-vs-unfocused URL source separation;
 - CI build, lint, unit-test, APK signature verification, package/label/version/pseudolocale verification, SHA-256 generation, exact-source revision recording, and artifact upload.
 
-The presence of string resources and pseudolocales is not translated-locale acceptance. The default Browser resource set remains English until separately governed translations are added and validated.
+The presence of string resources and pseudolocales is not translated-locale acceptance. The default Browser resource set remains English until separately governed translations are added and validated. The address presentation sanitizer does not rewrite navigation, search, clipboard/share URLs, WebView requests, persisted state, permissions, telemetry, or network traffic.
 
 ## Mobile browser chrome
 
@@ -67,7 +69,8 @@ The beta preserves the current compact native mobile structure:
 - Browser-owned natural-language labels/descriptions/messages resolved through Android string resources;
 - debug `en-XA` and `ar-XB` resource variants available for later expansion/RTL stress testing;
 - page progress overlaid at the top of content;
-- full URL exposure on omnibox focus and leading-hostname anchoring when unfocused;
+- full original URL exposure on omnibox focus and leading-hostname anchoring when unfocused;
+- unfocused condensed address presentation with Unicode bidi-formatting controls removed while ordinary RTL letters remain available;
 - Android Back dismissing omnibox editing before page-history navigation;
 - a 56dp minimum omnibox baseline inside 8dp top/bottom chrome gutters, with text-bearing top chrome allowed to grow above the baseline under Android font scaling;
 - a 128dp baseline expanded Browser-chrome budget at normal text scale before system bars rather than a hard maximum height;
@@ -78,7 +81,7 @@ The beta preserves the current compact native mobile structure:
 
 The Browser menu is not a substitute for future full Settings, tabs, private-browsing, permissions, downloads, security, privacy, or account surfaces.
 
-The accessibility-aware collapse policy, large-text layout changes, RTL-directionality changes, localization-resource extraction, and pseudolocale generation are source/build hardening and testability. Representative TalkBack, Switch Access, Voice Access, focus-order, announcement-quality, rendered 200% text behavior, rendered pseudolocale behavior, actual translated/localized copy, translation quality/completeness, bidirectional URL/address behavior, rendered RTL directionality, and physical-device behavior remain separate validation gates.
+The accessibility-aware collapse policy, large-text layout changes, RTL-directionality changes, localization-resource extraction, pseudolocale generation, and bidi-address presentation hardening are source/build/runtime hardening and testability. Representative TalkBack, Switch Access, Voice Access, focus-order, announcement-quality, rendered 200% text behavior, rendered pseudolocale behavior, actual translated/localized copy, translation quality/completeness, complete Unicode/IDN/confusable behavior, bidirectional URL/address editing, rendered RTL directionality, and physical-device behavior remain separate validation gates.
 
 ## GLAZE UI V1.2 Android mapping
 
@@ -105,6 +108,7 @@ The current Browser source mapping records:
 - Android RTL support plus source-validated native auto-mirroring for directional Back/Forward vectors and logical horizontal-margin usage;
 - Browser-owned natural-language chrome/accessibility copy sourced from Android resources for future localization, with protocol/status tokens explicitly non-translatable;
 - debug-only `en-XA` and `ar-XB` pseudolocales for later expansion/RTL stress testing;
+- condensed unfocused address presentation strips Unicode bidi-formatting controls without modifying the authoritative full URL exposed on focus;
 - Light, Dark, and Deep Dark appearance targets;
 - Calm expression and Balanced clarity;
 - upper-left optical light direction;
@@ -115,13 +119,13 @@ The current Browser source mapping records:
 - visible semantic focus/state treatment;
 - effects-free fallback that does not require blur, transparency, or animation;
 - vector icons for Browser-owned chrome;
-- explicit no-action-bar, no-development-status, Browser-owned-menu, accessibility-aware scroll-chrome, text-content-height, bounded RTL-directionality, localization-resource, and debug-pseudolocale source contracts.
+- explicit no-action-bar, no-development-status, Browser-owned-menu, accessibility-aware scroll-chrome, text-content-height, bounded RTL-directionality, localization-resource, debug-pseudolocale, and bidi-address-presentation source contracts.
 
 Protected semantic meaning, focus, accessibility, and required boundaries override atmosphere. GLAZE UI presentation does not manufacture security, privacy, identity, recovery, coordination, Search, or Sync truth.
 
 The 56dp Touch Assistance floor is represented in source, but this branch does not claim a complete GoreeCloud Touch Assistance runtime preference or OS mapping.
 
-This is **not** complete downstream GLAZE UI acceptance. Native-device visual quality, TalkBack, Switch Access, Voice Access, rendered 200% text/large-text reflow, rendered pseudolocale stress review, actual translations and translation-quality/completeness review, locale fallback/grammar behavior, bidirectional URL/address behavior, rendered RTL directionality, Reduced Motion, Reduced Transparency/effects-free behavior, contrast/high-contrast behavior, orientation, foldable/safe-area behavior, performance, Touch Assistance behavior, and representative physical-hardware acceptance remain separate gates.
+This is **not** complete downstream GLAZE UI acceptance. Native-device visual quality, TalkBack, Switch Access, Voice Access, rendered 200% text/large-text reflow, rendered pseudolocale stress review, actual translations and translation-quality/completeness review, locale fallback/grammar behavior, complete Unicode/IDN/confusable review, bidirectional URL/address editing, rendered RTL directionality, Reduced Motion, Reduced Transparency/effects-free behavior, contrast/high-contrast behavior, orientation, foldable/safe-area behavior, performance, Touch Assistance behavior, and representative physical-hardware acceptance remain separate gates.
 
 ## APK build and evidence
 
@@ -141,7 +145,7 @@ Expected APK path:
 apps/android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Historical `+android.5`, intermediate `+android.6`, parent `+android.7`, `+android.8`, `+android.9`, `+android.10`, and `+android.11` evidence are not inherited by this materially changed `+android.12` candidate. Fresh exact-source workflow evidence is required again.
+Historical `+android.5`, intermediate `+android.6`, parent `+android.7`, `+android.8`, `+android.9`, `+android.10`, `+android.11`, and `+android.12` evidence are not inherited by this materially changed `+android.13` candidate. Fresh exact-source workflow evidence is required again after documentation reconciliation.
 
 ## Signing boundary
 
@@ -158,13 +162,13 @@ The beta fails closed where platform integration is incomplete:
 - third-party cookies are disabled;
 - local file/content access from WebView is disabled.
 
-The accessibility chrome policy reads only `AccessibilityManager.isEnabled` and listens only for enabled/disabled state changes. It does not enumerate installed or enabled accessibility services, retain accessibility state, inspect accessibility event content, or add network/telemetry behavior. The large-text reflow change uses Android-native layout measurement and existing system font scaling. The RTL directionality change uses Android manifest/vector/layout source semantics. The localization-resource change moves Browser-owned copy between application source/resource files. The pseudolocale change generates synthetic debug resources at build time. These changes add no user-data collection, service enumeration, network traffic, telemetry, permissions, persistent accessibility/locale state, or user-content inspection.
+The accessibility chrome policy reads only `AccessibilityManager.isEnabled` and listens only for enabled/disabled state changes. It does not enumerate installed or enabled accessibility services, retain accessibility state, inspect accessibility event content, or add network/telemetry behavior. The large-text reflow change uses Android-native layout measurement and existing system font scaling. The RTL directionality change uses Android manifest/vector/layout source semantics. The localization-resource change moves Browser-owned copy between application source/resource files. The pseudolocale change generates synthetic debug resources at build time. The bidi-presentation change transforms only the local condensed address string. These changes add no user-data collection, service enumeration, network traffic, telemetry, permissions, persistent accessibility/locale state, or user-content inspection.
 
-These behaviors do not establish complete Wardveil Security or Privacy Shield acceptance. Android engine-level Safe Browsing is not a substitute for GoreeCloud Wardveil runtime evidence. The omnibox scheme indicator is parsed-URL presentation, not a Wardveil or certificate-verification badge.
+These behaviors do not establish complete Wardveil Security or Privacy Shield acceptance. Android engine-level Safe Browsing is not a substitute for GoreeCloud Wardveil runtime evidence. The omnibox scheme indicator is parsed-URL presentation, not a Wardveil or certificate-verification badge. The bidi sanitizer likewise does not establish site trust or complete anti-spoofing acceptance.
 
 ## Deliberate beta restrictions
 
-The Android beta does not yet claim production/Stable readiness, complete GLAZE UI V1.2 downstream acceptance, complete Touch Assistance runtime mapping, rendered pseudolocale acceptance, actual translation/localization acceptance, complete RTL/bidirectional acceptance, production first-party service integration, Private Browsing acceptance, Android Wardveil download release, complete Privacy Shield behavior, Everkeep acceptance, Browser-owned website permission UI, accepted multi-tab product UI, controlled production signing, managed update/rollback, store publication, or sustained real-device acceptance.
+The Android beta does not yet claim production/Stable readiness, complete GLAZE UI V1.2 downstream acceptance, complete Touch Assistance runtime mapping, rendered pseudolocale acceptance, actual translation/localization acceptance, complete Unicode/IDN/confusable or RTL/bidirectional acceptance, production first-party service integration, Private Browsing acceptance, Android Wardveil download release, complete Privacy Shield behavior, Everkeep acceptance, Browser-owned website permission UI, accepted multi-tab product UI, controlled production signing, managed update/rollback, store publication, or sustained real-device acceptance.
 
 ## Promotion gates
 
@@ -182,10 +186,11 @@ Before Android can be described as production-approved or Stable, GoreeCloud mus
 10. Representative real-device tests across supported Android versions, screen sizes, WebView versions, network transitions, background/restore, and sustained use.
 11. Rendered `en-XA` and `ar-XB` pseudolocale stress review across representative screen sizes/configurations.
 12. Actual translated/localized Browser resources with translation completeness/quality, locale fallback/plural/grammar, and representative locale acceptance.
-13. TalkBack, Switch Access, Voice Access, rendered 200% text, bidirectional URL/address handling, rendered RTL directionality, Reduced Motion, Reduced Transparency, Increased Contrast/high-contrast behavior, and Touch Assistance acceptance where supported across representative locales.
-14. Signed upgrade/downgrade/rollback and application-data migration tests.
-15. Release artifact provenance, checksums, release notes, and production acceptance evidence.
+13. Complete Unicode/IDN/confusable review plus bidirectional URL/address editing and rendered RTL directionality acceptance.
+14. TalkBack, Switch Access, Voice Access, rendered 200% text, Reduced Motion, Reduced Transparency, Increased Contrast/high-contrast behavior, and Touch Assistance acceptance where supported across representative locales.
+15. Signed upgrade/downgrade/rollback and application-data migration tests.
+16. Release artifact provenance, checksums, release notes, and production acceptance evidence.
 
 ## Status language
 
-A passing CI workflow proves only that the exact source revision produced a structurally valid installable debug-signed APK and passed the checks actually run, including generated debug pseudolocale presence. It does not by itself prove production security, privacy, performance, compatibility, accessibility, rendered pseudolocale behavior, translation/localization quality, directionality, recovery, GLAZE UI native-device acceptance, or Stable qualification.
+A passing CI workflow proves only that the exact source revision produced a structurally valid installable debug-signed APK and passed the checks actually run, including generated debug pseudolocale presence and source-level bidi presentation tests. It does not by itself prove production security, privacy, performance, compatibility, accessibility, rendered pseudolocale behavior, translation/localization quality, complete Unicode/IDN/confusable handling, directionality/editing acceptance, recovery, GLAZE UI native-device acceptance, or Stable qualification.
