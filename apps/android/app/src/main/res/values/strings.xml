@@ -1,4 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">GoreeCloud Browser Beta</string>
+    <string name="browser_name">GoreeCloud Browser</string>
+
+    <!-- Protocol/status tokens are not natural-language copy. -->
+    <string name="scheme_https" translatable="false">HTTPS</string>
+    <string name="scheme_http" translatable="false">HTTP</string>
+    <string name="scheme_web" translatable="false">WEB</string>
+
+    <string name="address_scheme_description">Address scheme %1$s</string>
+    <string name="omnibox_hint">Search GoreeCloud or enter address</string>
+    <string name="omnibox_description">Unified search and address bar</string>
+    <string name="navigate">Navigate</string>
+    <string name="page_loading_progress">Page loading progress</string>
+
+    <string name="back">Back</string>
+    <string name="forward">Forward</string>
+    <string name="search_home">GoreeCloud Search home</string>
+    <string name="reload">Reload</string>
+    <string name="stop_loading">Stop loading</string>
+    <string name="browser_menu">Browser menu</string>
+
+    <string name="ssl_error_blocked">Blocked: the site certificate could not be verified.</string>
+    <string name="safe_browsing_blocked">Blocked by Android Safe Browsing.</string>
+    <string name="downloads_unavailable">Downloads are unavailable until the Android Wardveil release gate is integrated.</string>
+    <string name="no_app_can_open_link">No app can open this link.</string>
+
+    <string name="copy_page_address">Copy page address</string>
+    <string name="share_page">Share page</string>
+    <string name="about_beta">About this beta</string>
+    <string name="current_page">Current page</string>
+    <string name="page_address_clip_label">Page address</string>
+    <string name="page_address_copied">Page address copied.</string>
+    <string name="beta_info">GoreeCloud Browser %1$s. Installable beta; production signing, downloads, site permissions, and full platform acceptance remain pending.</string>
 </resources>
