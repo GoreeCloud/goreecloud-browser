@@ -14,9 +14,10 @@ object AddressPresentation {
         val safeFallback = withoutBidiControls(url)
         val uri = runCatching { URI(url) }.getOrNull() ?: return safeFallback
         val host = uri.host ?: return safeFallback
+        val port = uri.port.takeIf { it >= 0 }?.let { ":$it" }.orEmpty()
         val path = uri.rawPath.orEmpty().takeUnless { it == "/" }.orEmpty()
         val query = uri.rawQuery?.let { "?$it" }.orEmpty()
-        return withoutBidiControls(host + path + query)
+        return withoutBidiControls(host + port + path + query)
     }
 
     /**
