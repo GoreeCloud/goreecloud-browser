@@ -68,6 +68,18 @@ class LocalizationSourceContractTest {
         assertTrue(activity.contains("getString(R.string.address_scheme_description, schemeBadge.text)"))
     }
 
+    @Test
+    fun debugBetaGeneratesPseudolocalesWithoutChangingReleaseContract() {
+        val build = sourceText("build.gradle.kts")
+        val debugBlock = build.substringAfter("getByName(\"debug\") {")
+            .substringBefore("getByName(\"release\") {")
+        val releaseBlock = build.substringAfter("getByName(\"release\") {")
+
+        assertTrue(debugBlock.contains("isPseudoLocalesEnabled = true"))
+        assertFalse(releaseBlock.contains("isPseudoLocalesEnabled = true"))
+        assertTrue(debugBlock.contains("versionNameSuffix = \"+android.12\""))
+    }
+
     private fun sourceText(relativePath: String): String {
         val candidates = listOf(
             File(relativePath),

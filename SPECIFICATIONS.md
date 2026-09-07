@@ -13,23 +13,25 @@ GoreeCloud Browser is an original GoreeCloud-owned native web browser. GoreeClou
 - GLAZE UI Stable promotion merge revision: `f285b9145e27e6e7027b075c37299d101945c272`
 - GLAZE UI V1.2 source-qualification anchor: `b0eadf9a60f73d45caffb62ffc7e9e0334cddc97`
 - GLAZE UI optical foundation: `tokens/glaze-v1.2-optical-foundation.candidate.json`
-- Android V1.2 source mapping: Development migration parent on `+android.7`; accessibility-chrome hardening stacked as `+android.8`; large-text content-height hardening stacked as `+android.9`; RTL history-control directionality hardening stacked as `+android.10`; Android string-resource localization-readiness hardening stacked as `+android.11`; downstream rendered/native-device/localization acceptance pending
+- Android V1.2 source mapping: Development migration parent on `+android.7`; accessibility-chrome hardening stacked as `+android.8`; large-text content-height hardening stacked as `+android.9`; RTL history-control directionality hardening stacked as `+android.10`; Android string-resource localization-readiness hardening stacked as `+android.11`; debug pseudolocale testability stacked as `+android.12`; downstream rendered/native-device/localization acceptance pending
 - Canonical source repository: `GoreeCloud/goreecloud-browser`
 
 ## Android beta
 
 - User-facing identity: GoreeCloud Browser Beta
 - Debug-beta package: `io.goreecloud.browser.beta`
-- Debug-beta version on this stacked Development branch: `0.1.0-beta.1+android.11`
-- Android versionCode: `10011`
+- Debug-beta version on this stacked Development branch: `0.1.0-beta.1+android.12`
+- Android versionCode: `10012`
 - Minimum Android: API 26
 - Compile/target API: 35
 - Java/Kotlin target: 17
 - Rendering runtime: Android System WebView/Chromium as an engine dependency
 - Beta signing: Android debug signing for fresh-install testing
+- Debug pseudolocale generation: enabled for Android `en-XA` and `ar-XB`
+- Release pseudolocale opt-in from this contract: No
 - Production signing material: not stored in source control and not yet accepted
 
-The Android beta must remain installable without implying production readiness. CI validates unit tests, Android lint, APK assembly, APK signature/package/version identity, checksum generation, exact-source revision recording, and artifact upload.
+The Android beta must remain installable without implying production readiness. CI validates unit tests, Android lint, APK assembly, APK signature/package/version identity, generated `en-XA`/`ar-XB` pseudolocale presence in debug APK badging, checksum generation, exact-source revision recording, and artifact upload.
 
 ## Native session recovery contract
 
@@ -78,6 +80,7 @@ The installed beta uses a Browser-owned two-region mobile shell:
 - programmatic Browser chrome using logical start/end horizontal margins rather than physical left/right margin fields in the current source contract;
 - Browser-owned visible/accessibility natural-language chrome copy sourced from Android string resources rather than embedded English UI literals in `BrowserActivity.kt`;
 - HTTPS, HTTP, and WEB protocol/status tokens explicitly marked non-translatable;
+- debug-only Android pseudolocale generation for `en-XA` and `ar-XB`, with a source contract keeping the release build type outside this debug testability boundary;
 - page-load progress overlaid on web content;
 - unfocused address presentation that removes the scheme while keeping the hostname at the leading edge;
 - complete URL exposure and selection when the omnibox receives focus;
@@ -89,9 +92,9 @@ The installed beta uses a Browser-owned two-region mobile shell:
 
 At normal text scale, the baseline expanded Browser-chrome budget is 128dp before Android system bars. This value is no longer a hard maximum: text-bearing top chrome may grow above the baseline when Android font scaling requires additional measured height. The collapsed scrolling state retains only the fixed 56dp bottom navigation toolbar and is allowed only while Android does not report an accessibility service enabled.
 
-The accessibility visibility policy consumes only `AccessibilityManager.isEnabled` and its boolean state-change callback. It does not enumerate service identities, inspect accessibility event/user content, persist accessibility state, add permissions, or create telemetry/network behavior. The large-text layout change uses Android-native text/layout measurement and existing system font scaling and adds no new user-data processing. The RTL directionality slice uses Android manifest/vector/layout semantics only. The localization-resource slice moves Browser-owned display/accessibility copy into Android resources. None of these slices adds permissions, persistence, telemetry, network behavior, or user-content processing.
+The accessibility visibility policy consumes only `AccessibilityManager.isEnabled` and its boolean state-change callback. It does not enumerate service identities, inspect accessibility event/user content, persist accessibility state, add permissions, or create telemetry/network behavior. The large-text layout change uses Android-native text/layout measurement and existing system font scaling and adds no new user-data processing. The RTL directionality slice uses Android manifest/vector/layout semantics only. The localization-resource slice moves Browser-owned display/accessibility copy into Android resources. The pseudolocale slice is a build-time debug resource-generation setting. None of these slices adds permissions, persistence, telemetry, network behavior, or user-content processing.
 
-The source contract records 2.0 font scale as the downstream large-text acceptance target. This source/runtime hardening is not representative 200% rendered acceptance, TalkBack, Switch Access, Voice Access, focus-order, announcement-quality, or physical-device acceptance. The RTL source contract likewise does not establish translated Browser copy, bidirectional address-field acceptance, rendered RTL layout, combined RTL + large-text behavior, or representative locale/device acceptance. The localization-resource source contract creates translation-ready resource boundaries only; it does not provide translations or establish translation completeness/quality, locale fallback, grammar/plural behavior, bidi behavior, or rendered locale acceptance.
+The source contract records 2.0 font scale as the downstream large-text acceptance target. This source/runtime hardening is not representative 200% rendered acceptance, TalkBack, Switch Access, Voice Access, focus-order, announcement-quality, or physical-device acceptance. The RTL source contract likewise does not establish translated Browser copy, bidirectional address-field acceptance, rendered RTL layout, combined RTL + large-text behavior, or representative locale/device acceptance. The localization-resource source contract creates translation-ready resource boundaries only. The pseudolocale contract and APK badging proof establish debug test-resource generation only; they do not establish rendered pseudolocale behavior, translation completeness/quality, locale fallback, grammar/plural behavior, bidi behavior, or representative locale/device acceptance.
 
 ## GLAZE UI V1.2 Android contract
 
@@ -113,6 +116,7 @@ Browser preserves the working mobile-shell structure while applying the current 
 - 2.0 font scale is recorded as the downstream large-text acceptance target, without claiming rendered acceptance from source alone;
 - Android RTL support plus native auto-mirroring for directional Back/Forward Browser vectors, without claiming localization or rendered RTL acceptance;
 - Browser-owned natural-language chrome/accessibility strings are Android-resource-backed for future localization, while protocol/status tokens remain non-translatable;
+- debug Android `en-XA` / `ar-XB` pseudolocale generation for later expansion/RTL stress testing, with release behavior outside that debug source contract;
 - at most one dominant Glaze panel plus three small floating Glaze controls;
 - Light, Dark, and Deep Dark structural appearance targets;
 - upper-left optical light direction;
@@ -123,11 +127,11 @@ Browser preserves the working mobile-shell structure while applying the current 
 - semantic native labels and visible focus/state treatment;
 - effects-free operation without requiring blur/transparency;
 - Browser-owned vector icons;
-- explicit no-action-bar, no-development-banner, Browser-owned-menu, accessibility-aware scroll-chrome, large-text content-height, RTL-directionality, and localization-resource source contracts.
+- explicit no-action-bar, no-development-banner, Browser-owned-menu, accessibility-aware scroll-chrome, large-text content-height, RTL-directionality, localization-resource, and debug-pseudolocale source contracts.
 
 The inherited semantic-state ordering remains represented in the Browser contract. Disabled and error semantics continue to override lower-priority interaction presentation. V1.2 material/atmosphere cannot change security, privacy, identity, recovery, coordination, Search, or Sync truth.
 
-This mapping is not native-device downstream acceptance. Production acceptance requires exact-revision rendered visual review, TalkBack/Switch Access/Voice Access and broader accessibility evidence, rendered 200% text behavior, contrast/high-contrast behavior, Reduced Motion, Reduced Transparency/effects-free behavior, actual translated/localized copy and translation-quality acceptance, locale fallback/grammar behavior, bidirectional text/address behavior, rendered RTL directionality, responsive/form-factor behavior, performance, Touch Assistance mapping where supported, and representative physical-device evidence.
+This mapping is not native-device downstream acceptance. Production acceptance requires exact-revision rendered visual review, TalkBack/Switch Access/Voice Access and broader accessibility evidence, rendered 200% text behavior, contrast/high-contrast behavior, Reduced Motion, Reduced Transparency/effects-free behavior, actual translated/localized copy and translation-quality acceptance, locale fallback/grammar behavior, rendered pseudolocale stress review, bidirectional text/address behavior, rendered RTL directionality, responsive/form-factor behavior, performance, Touch Assistance mapping where supported, and representative physical-device evidence.
 
 ## Security boundary
 
@@ -141,7 +145,7 @@ Android System WebView remains responsible for engine/platform security mechanis
 
 Privacy Shield is the authoritative privacy and data-use governance system. The beta currently uses privacy-protective defaults including third-party-cookie blocking and denied permission/geolocation requests.
 
-The accessibility chrome policy uses only Android's boolean accessibility-enabled state and does not enumerate services or inspect accessibility event/user content. The large-text change relies only on Android-native layout/font metrics. The RTL directionality change is limited to Android source/resource semantics. The localization-resource slice moves Browser-owned UI copy between application source/resource files. These changes add no telemetry, service discovery, persisted accessibility/locale preference state, user-content processing, or new authority. They are bounded source behaviors, not complete Privacy Shield acceptance.
+The accessibility chrome policy uses only Android's boolean accessibility-enabled state and does not enumerate services or inspect accessibility event/user content. The large-text change relies only on Android-native layout/font metrics. The RTL directionality change is limited to Android source/resource semantics. The localization-resource slice moves Browser-owned UI copy between application source/resource files. The pseudolocale slice adds generated debug resources only. These changes add no telemetry, service discovery, persisted accessibility/locale preference state, user-content processing, or new authority. They are bounded source/build behaviors, not complete Privacy Shield acceptance.
 
 The native session-recovery core excludes Private and Isolated Private windows before persistence. This is a source-level privacy invariant, not complete private-browsing runtime acceptance.
 
@@ -169,6 +173,7 @@ At minimum, Stable Android promotion remains blocked by:
 - required Identity/Vault/Sync/DNS/Network/Mesh/Search adapters with accepted producer evidence;
 - representative supported-device testing;
 - actual translations plus translation completeness/quality and locale fallback/grammar acceptance;
+- rendered pseudolocale stress testing across representative screen sizes and configurations;
 - TalkBack, Switch Access, Voice Access, accessibility focus/announcement quality, rendered RTL/bidirectional behavior, and rendered 200% text-scaling acceptance across representative locales;
 - Touch Assistance runtime mapping where the supported Android scope requires it;
 - upgrade/downgrade/data-migration acceptance;
