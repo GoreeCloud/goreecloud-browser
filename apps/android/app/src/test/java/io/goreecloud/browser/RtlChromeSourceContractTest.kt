@@ -31,6 +31,14 @@ class RtlChromeSourceContractTest {
         assertFalse(activity.contains("rightMargin"))
     }
 
+    @Test
+    fun focusedAddressKeepsAuthorityWhileUnfocusedUsesPresentationHelper() {
+        val activity = sourceText("src/main/java/io/goreecloud/browser/BrowserActivity.kt")
+
+        assertTrue(activity.contains("setText(currentUrl)"))
+        assertTrue(activity.contains("addressField.setText(AddressPresentation.condensed(currentUrl))"))
+    }
+
     private fun sourceText(relativePath: String): String {
         val candidates = listOf(
             File(relativePath),

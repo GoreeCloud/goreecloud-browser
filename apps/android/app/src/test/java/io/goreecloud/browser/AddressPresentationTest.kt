@@ -32,4 +32,27 @@ class AddressPresentationTest {
     fun nonHostAddressFallsBackToOriginalText() {
         assertEquals("about:blank", AddressPresentation.condensed("about:blank"))
     }
+
+    @Test
+    fun presentationRemovesUnicodeBidiControls() {
+        val controlled = "example.com/\u202Epayload\u202C?q=\u2067value\u2069"
+        assertEquals(
+            "example.com/payload?q=value",
+            AddressPresentation.withoutBidiControls(controlled),
+        )
+    }
+
+    @Test
+    fun presentationRemovesBidiControlsFromFallbackText() {
+        assertEquals(
+            "about:blank",
+            AddressPresentation.condensed("about:\u202Eblank\u202C"),
+        )
+    }
+
+    @Test
+    fun presentationPreservesOrdinaryRtlLetters() {
+        val address = "example.com/مرحبا?q=اختبار"
+        assertEquals(address, AddressPresentation.withoutBidiControls(address))
+    }
 }
