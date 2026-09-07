@@ -162,7 +162,7 @@ class BrowserActivity : Activity() {
             schemeBadge,
             LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
-                dp(GlazeContract.GENERAL_TARGET_DP),
+                LinearLayout.LayoutParams.WRAP_CONTENT,
             ),
         )
 
@@ -199,7 +199,7 @@ class BrowserActivity : Activity() {
             addressField,
             LinearLayout.LayoutParams(
                 0,
-                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
                 1f,
             ).apply {
                 marginStart = dp(2)
@@ -226,7 +226,7 @@ class BrowserActivity : Activity() {
             omnibox,
             LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                dp(GlazeContract.OMNIBOX_HEIGHT_DP),
+                LinearLayout.LayoutParams.WRAP_CONTENT,
             ),
         )
         root.addView(
@@ -622,7 +622,7 @@ class BrowserActivity : Activity() {
 
     private fun menuActionParams() = LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT,
-        dp(GlazeContract.MENU_ACTION_HEIGHT_DP),
+        LinearLayout.LayoutParams.WRAP_CONTENT,
     ).apply {
         topMargin = dp(4)
     }

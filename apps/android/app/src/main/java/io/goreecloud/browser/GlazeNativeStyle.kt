@@ -19,7 +19,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 
 /**
- * Effects-free Android-native Glaze UI 2.0 mapping for Browser-owned chrome.
+ * Effects-free Android-native GLAZE UI V1.2 mapping for Browser-owned chrome.
  *
  * Native controls retain Android semantics while Browser maps the current Glaze
  * material hierarchy, target floor, focus/pressed state, spacing and appearance
@@ -99,7 +99,9 @@ class GlazeNativeStyle(private val context: Context) {
         view.setAllCaps(true)
         view.minWidth = dp(44)
         view.minimumWidth = dp(44)
-        view.setPadding(dp(8), 0, dp(8), 0)
+        view.minHeight = dp(GlazeContract.GENERAL_TARGET_DP)
+        view.minimumHeight = dp(GlazeContract.GENERAL_TARGET_DP)
+        view.setPadding(dp(8), dp(8), dp(8), dp(8))
         view.background = material(
             GlazeContract.MaterialLevel.Surface,
             dp(18),
@@ -132,12 +134,13 @@ class GlazeNativeStyle(private val context: Context) {
     }
 
     fun styleAddressField(field: EditText) {
+        field.gravity = Gravity.CENTER_VERTICAL
         field.setTextColor(palette.textPrimary)
         field.setHintTextColor(palette.textSecondary)
         field.textSize = 16f
         field.minHeight = dp(GlazeContract.GENERAL_TARGET_DP)
         field.minimumHeight = dp(GlazeContract.GENERAL_TARGET_DP)
-        field.setPadding(dp(10), 0, dp(8), 0)
+        field.setPadding(dp(10), dp(8), dp(8), dp(8))
         field.background = null
         field.setSelectAllOnFocus(false)
     }
@@ -179,7 +182,7 @@ class GlazeNativeStyle(private val context: Context) {
         view.setTextColor(palette.textPrimary)
         view.textSize = 17f
         view.minimumHeight = dp(GlazeContract.MENU_ACTION_HEIGHT_DP)
-        view.setPadding(dp(18), 0, dp(18), 0)
+        view.setPadding(dp(18), dp(8), dp(18), dp(8))
         view.isClickable = true
         view.isFocusable = true
         view.background = interactiveBackground(

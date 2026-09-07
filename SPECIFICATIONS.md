@@ -13,15 +13,15 @@ GoreeCloud Browser is an original GoreeCloud-owned native web browser. GoreeClou
 - GLAZE UI Stable promotion merge revision: `f285b9145e27e6e7027b075c37299d101945c272`
 - GLAZE UI V1.2 source-qualification anchor: `b0eadf9a60f73d45caffb62ffc7e9e0334cddc97`
 - GLAZE UI optical foundation: `tokens/glaze-v1.2-optical-foundation.candidate.json`
-- Android V1.2 source mapping: Development migration parent on `+android.7`; accessibility-chrome hardening stacked as `+android.8`; downstream rendered/native-device acceptance pending
+- Android V1.2 source mapping: Development migration parent on `+android.7`; accessibility-chrome hardening stacked as `+android.8`; large-text content-height hardening stacked as `+android.9`; downstream rendered/native-device acceptance pending
 - Canonical source repository: `GoreeCloud/goreecloud-browser`
 
 ## Android beta
 
 - User-facing identity: GoreeCloud Browser Beta
 - Debug-beta package: `io.goreecloud.browser.beta`
-- Debug-beta version on this stacked Development branch: `0.1.0-beta.1+android.8`
-- Android versionCode: `10008`
+- Debug-beta version on this stacked Development branch: `0.1.0-beta.1+android.9`
+- Android versionCode: `10009`
 - Minimum Android: API 26
 - Compile/target API: 35
 - Java/Kotlin target: 17
@@ -29,7 +29,7 @@ GoreeCloud Browser is an original GoreeCloud-owned native web browser. GoreeClou
 - Beta signing: Android debug signing for fresh-install testing
 - Production signing material: not stored in source control and not yet accepted
 
-The Android beta must remain installable without implying production readiness. CI validates unit tests, Android lint, APK assembly, APK signature/package/version identity, checksum generation, and artifact upload.
+The Android beta must remain installable without implying production readiness. CI validates unit tests, Android lint, APK assembly, APK signature/package/version identity, checksum generation, exact-source revision recording, and artifact upload.
 
 ## Native session recovery contract
 
@@ -69,20 +69,25 @@ The unified address/search field resolves input according to Browser-owned polic
 
 The installed beta uses a Browser-owned two-region mobile shell:
 
-- a 56dp top omnibox inside an 8dp top/bottom chrome gutter;
-- a 56dp persistent bottom navigation toolbar;
+- a 56dp minimum top omnibox baseline inside an 8dp top/bottom chrome gutter;
+- text-bearing top chrome measured with content height so Android font scaling may expand it above the normal baseline rather than clipping it into an exact 56dp box;
+- a 56dp persistent icon-only bottom navigation toolbar;
 - full-width web content between those regions;
 - Browser-owned vector controls for Back, Forward, Search Home, Reload/Stop, and Browser menu;
 - page-load progress overlaid on web content;
 - unfocused address presentation that removes the scheme while keeping the hostname at the leading edge;
 - complete URL exposure and selection when the omnibox receives focus;
+- a deliberately single-line address/search editor whose height can grow with native Android text metrics while horizontal address editing remains a browser-control behavior;
+- Browser-menu action rows that use content height with a 56dp minimum so scaled or wrapped action labels are not constrained to a hard 56dp height;
 - scroll-aware top chrome that collapses after meaningful downward page scrolling and returns on upward scrolling, page-top return, omnibox focus, or new navigation when Android accessibility services are not active;
 - top chrome that is kept visible while Android reports an accessibility service enabled and is restored immediately if accessibility becomes enabled while the Activity is active;
 - Browser-owned Glaze menu presentation rather than the Android platform-default popup menu.
 
-Expanded fixed Browser chrome is 128dp before Android system bars. The collapsed scrolling state retains only the 56dp bottom navigation toolbar and is allowed only while Android does not report an accessibility service enabled.
+At normal text scale, the baseline expanded Browser-chrome budget is 128dp before Android system bars. This value is no longer a hard maximum: text-bearing top chrome may grow above the baseline when Android font scaling requires additional measured height. The collapsed scrolling state retains only the fixed 56dp bottom navigation toolbar and is allowed only while Android does not report an accessibility service enabled.
 
-The accessibility visibility policy consumes only `AccessibilityManager.isEnabled` and its boolean state-change callback. It does not enumerate service identities, inspect accessibility event/user content, persist accessibility state, add permissions, or create telemetry/network behavior. This source/runtime policy is not representative TalkBack, Switch Access, Voice Access, focus-order, announcement-quality, or physical-device acceptance.
+The accessibility visibility policy consumes only `AccessibilityManager.isEnabled` and its boolean state-change callback. It does not enumerate service identities, inspect accessibility event/user content, persist accessibility state, add permissions, or create telemetry/network behavior. The large-text layout change uses Android-native text/layout measurement and existing system font scaling and adds no new user-data processing.
+
+The source contract records 2.0 font scale as the downstream large-text acceptance target. This source/runtime hardening is not representative 200% rendered acceptance, TalkBack, Switch Access, Voice Access, focus-order, announcement-quality, or physical-device acceptance.
 
 ## GLAZE UI V1.2 Android contract
 
@@ -100,6 +105,8 @@ Browser preserves the working mobile-shell structure while applying the current 
 - Calm expression and Balanced clarity;
 - 48dp ordinary interaction floor;
 - 56dp Touch Assistance floor where applicable, without claiming an unwired Android preference/OS mapping;
+- text-bearing Browser chrome uses content height rather than exact fixed heights so native Android `sp` metrics can expand it;
+- 2.0 font scale is recorded as the downstream large-text acceptance target, without claiming rendered acceptance from source alone;
 - at most one dominant Glaze panel plus three small floating Glaze controls;
 - Light, Dark, and Deep Dark structural appearance targets;
 - upper-left optical light direction;
@@ -110,11 +117,11 @@ Browser preserves the working mobile-shell structure while applying the current 
 - semantic native labels and visible focus/state treatment;
 - effects-free operation without requiring blur/transparency;
 - Browser-owned vector icons;
-- explicit no-action-bar, no-development-banner, Browser-owned-menu, and accessibility-aware scroll-chrome contracts.
+- explicit no-action-bar, no-development-banner, Browser-owned-menu, accessibility-aware scroll-chrome, and large-text content-height contracts.
 
 The inherited semantic-state ordering remains represented in the Browser contract. Disabled and error semantics continue to override lower-priority interaction presentation. V1.2 material/atmosphere cannot change security, privacy, identity, recovery, coordination, Search, or Sync truth.
 
-This mapping is not native-device downstream acceptance. Production acceptance requires exact-revision rendered visual review, TalkBack/Switch Access/Voice Access and broader accessibility evidence, 200% text, contrast/high-contrast behavior, Reduced Motion, Reduced Transparency/effects-free behavior, RTL/localization, responsive/form-factor behavior, performance, Touch Assistance mapping where supported, and representative physical-device evidence.
+This mapping is not native-device downstream acceptance. Production acceptance requires exact-revision rendered visual review, TalkBack/Switch Access/Voice Access and broader accessibility evidence, rendered 200% text behavior, contrast/high-contrast behavior, Reduced Motion, Reduced Transparency/effects-free behavior, RTL/localization, responsive/form-factor behavior, performance, Touch Assistance mapping where supported, and representative physical-device evidence.
 
 ## Security boundary
 
@@ -128,7 +135,7 @@ Android System WebView remains responsible for engine/platform security mechanis
 
 Privacy Shield is the authoritative privacy and data-use governance system. The beta currently uses privacy-protective defaults including third-party-cookie blocking and denied permission/geolocation requests.
 
-The accessibility chrome policy uses only Android's boolean accessibility-enabled state and does not enumerate services or inspect accessibility event/user content. This minimizes the information needed for discoverability behavior but is not complete Privacy Shield acceptance.
+The accessibility chrome policy uses only Android's boolean accessibility-enabled state and does not enumerate services or inspect accessibility event/user content. The large-text change relies only on Android-native layout/font metrics and does not add telemetry, service discovery, persisted preference state, or user-content processing. These are bounded source behaviors, not complete Privacy Shield acceptance.
 
 The native session-recovery core excludes Private and Isolated Private windows before persistence. This is a source-level privacy invariant, not complete private-browsing runtime acceptance.
 
@@ -155,7 +162,7 @@ At minimum, Stable Android promotion remains blocked by:
 - Browser-owned permission workflows;
 - required Identity/Vault/Sync/DNS/Network/Mesh/Search adapters with accepted producer evidence;
 - representative supported-device testing;
-- TalkBack, Switch Access, Voice Access, accessibility focus/announcement quality, RTL/localization, and text-scaling acceptance;
+- TalkBack, Switch Access, Voice Access, accessibility focus/announcement quality, RTL/localization, and rendered 200% text-scaling acceptance;
 - Touch Assistance runtime mapping where the supported Android scope requires it;
 - upgrade/downgrade/data-migration acceptance;
 - release provenance and operational recovery evidence.

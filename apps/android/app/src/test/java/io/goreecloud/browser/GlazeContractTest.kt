@@ -91,6 +91,19 @@ class GlazeContractTest {
     }
 
     @Test
+    fun textBearingChromeCanGrowForLargeText() {
+        val mapping = GlazeContract.ANDROID_BROWSER_MAPPING
+
+        assertEquals(2.0f, GlazeContract.LARGE_TEXT_ACCEPTANCE_FONT_SCALE, 0.0f)
+        assertTrue(mapping.textBearingChromeUsesContentHeight)
+        assertEquals(128, GlazeContract.baselineExpandedChromeHeightDp())
+        assertEquals(56, GlazeContract.collapsedChromeHeightDp())
+        assertTrue(
+            GlazeContract.collapsedChromeHeightDp() < GlazeContract.baselineExpandedChromeHeightDp(),
+        )
+    }
+
+    @Test
     fun semanticPriorityKeepsDisabledAboveErrorAndFocus() {
         assertTrue(
             GlazeContract.statePriority(GlazeContract.InteractionState.Disabled) >
@@ -115,15 +128,6 @@ class GlazeContractTest {
         assertTrue(
             GlazeContract.statePriority(GlazeContract.InteractionState.Hover) >
                 GlazeContract.statePriority(GlazeContract.InteractionState.Rest),
-        )
-    }
-
-    @Test
-    fun mobileChromeBudgetsExpandedAndCollapsedViewportStates() {
-        assertEquals(128, GlazeContract.fixedChromeHeightDp())
-        assertEquals(56, GlazeContract.collapsedChromeHeightDp())
-        assertTrue(
-            GlazeContract.collapsedChromeHeightDp() < GlazeContract.fixedChromeHeightDp(),
         )
     }
 }

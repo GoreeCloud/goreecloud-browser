@@ -22,7 +22,7 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 
 - Installable debug-signed APK target.
 - Package `io.goreecloud.browser.beta`.
-- Current stacked Development candidate identity `0.1.0-beta.1+android.8` / versionCode `10008`.
+- Current stacked Development candidate identity `0.1.0-beta.1+android.9` / versionCode `10009`.
 - Android API 26 minimum and API 35 target.
 - Android System WebView/Chromium rendering dependency behind GoreeCloud-owned product behavior.
 - Back, Forward, Reload, Go, unified address/search field, progress state, and web-content region.
@@ -38,8 +38,10 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 - Website permissions and geolocation denied until Browser-owned policy surfaces are accepted.
 - Downloads blocked until the Android path satisfies the authoritative Wardveil release contract.
 - Scroll-aware top Browser chrome remains available while Android reports an accessibility service enabled; Browser consumes only the boolean accessibility-enabled state and does not enumerate services or inspect accessibility/user content.
-- Unit tests for Browser-owned navigation resolution, address presentation, GLAZE UI mapping, and accessibility-aware top-chrome visibility policy.
-- CI unit test, Android lint, APK build, signature/package verification, SHA-256, and artifact upload.
+- Text-bearing top Browser chrome and Browser-menu actions use content height plus minimum interaction floors, allowing Android-native font scaling to increase their measured height rather than constraining scaled text to hard 56dp rows.
+- The large-text source contract records 2.0 font scale as the downstream acceptance target while keeping rendered/device acceptance explicitly pending.
+- Unit tests for Browser-owned navigation resolution, address presentation, GLAZE UI mapping, accessibility-aware top-chrome visibility policy, and the large-text content-height source contract.
+- CI unit test, Android lint, APK build, exact-source verification, signature/package/version verification, SHA-256/source-revision recording, and artifact upload.
 
 ## Android beta — GLAZE UI V1.2 source mapping candidate
 
@@ -53,15 +55,17 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 - Native Android controls retained for platform semantics.
 - 48dp minimum general touch-oriented interaction target.
 - 56dp Touch Assistance target floor recorded where applicable; complete Android runtime mapping remains pending.
+- Text-bearing chrome uses content-height layout rather than exact fixed row heights, preserving the normal 56dp/128dp baseline while allowing scaled text metrics to expand top/menu chrome.
+- 2.0 font scale recorded as the downstream large-text acceptance target; this is not rendered 200% acceptance.
 - Light, Dark, and Deep Dark structural appearance targets recorded.
 - Upper-left optical light direction, Frost White neutral material reference, and bounded Ice Blue atmospheric accent recorded without restoring chromatic substrate tinting.
 - Nested backdrop blur remains disabled.
 - Environmental Color Memory is not required and this mapping does not introduce environmental-content sampling or remote color derivation.
 - Calm expression and Balanced clarity retained for the current Browser shell.
 - Effects-free fallback remains first class and does not require blur/transparency.
-- Contract tests cover current Stable provenance, target floors, Application authority, Glaze budget, V1.2 neutral-material/appearance bounds, no nested blur, no required environmental sampling, and preserved semantic-state priority.
+- Contract tests cover current Stable provenance, target floors, Application authority, Glaze budget, V1.2 neutral-material/appearance bounds, no nested blur, no required environmental sampling, preserved semantic-state priority, and the text-content-height source contract.
 
-This section is repository-local source migration evidence only. A successful build does not establish Browser-specific V1.2 rendered/native-device visual, accessibility, Human Visual Excellence, performance, or production acceptance. The accessibility-aware chrome policy similarly does not establish representative TalkBack, Switch Access, Voice Access, focus-order, announcement-quality, or physical-device acceptance.
+This section is repository-local source migration and hardening evidence only. A successful build does not establish Browser-specific V1.2 rendered/native-device visual, accessibility, Human Visual Excellence, performance, or production acceptance. The accessibility-aware chrome and large-text source changes similarly do not establish representative TalkBack, Switch Access, Voice Access, rendered 200% text, focus-order, announcement-quality, or physical-device acceptance.
 
 ## Planned / incomplete Android capabilities
 
@@ -77,7 +81,7 @@ This section is repository-local source migration evidence only. A successful bu
 - GoreeCloud DNS and GoreeCloud Network runtime adapters.
 - GoreeCloud Mesh capability coordination.
 - Complete Touch Assistance Android runtime mapping and native acceptance where supported.
-- Representative TalkBack, Switch Access, Voice Access, large-text, RTL/localization, and accessibility announcement/focus-order acceptance.
+- Representative TalkBack, Switch Access, Voice Access, rendered 200% text, RTL/localization, and accessibility announcement/focus-order acceptance.
 - Bookmarks, history, library, settings, downloads UI, Reader Mode, and Wayfinder mobile surfaces.
 - Controlled beta/production signing, managed updates, rollback, and migration.
 - Store packaging and publication.

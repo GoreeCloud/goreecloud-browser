@@ -6,15 +6,17 @@ GoreeCloud Browser is GoreeCloud's first-party native web browser. GoreeCloud ow
 
 GoreeCloud Browser is on the **0.1.0-beta.1** development channel and is **not production-approved or Stable**.
 
-The repository contains build-tested engine-independent Browser core, a Linux GTK/X11 native shell path, and a real installable Android beta target. The Android V1.2 migration candidate is:
+The repository contains build-tested engine-independent Browser core, a Linux GTK/X11 native shell path, and a real installable Android beta target. The current stacked Android Development candidate is:
 
 - package: `io.goreecloud.browser.beta`
-- version: `0.1.0-beta.1+android.7`
-- versionCode: `10007`
+- version: `0.1.0-beta.1+android.9`
+- versionCode: `10009`
 - minimum Android API: 26
 - target Android API: 35
 
-Android System WebView/Chromium is used only as the rendering engine dependency. GoreeCloud owns the mobile chrome, URL/search routing, privacy defaults, permission behavior, design-system mapping, and product capability gates. Downloads remain fail-closed until the Android path satisfies the authoritative Wardveil release contract.
+The Android stack currently consists of the V1.2 Stable mapping parent, the `+android.8` accessibility-chrome persistence slice, and this `+android.9` large-text content-height hardening slice. Android System WebView/Chromium is used only as the rendering engine dependency. GoreeCloud owns the mobile chrome, URL/search routing, privacy defaults, permission behavior, design-system mapping, and product capability gates. Downloads remain fail-closed until the Android path satisfies the authoritative Wardveil release contract.
+
+The `+android.9` source replaces exact fixed heights on text-bearing top/menu chrome with Android-native content-height measurement while retaining minimum interaction floors. This allows system font scaling to grow the omnibox, scheme/address controls, and Browser-menu actions rather than constraining scaled text to hard 56dp rows. The source contract records 2.0 font scale as a downstream acceptance target; representative rendered 200% text acceptance remains pending.
 
 Passing source CI or producing an installable APK does not establish production readiness. Real-runtime, security, privacy, accessibility, current-Stable GLAZE UI, packaging/signing, recovery, compatibility, representative-device, and sustained-use acceptance remain separate gates.
 
@@ -29,7 +31,7 @@ GoreeCloud Browser must track the **current approved Stable GLAZE UI release**. 
 - web entrypoint: `css/glaze-v1.2.0.css`
 - runtime entrypoint: `js/glaze-v1.2.0.mjs`
 
-This branch advances Browser from its historical Glaze UI 2.2 and V1.1 mappings to V1.2 Stable authority without rewriting the working mobile shell for version churn.
+The current Android branch stack advances Browser from its historical Glaze UI 2.2 and V1.1 mappings to V1.2 Stable authority, preserves the working mobile shell, protects primary top chrome while Android accessibility services are active, and hardens text-bearing chrome against fixed-height clipping under system font scaling.
 
 The Browser Android mapping records the V1.2 rules applicable to the current shell:
 
@@ -38,6 +40,8 @@ The Browser Android mapping records the V1.2 rules applicable to the current she
 - Application-scope System Shell authority without claiming Universal Search, Control Center, System Panel, or Critical System authority;
 - one dominant Glaze panel plus at most three small floating Glaze controls;
 - 48dp ordinary interaction targets and 56dp Touch Assistance targets where applicable;
+- content-height text-bearing top/menu chrome with a normal 56dp/128dp baseline and room to grow with native Android font metrics;
+- 2.0 font scale recorded as a downstream large-text acceptance target without claiming rendered acceptance;
 - Light, Dark, and Deep Dark structural appearances;
 - upper-left optical lighting, Frost White as a neutral material reference, and bounded Ice Blue atmosphere rather than chromatic substrate tinting;
 - no default Deep Teal/Soft Amber base-material mapping;
@@ -47,7 +51,7 @@ The Browser Android mapping records the V1.2 rules applicable to the current she
 
 Presentation never manufactures Wardveil security truth, Privacy Shield privacy truth, Everkeep continuity truth, Identity authorization, Mesh coordination, Search authority, Sync authority, or Browser workflow success.
 
-This is repository-local source mapping only. Browser still requires exact-revision rendered/native visual review, TalkBack/accessibility, 200% text, RTL/localization, Reduced Motion, Reduced Transparency/effects-free behavior, contrast/high-contrast handling, Touch Assistance mapping where supported, form-factor behavior, performance, representative physical-device evidence, and product-specific production approval.
+This is repository-local source mapping and hardening only. Browser still requires exact-revision rendered/native visual review, TalkBack, Switch Access, Voice Access, rendered 200% text, RTL/localization, Reduced Motion, Reduced Transparency/effects-free behavior, contrast/high-contrast handling, Touch Assistance mapping where supported, form-factor behavior, performance, representative physical-device evidence, and product-specific production approval.
 
 See [`docs/GLAZE_UI_ADOPTION.md`](docs/GLAZE_UI_ADOPTION.md).
 
@@ -88,7 +92,7 @@ A source foundation is not the same as deployed producer connectivity or product
 
 ## Android beta behavior
 
-The current Android beta provides Browser-owned Back, Forward, Home, Reload/Stop, a unified address/search field, page progress, direct HTTP/HTTPS navigation, bare-host HTTPS upgrade, GoreeCloud Search routing for non-URL input, browser-intent handling for web links, Browser-owned menu actions, and scroll-aware top chrome.
+The current Android beta provides Browser-owned Back, Forward, Home, Reload/Stop, a unified address/search field, page progress, direct HTTP/HTTPS navigation, bare-host HTTPS upgrade, GoreeCloud Search routing for non-URL input, browser-intent handling for web links, Browser-owned menu actions, accessibility-aware scroll chrome, and content-height text-bearing top/menu chrome.
 
 Security/privacy defaults remain deliberately conservative:
 
@@ -100,7 +104,7 @@ Security/privacy defaults remain deliberately conservative:
 - website permissions and geolocation remain default-deny until Browser-owned policy surfaces are accepted;
 - Android downloads remain blocked until Wardveil release requirements are satisfied.
 
-Private Browsing, full tab-management UI, accepted permission surfaces, production Wardveil downloads, full first-party runtime integrations, managed updates/rollback, production signing, store distribution, and Stable qualification remain incomplete.
+Private Browsing, full tab-management UI, accepted permission surfaces, production Wardveil downloads, full first-party runtime integrations, representative large-text/assistive-technology acceptance, managed updates/rollback, production signing, store distribution, and Stable qualification remain incomplete.
 
 ## First-party capability boundary
 
@@ -141,4 +145,4 @@ Suspicious content is held; malicious or unverifiable content remains blocked. B
 
 ## Status
 
-GoreeCloud Browser remains **Development / Beta**. The V1.2 migration candidate does not become conformant, Stable, production-signed, deployed, or production-approved merely by merging source changes. Those states require their own verified evidence.
+GoreeCloud Browser remains **Development / Beta**. The V1.2/accessibility/large-text branch stack does not become conformant, Stable, production-signed, deployed, or production-approved merely by merging source changes. Those states require their own verified evidence.
