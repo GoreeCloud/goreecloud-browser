@@ -22,7 +22,7 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 
 - Installable debug-signed APK target.
 - Package `io.goreecloud.browser.beta`.
-- Current migration-candidate identity `0.1.0-beta.1+android.6` / versionCode `10006`.
+- Current migration-candidate identity `0.1.0-beta.1+android.7` / versionCode `10007`.
 - Android API 26 minimum and API 35 target.
 - Android System WebView/Chromium rendering dependency behind GoreeCloud-owned product behavior.
 - Back, Forward, Reload, Go, unified address/search field, progress state, and web-content region.
@@ -40,26 +40,27 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 - Unit tests for Browser-owned navigation resolution.
 - CI unit test, Android lint, APK build, signature/package verification, SHA-256, and artifact upload.
 
-## Android beta — GLAZE UI V1.1 source mapping candidate
+## Android beta — GLAZE UI V1.2 source mapping candidate
 
-- Current Stable GLAZE UI version `1.1.0`, tag `v1.1.0`, and Stable release revision `15cc76d2bcd4065552dc31c77145b63f34d9e7b2` recorded in source.
-- Accepted V1.1 visual source `8ea1f789bbabf943c3359514dc1506b24fa3c51b` recorded as central design-system provenance, not Browser acceptance.
-- V1.1 optical contract `contracts/v1.1/optical-refinement.json` recorded in the Android mapping.
-- Core solid-content / glazed-interaction rule preserved for Browser-owned surfaces.
+- Current Stable GLAZE UI version `1.2.0` and Stable promotion merge revision `f285b9145e27e6e7027b075c37299d101945c272` recorded in source.
+- V1.2 source-qualification anchor `b0eadf9a60f73d45caffb62ffc7e9e0334cddc97` recorded as design-system provenance, not Browser acceptance.
+- V1.2 optical foundation `tokens/glaze-v1.2-optical-foundation.candidate.json` plus Stable web/runtime entrypoints recorded in the Android mapping; the Candidate filename is preserved upstream source lineage rather than current lifecycle status.
+- Governing rule **Neutral glass is the material. Color is an accent.** recorded in source.
+- Core solid/near-solid reading and consequential-decision boundary preserved while transient Browser-owned interaction chrome uses bounded neutral glaze.
 - Browser-owned chrome explicitly remains in Application scope rather than claiming Universal Search, Control Center, System Panel, or Critical System authority.
 - Inherited Glaze budget represented as at most one dominant Glaze panel and up to three small floating Glaze controls.
 - Native Android controls retained for platform semantics.
 - 48dp minimum general touch-oriented interaction target.
 - 56dp Touch Assistance target floor recorded where applicable; complete Android runtime mapping remains pending.
 - Light, Dark, and Deep Dark structural appearance targets recorded.
-- Upper-left optical light direction and bounded Deep Teal + Soft Amber atmosphere recorded as presentation-only identity.
+- Upper-left optical light direction, Frost White neutral material reference, and bounded Ice Blue atmospheric accent recorded without restoring chromatic substrate tinting.
 - Nested backdrop blur remains disabled.
 - Environmental Color Memory is not required and this mapping does not introduce environmental-content sampling or remote color derivation.
 - Calm expression and Balanced clarity retained for the current Browser shell.
 - Effects-free fallback remains first class and does not require blur/transparency.
-- Contract tests cover current Stable provenance, target floors, Application authority, Glaze budget, V1.1 appearance/atmosphere bounds, no nested blur, no required environmental sampling, and preserved semantic-state priority.
+- Contract tests cover current Stable provenance, target floors, Application authority, Glaze budget, V1.2 neutral-material/appearance bounds, no nested blur, no required environmental sampling, and preserved semantic-state priority.
 
-This section is repository-local source migration evidence only. A successful build does not establish Browser-specific V1.1 rendered/native-device visual, accessibility, Human Visual Excellence, performance, or production acceptance.
+This section is repository-local source migration evidence only. A successful build does not establish Browser-specific V1.2 rendered/native-device visual, accessibility, Human Visual Excellence, performance, or production acceptance.
 
 ## Planned / incomplete Android capabilities
 
