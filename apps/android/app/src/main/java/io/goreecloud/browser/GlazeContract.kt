@@ -1,7 +1,7 @@
 package io.goreecloud.browser
 
 /**
- * Browser-owned Android-native mapping metadata for GLAZE UI V1.1 Stable.
+ * Browser-owned Android-native mapping metadata for GLAZE UI V1.2 Stable.
  *
  * This records the semantic and optical contract consumed by the Android shell.
  * It is repository-local source mapping evidence only; rendered/native-device
@@ -9,11 +9,13 @@ package io.goreecloud.browser
  * remain separate promotion gates.
  */
 object GlazeContract {
-    const val VERSION = "1.1.0"
-    const val STABLE_TAG = "v1.1.0"
-    const val STABLE_RELEASE_REVISION = "15cc76d2bcd4065552dc31c77145b63f34d9e7b2"
-    const val ACCEPTED_VISUAL_SOURCE = "8ea1f789bbabf943c3359514dc1506b24fa3c51b"
-    const val OPTICAL_CONTRACT = "contracts/v1.1/optical-refinement.json"
+    const val VERSION = "1.2.0"
+    const val STABLE_RELEASE_REVISION = "f285b9145e27e6e7027b075c37299d101945c272"
+    const val SOURCE_QUALIFICATION_ANCHOR = "b0eadf9a60f73d45caffb62ffc7e9e0334cddc97"
+    const val OPTICAL_CONTRACT = "tokens/glaze-v1.2-optical-foundation.candidate.json"
+    const val STABLE_WEB_ENTRYPOINT = "css/glaze-v1.2.0.css"
+    const val STABLE_RUNTIME_ENTRYPOINT = "js/glaze-v1.2.0.mjs"
+    const val MATERIAL_RULE = "neutral-glass-is-material-color-is-accent"
 
     const val GENERAL_TARGET_DP = 48
     const val TOUCH_ASSISTANCE_TARGET_DP = 56
@@ -32,8 +34,8 @@ object GlazeContract {
     const val MAX_DOMINANT_GLAZE_PANELS = 1
     const val MAX_SMALL_FLOATING_GLAZE_CONTROLS = 3
     const val OPTICAL_LIGHT_ORIGIN = "upper-left"
-    const val ATMOSPHERE_PRIMARY = "deep-teal"
-    const val ATMOSPHERE_SECONDARY = "soft-amber"
+    const val MATERIAL_PRIMARY = "frost-white"
+    const val ATMOSPHERE_ACCENT = "ice-blue"
 
     enum class MaterialLevel {
         Canvas,
