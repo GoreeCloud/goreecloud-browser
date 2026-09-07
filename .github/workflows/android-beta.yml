@@ -53,6 +53,7 @@ jobs:
         run: |
           gradle --no-daemon clean testDebugUnitTest lintDebug assembleDebug
 
+      # A material Android behavior change gets a distinct debug-beta identity.
       - name: Verify APK signature and identity
         shell: bash
         run: |
