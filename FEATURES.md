@@ -22,7 +22,7 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 
 - Installable debug-signed APK target.
 - Package `io.goreecloud.browser.beta`.
-- Current migration-candidate identity `0.1.0-beta.1+android.7` / versionCode `10007`.
+- Current stacked Development candidate identity `0.1.0-beta.1+android.8` / versionCode `10008`.
 - Android API 26 minimum and API 35 target.
 - Android System WebView/Chromium rendering dependency behind GoreeCloud-owned product behavior.
 - Back, Forward, Reload, Go, unified address/search field, progress state, and web-content region.
@@ -37,7 +37,8 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 - WebView file/content access disabled.
 - Website permissions and geolocation denied until Browser-owned policy surfaces are accepted.
 - Downloads blocked until the Android path satisfies the authoritative Wardveil release contract.
-- Unit tests for Browser-owned navigation resolution.
+- Scroll-aware top Browser chrome remains available while Android reports an accessibility service enabled; Browser consumes only the boolean accessibility-enabled state and does not enumerate services or inspect accessibility/user content.
+- Unit tests for Browser-owned navigation resolution, address presentation, GLAZE UI mapping, and accessibility-aware top-chrome visibility policy.
 - CI unit test, Android lint, APK build, signature/package verification, SHA-256, and artifact upload.
 
 ## Android beta — GLAZE UI V1.2 source mapping candidate
@@ -60,7 +61,7 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 - Effects-free fallback remains first class and does not require blur/transparency.
 - Contract tests cover current Stable provenance, target floors, Application authority, Glaze budget, V1.2 neutral-material/appearance bounds, no nested blur, no required environmental sampling, and preserved semantic-state priority.
 
-This section is repository-local source migration evidence only. A successful build does not establish Browser-specific V1.2 rendered/native-device visual, accessibility, Human Visual Excellence, performance, or production acceptance.
+This section is repository-local source migration evidence only. A successful build does not establish Browser-specific V1.2 rendered/native-device visual, accessibility, Human Visual Excellence, performance, or production acceptance. The accessibility-aware chrome policy similarly does not establish representative TalkBack, Switch Access, Voice Access, focus-order, announcement-quality, or physical-device acceptance.
 
 ## Planned / incomplete Android capabilities
 
@@ -76,6 +77,7 @@ This section is repository-local source migration evidence only. A successful bu
 - GoreeCloud DNS and GoreeCloud Network runtime adapters.
 - GoreeCloud Mesh capability coordination.
 - Complete Touch Assistance Android runtime mapping and native acceptance where supported.
+- Representative TalkBack, Switch Access, Voice Access, large-text, RTL/localization, and accessibility announcement/focus-order acceptance.
 - Bookmarks, history, library, settings, downloads UI, Reader Mode, and Wayfinder mobile surfaces.
 - Controlled beta/production signing, managed updates, rollback, and migration.
 - Store packaging and publication.
