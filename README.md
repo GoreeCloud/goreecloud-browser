@@ -6,11 +6,11 @@ GoreeCloud Browser is GoreeCloud's first-party native web browser. GoreeCloud ow
 
 GoreeCloud Browser is on the **0.1.0-beta.1** development channel and is **not production-approved or Stable**.
 
-The repository contains build-tested engine-independent Browser core, a Linux GTK/X11 native shell path, and a real installable Android beta target. The Android V1.1 migration candidate is:
+The repository contains build-tested engine-independent Browser core, a Linux GTK/X11 native shell path, and a real installable Android beta target. The Android V1.2 migration candidate is:
 
 - package: `io.goreecloud.browser.beta`
-- version: `0.1.0-beta.1+android.6`
-- versionCode: `10006`
+- version: `0.1.0-beta.1+android.7`
+- versionCode: `10007`
 - minimum Android API: 26
 - target Android API: 35
 
@@ -20,23 +20,27 @@ Passing source CI or producing an installable APK does not establish production 
 
 ## GLAZE UI requirement
 
-GoreeCloud Browser must track the **current approved Stable GLAZE UI release**. The sole current consumer target is **GLAZE UI V1.1 (`1.1.0`)**:
+GoreeCloud Browser must track the **current approved Stable GLAZE UI release**. The current consumer target is **GLAZE UI V1.2 (`1.2.0`)**:
 
-- tag: `v1.1.0`
-- Stable release revision: `15cc76d2bcd4065552dc31c77145b63f34d9e7b2`
-- approved visual source: `8ea1f789bbabf943c3359514dc1506b24fa3c51b`
-- optical contract: `contracts/v1.1/optical-refinement.json`
+- Stable promotion merge revision: `f285b9145e27e6e7027b075c37299d101945c272`
+- V1.2 source-qualification anchor: `b0eadf9a60f73d45caffb62ffc7e9e0334cddc97`
+- Stable contract: `GLAZE_UI_V1_2.md`
+- optical foundation: `tokens/glaze-v1.2-optical-foundation.candidate.json`
+- web entrypoint: `css/glaze-v1.2.0.css`
+- runtime entrypoint: `js/glaze-v1.2.0.mjs`
 
-This branch explicitly migrates Browser away from its historical Glaze UI 2.2 mapping. The working mobile shell is preserved rather than rewritten for version churn, while Browser's source contract is reconciled to V1.1 authority.
+This branch advances Browser from its historical Glaze UI 2.2 and V1.1 mappings to V1.2 Stable authority without rewriting the working mobile shell for version churn.
 
-The Browser Android mapping records the V1.1 rules applicable to the current shell:
+The Browser Android mapping records the V1.2 rules applicable to the current shell:
 
-- solid reading/critical-decision surfaces and glazed transient interaction chrome;
+- **Neutral glass is the material. Color is an accent.**
+- solid/near-solid reading and consequential-decision surfaces with bounded neutral glaze for transient interaction chrome;
 - Application-scope System Shell authority without claiming Universal Search, Control Center, System Panel, or Critical System authority;
 - one dominant Glaze panel plus at most three small floating Glaze controls;
 - 48dp ordinary interaction targets and 56dp Touch Assistance targets where applicable;
 - Light, Dark, and Deep Dark structural appearances;
-- upper-left optical lighting and bounded Deep Teal + Soft Amber atmosphere over neutral structure;
+- upper-left optical lighting, Frost White as a neutral material reference, and bounded Ice Blue atmosphere rather than chromatic substrate tinting;
+- no default Deep Teal/Soft Amber base-material mapping;
 - no nested backdrop-blur stack;
 - no required Environmental Color Memory or environmental-content sampling;
 - effects-free operation before semantic/accessibility degradation.
@@ -137,4 +141,4 @@ Suspicious content is held; malicious or unverifiable content remains blocked. B
 
 ## Status
 
-GoreeCloud Browser remains **Development / Beta**. The V1.1 migration candidate does not become conformant, Stable, production-signed, deployed, or production-approved merely by merging source changes. Those states require their own verified evidence.
+GoreeCloud Browser remains **Development / Beta**. The V1.2 migration candidate does not become conformant, Stable, production-signed, deployed, or production-approved merely by merging source changes. Those states require their own verified evidence.
