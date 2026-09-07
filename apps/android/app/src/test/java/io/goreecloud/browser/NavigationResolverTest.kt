@@ -20,8 +20,53 @@ class NavigationResolverTest {
     }
 
     @Test
+    fun directUnicodeHostRemainsIndependentFromSearch() {
+        val address = "https://例え.テスト/path"
+        assertTrue(NavigationResolver.isAllowedWebUrl(address))
+        assertEquals(address, NavigationResolver.resolve(address))
+    }
+
+    @Test
+    fun malformedExplicitHttpNavigationFailsClosedToSearchHome() {
+        assertFalse(NavigationResolver.isAllowedWebUrl("https://"))
+        assertFalse(NavigationResolver.isAllowedWebUrl("https://not a url"))
+        assertFalse(NavigationResolver.isAllowedWebUrl("https://example.com:bad"))
+        assertFalse(NavigationResolver.isAllowedWebUrl("https://example.com:65536"))
+
+        assertEquals(NavigationResolver.SEARCH_HOME, NavigationResolver.resolve("https://"))
+        assertEquals(
+            NavigationResolver.SEARCH_HOME,
+            NavigationResolver.resolve("https://example.com:bad"),
+        )
+    }
+
+    @Test
     fun bareHostUpgradesToHttps() {
         assertEquals("https://example.com", NavigationResolver.resolve("example.com"))
+    }
+
+    @Test
+    fun bareLocalhostWithPortUpgradesToHttps() {
+        assertEquals(
+            "https://localhost:8080/path",
+            NavigationResolver.resolve("localhost:8080/path"),
+        )
+    }
+
+    @Test
+    fun bareBracketedIpv6WithPortUpgradesToHttps() {
+        assertEquals(
+            "https://[::1]:8080/path",
+            NavigationResolver.resolve("[::1]:8080/path"),
+        )
+    }
+
+    @Test
+    fun invalidBarePortIsTreatedAsSearchText() {
+        assertEquals(
+            "https://search.goreecloud.com/search?q=example.com%3Abad",
+            NavigationResolver.resolve("example.com:bad"),
+        )
     }
 
     @Test
