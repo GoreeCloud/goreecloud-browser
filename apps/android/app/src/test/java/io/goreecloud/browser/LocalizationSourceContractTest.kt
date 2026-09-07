@@ -83,7 +83,7 @@ class LocalizationSourceContractTest {
 
         assertTrue(debugBlock.contains("isPseudoLocalesEnabled = true"))
         assertFalse(releaseBlock.contains("isPseudoLocalesEnabled = true"))
-        assertTrue(debugBlock.contains("versionNameSuffix = \"+android.17\""))
+        assertTrue(debugBlock.contains("versionNameSuffix = \"+android.18\""))
     }
 
     private fun sourceText(relativePath: String): String {
