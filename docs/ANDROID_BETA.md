@@ -2,22 +2,22 @@
 
 **Target:** Android installable beta APK  
 **Package:** `io.goreecloud.browser.beta`  
-**Candidate version:** `0.1.0-beta.1+android.6`  
-**Candidate versionCode:** `10006`  
+**Candidate version:** `0.1.0-beta.1+android.7`  
+**Candidate versionCode:** `10007`  
 **Minimum Android:** 8.0 / API 26  
 **Target Android API:** 35  
-**Current GLAZE UI target:** 1.1.0 Stable  
-**GLAZE UI Stable tag:** `v1.1.0`  
-**GLAZE UI Stable release revision:** `15cc76d2bcd4065552dc31c77145b63f34d9e7b2`  
+**Current GLAZE UI target:** 1.2.0 Stable  
+**GLAZE UI Stable promotion merge revision:** `f285b9145e27e6e7027b075c37299d101945c272`  
+**GLAZE UI V1.2 source-qualification anchor:** `b0eadf9a60f73d45caffb62ffc7e9e0334cddc97`  
 **Production approved:** No
 
 ## Purpose
 
 This target is a real installable GoreeCloud Browser beta for Android. Android System WebView/Chromium is a replaceable web-engine dependency; GoreeCloud owns the Android browser chrome, navigation/search policy, privacy defaults, security gates, design-system mapping, and product behavior.
 
-The `+android.6` slice is a bounded repository-local migration from Browser's historical Glaze UI 2.2 Android mapping to the current GLAZE UI V1.1 Stable contract. It deliberately preserves the successful mobile chrome instead of visually rewriting the product for version churn. It updates design-system authority and records the V1.1 semantic, optical, appearance, accessibility, and effects-fallback constraints applicable to the current Android scope.
+The `+android.7` slice advances the repository-local migration to the current GLAZE UI V1.2 Stable contract. It deliberately preserves the successful mobile chrome instead of visually rewriting the product for version churn, while replacing the superseded V1.1 chromatic atmosphere mapping with V1.2 neutral Frosted/Living Glaze authority.
 
-The previous authoritative `+android.5` / Glaze UI 2.2 revision remains historical rollback and comparison input. Central GLAZE UI V1.1 Stable promotion does not auto-promote Browser.
+The historical `+android.5` / Glaze UI 2.2 and intermediate `+android.6` / V1.1 mapping remain rollback/comparison inputs only. Central GLAZE UI V1.2 Stable promotion does not auto-promote Browser.
 
 ## Implemented beta behavior
 
@@ -61,14 +61,15 @@ The beta preserves the current compact native mobile structure:
 
 The Browser menu is not a substitute for future full Settings, tabs, private-browsing, permissions, downloads, security, privacy, or account surfaces.
 
-## GLAZE UI V1.1 Android mapping
+## GLAZE UI V1.2 Android mapping
 
 The current Browser source mapping records:
 
-- Stable version `1.1.0` and tag `v1.1.0`;
-- Stable release revision `15cc76d2bcd4065552dc31c77145b63f34d9e7b2`;
-- approved V1.1 visual source `8ea1f789bbabf943c3359514dc1506b24fa3c51b`;
-- optical contract `contracts/v1.1/optical-refinement.json`;
+- Stable version `1.2.0`;
+- Stable promotion merge revision `f285b9145e27e6e7027b075c37299d101945c272`;
+- V1.2 source-qualification anchor `b0eadf9a60f73d45caffb62ffc7e9e0334cddc97`;
+- optical foundation `tokens/glaze-v1.2-optical-foundation.candidate.json` and Stable web/runtime entrypoints; the `.candidate` filename is upstream promoted-source lineage, not current lifecycle state;
+- governing rule **Neutral glass is the material. Color is an accent.**;
 - application background → Canvas;
 - top chrome → Canvas;
 - omnibox capsule → Soft Glaze;
@@ -83,7 +84,8 @@ The current Browser source mapping records:
 - Light, Dark, and Deep Dark appearance targets;
 - Calm expression and Balanced clarity;
 - upper-left optical light direction;
-- bounded Deep Teal + Soft Amber atmosphere with neutral structure dominant;
+- Frost White as a neutral material reference with bounded Ice Blue atmosphere rather than chromatic substrate tinting;
+- no default Deep Teal, Soft Amber, green, aqua, or other chromatic base material;
 - no nested backdrop-blur stack;
 - no required Environmental Color Memory or content sampling;
 - visible semantic focus/state treatment;
@@ -115,7 +117,7 @@ Expected APK path:
 apps/android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Historical `+android.5` build evidence is not inherited by this materially changed `+android.6` candidate. Exact-head workflow evidence is required again.
+Historical `+android.5` and intermediate `+android.6` build evidence are not inherited by this materially changed `+android.7` candidate. Exact-head workflow evidence is required again.
 
 ## Signing boundary
 
@@ -136,14 +138,14 @@ These behaviors do not establish complete Wardveil Security or Privacy Shield ac
 
 ## Deliberate beta restrictions
 
-The Android beta does not yet claim production/Stable readiness, complete GLAZE UI V1.1 downstream acceptance, complete Touch Assistance runtime mapping, production first-party service integration, Private Browsing acceptance, Android Wardveil download release, complete Privacy Shield behavior, Everkeep acceptance, Browser-owned website permission UI, accepted multi-tab product UI, controlled production signing, managed update/rollback, store publication, or sustained real-device acceptance.
+The Android beta does not yet claim production/Stable readiness, complete GLAZE UI V1.2 downstream acceptance, complete Touch Assistance runtime mapping, production first-party service integration, Private Browsing acceptance, Android Wardveil download release, complete Privacy Shield behavior, Everkeep acceptance, Browser-owned website permission UI, accepted multi-tab product UI, controlled production signing, managed update/rollback, store publication, or sustained real-device acceptance.
 
 ## Promotion gates
 
 Before Android can be described as production-approved or Stable, GoreeCloud must add and accept at minimum:
 
 1. Controlled GoreeCloud beta/production signing and key-recovery procedures.
-2. Exact-revision GLAZE UI V1.1 Browser visual/accessibility/form-factor acceptance.
+2. Exact-revision GLAZE UI V1.2 Browser visual/accessibility/form-factor acceptance.
 3. Wardveil Browser-to-scan authenticated transport and Android download release/quarantine evidence.
 4. Privacy Shield Android policy/consent/filtering integration.
 5. Everkeep Android recovery/continuity integration.
