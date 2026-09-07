@@ -22,7 +22,7 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 
 - Installable debug-signed APK target.
 - Package `io.goreecloud.browser.beta`.
-- Current stacked Development candidate identity `0.1.0-beta.1+android.11` / versionCode `10011`.
+- Current stacked Development candidate identity `0.1.0-beta.1+android.12` / versionCode `10012`.
 - Android API 26 minimum and API 35 target.
 - Android System WebView/Chromium rendering dependency behind GoreeCloud-owned product behavior.
 - Back, Forward, Reload, Go, unified address/search field, progress state, and web-content region.
@@ -43,10 +43,13 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 - Android application RTL support is declared; directional Back and Forward vector resources opt into native auto-mirroring; a JVM source contract verifies those flags plus logical start/end rather than physical left/right programmatic horizontal margins.
 - Browser-owned visible/accessibility Android chrome copy is sourced from `res/values/strings.xml` rather than embedded English labels in `BrowserActivity.kt`; HTTPS/HTTP/WEB protocol/status tokens remain explicitly non-translatable.
 - A localization source contract requires the reviewed Browser string-resource surface and fails if the prior embedded UI copy returns to the Activity.
-- Unit tests for Browser-owned navigation resolution, address presentation, GLAZE UI mapping, accessibility-aware top-chrome visibility policy, large-text content-height source contract, bounded RTL directionality source contract, and Android string-resource localization foundation.
-- CI unit test, Android lint, APK build, exact-source verification, signature/package/version verification, SHA-256/source-revision recording, and artifact upload.
+- Debug beta pseudolocale generation is enabled for Android `en-XA` and `ar-XB`; the release build type is not opted into this debug testability contract.
+- The localization source contract also fails closed unless the debug-only pseudolocale boundary remains configured.
+- Android CI verifies pseudolocalized `en-XA` and `ar-XB` application-label resources plus both locale identifiers in the built debug APK's `aapt` badging before artifact upload.
+- Unit tests for Browser-owned navigation resolution, address presentation, GLAZE UI mapping, accessibility-aware top-chrome visibility policy, large-text content-height source contract, bounded RTL directionality source contract, Android string-resource localization foundation, and debug pseudolocale configuration.
+- CI unit test, Android lint, APK build, exact-source verification, signature/package/version/pseudolocale verification, SHA-256/source-revision recording, and artifact upload.
 
-The string-resource extraction is localization readiness only. It does not provide translations or establish translation completeness/quality, locale fallback/plural/grammar behavior, bidirectional URL/address handling, rendered RTL behavior, or representative locale/device acceptance.
+The string-resource extraction and pseudolocales are localization testability only. Pseudolocales are synthetic Android test resources, not translations. This does not establish translation completeness/quality, locale fallback/plural/grammar behavior, bidirectional URL/address handling, rendered pseudolocale or RTL behavior, or representative locale/device acceptance.
 
 ## Android beta — GLAZE UI V1.2 source mapping candidate
 
@@ -64,15 +67,16 @@ The string-resource extraction is localization readiness only. It does not provi
 - 2.0 font scale recorded as the downstream large-text acceptance target; this is not rendered 200% acceptance.
 - Android RTL support plus native auto-mirroring for directional Back/Forward vectors is source-validated.
 - Browser-owned natural-language chrome strings are resource-backed for future localization; protocol/status tokens remain explicitly non-translatable.
+- Debug `en-XA` and `ar-XB` pseudolocale generation is build-tested and APK-verified for later localization stress testing, without claiming rendered acceptance.
 - Light, Dark, and Deep Dark structural appearance targets recorded.
 - Upper-left optical light direction, Frost White neutral material reference, and bounded Ice Blue atmospheric accent recorded without restoring chromatic substrate tinting.
 - Nested backdrop blur remains disabled.
 - Environmental Color Memory is not required and this mapping does not introduce environmental-content sampling or remote color derivation.
 - Calm expression and Balanced clarity retained for the current Browser shell.
 - Effects-free fallback remains first class and does not require blur/transparency.
-- Contract tests cover current Stable provenance, target floors, Application authority, Glaze budget, V1.2 neutral-material/appearance bounds, no nested blur, no required environmental sampling, preserved semantic-state priority, text-content-height source contract, bounded RTL directionality source requirements, and the Android localization-resource foundation.
+- Contract tests cover current Stable provenance, target floors, Application authority, Glaze budget, V1.2 neutral-material/appearance bounds, no nested blur, no required environmental sampling, preserved semantic-state priority, text-content-height source contract, bounded RTL directionality source requirements, Android localization-resource foundation, and debug-only pseudolocale configuration.
 
-This section is repository-local source migration and hardening evidence only. A successful build does not establish Browser-specific V1.2 rendered/native-device visual, accessibility, localization, Human Visual Excellence, performance, or production acceptance. The source changes do not establish representative TalkBack, Switch Access, Voice Access, rendered 200% text, translated/localized copy, rendered RTL, focus-order, announcement-quality, or physical-device acceptance.
+This section is repository-local source migration and hardening evidence only. A successful build does not establish Browser-specific V1.2 rendered/native-device visual, accessibility, localization, Human Visual Excellence, performance, or production acceptance. The source changes do not establish representative TalkBack, Switch Access, Voice Access, rendered 200% text, translated/localized copy, rendered pseudolocale/RTL behavior, focus-order, announcement-quality, or physical-device acceptance.
 
 ## Planned / incomplete Android capabilities
 
@@ -89,6 +93,7 @@ This section is repository-local source migration and hardening evidence only. A
 - GoreeCloud Mesh capability coordination.
 - Complete Touch Assistance Android runtime mapping and native acceptance where supported.
 - Actual translated/localized Browser resources and locale coverage.
+- Representative pseudolocale rendering and layout stress review on supported test devices.
 - Representative TalkBack, Switch Access, Voice Access, rendered 200% text, translation-quality/locale fallback, bidirectional URL/address handling, rendered RTL directionality, and accessibility announcement/focus-order acceptance.
 - Bookmarks, history, library, settings, downloads UI, Reader Mode, and Wayfinder mobile surfaces.
 - Controlled beta/production signing, managed updates, rollback, and migration.
