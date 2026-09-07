@@ -8,8 +8,8 @@ Current Android beta identity for this source revision:
 
 - Application: **GoreeCloud Browser Beta**
 - Package: `io.goreecloud.browser.beta`
-- Version: `0.1.0-beta.1+android.9`
-- versionCode: `10009`
+- Version: `0.1.0-beta.1+android.10`
+- versionCode: `10010`
 - Minimum Android: Android 8.0 / API 26
 - Target API: 35
 - Rendering dependency: Android System WebView/Chromium
@@ -17,7 +17,7 @@ Current Android beta identity for this source revision:
 
 GoreeCloud owns the Browser product layer, navigation/search behavior, mobile browser chrome, privacy defaults, security gates, and GoreeCloud integrations. Android System WebView/Chromium provides the web rendering/runtime foundation and is not the product identity.
 
-The `+android.9` Development candidate is stacked on the V1.2 source migration and `+android.8` accessibility-chrome hardening. It allows text-bearing top/menu chrome to grow with Android font scaling instead of forcing scaled text into fixed-height rows. This is source/runtime hardening, not representative 200% text or assistive-technology acceptance.
+The `+android.10` Development candidate is stacked on the V1.2 source migration, `+android.8` accessibility-chrome hardening, and `+android.9` large-text reflow work. It adds bounded RTL directionality hardening by allowing Android to auto-mirror the directional Back and Forward history icons and by source-validating the current logical start/end horizontal-margin structure. This is source/runtime directionality hardening, not translated-copy, rendered RTL, bidirectional address-field, or representative locale/device acceptance.
 
 ## Installing the Android beta
 
@@ -44,7 +44,7 @@ The top omnibox reserves most of its width for the unified address/search field.
 
 The leading `HTTPS`, `HTTP`, or `WEB` label reports the parsed address scheme. It is not a Wardveil verdict, certificate-verification badge, or claim that a page is trustworthy.
 
-Use the arrow action at the right edge of the omnibox or the Android keyboard's Go action to navigate.
+Use the arrow action beside the address field or the Android keyboard's Go action to navigate.
 
 Enter a complete `https://` or `http://` URL to navigate directly. A host such as `example.com` is upgraded to HTTPS before navigation.
 
@@ -59,6 +59,14 @@ The unified address field intentionally remains a single-line browser control. I
 Browser-menu action rows also use content height with a 56dp minimum, so a scaled or wrapped action label can request more vertical room instead of being clipped into a fixed 56dp row.
 
 The source contract records 2.0 font scale as the downstream large-text acceptance target. The current source/build state does **not** prove that 200% text has passed representative device, screen-size, orientation, or localization acceptance.
+
+### RTL directionality
+
+The Android application declares RTL support. In the current `+android.10` source, the directional Back and Forward vector controls use Android auto-mirroring so their glyph direction follows the platform layout direction rather than remaining permanently left/right facing.
+
+The current programmatic Browser chrome also uses logical start/end horizontal margins in the validated source path rather than physical left/right margin fields.
+
+This does **not** mean the beta is localized. Browser chrome copy is still not accepted across translated locales, bidirectional URL/address editing has not been accepted, rendered RTL layout has not been reviewed on representative devices, and combined RTL + large-text + accessibility behavior remains open.
 
 ### Scroll-aware and accessibility-aware chrome
 
@@ -85,7 +93,7 @@ The fixed 56dp bottom toolbar contains:
 - Reload, which becomes Stop while a page is loading; and
 - Browser menu.
 
-Back and Forward visibly disable when no matching history action is available.
+Back and Forward visibly disable when no matching history action is available. Their directional glyphs now follow Android layout direction through native vector auto-mirroring.
 
 Page-loading progress is drawn at the top of the web-content region rather than using a separate toolbar row.
 
@@ -109,11 +117,11 @@ When the omnibox is being edited, Android Back first leaves omnibox editing and 
 
 The Android beta maps Browser-owned chrome to **GLAZE UI V1.2 (`1.2.0`) Stable** using native Android controls.
 
-The current source mapping includes Canvas, Surface, and Soft Glaze roles, the rule **Neutral glass is the material. Color is an accent.**, a 48dp minimum general interaction target, a recorded 56dp Touch Assistance floor where applicable, Calm expression, Balanced clarity, Light/Dark/Deep Dark structural targets, semantic control labels, vector Browser chrome icons, visible pressed/focus treatment, and an effects-free fallback that does not depend on blur, transparency, or animation.
+The current source mapping includes Canvas, Surface, and Soft Glaze roles, the rule **Neutral glass is the material. Color is an accent.**, a 48dp minimum general interaction target, a recorded 56dp Touch Assistance floor where applicable, Calm expression, Balanced clarity, Light/Dark/Deep Dark structural targets, semantic control labels, vector Browser chrome icons, visible pressed/focus treatment, an effects-free fallback that does not depend on blur, transparency, or animation, and bounded RTL directionality for directional history vectors.
 
 The normal browsing surface removes the platform action bar and developer-status banner. At ordinary text scale the baseline expanded Browser chrome is 128dp before Android system bars; this is no longer a hard maximum because text-bearing top chrome can grow with native font metrics. The scroll-collapsed state retains only the fixed 56dp bottom toolbar. The Browser menu is Browser-owned rather than a platform `PopupMenu` surface.
 
-This remains source-level V1.2 mapping/hardening evidence. It is **not yet native-device GLAZE UI or accessibility conformance acceptance**. Representative visual review, TalkBack, Switch Access, Voice Access, rendered 200% text, RTL/localization, contrast/high-contrast, Reduced Motion, Reduced Transparency, input, performance, orientation, foldable/form-factor, Touch Assistance where supported, and physical-hardware validation remain required before production approval.
+This remains source-level V1.2 mapping/hardening evidence. It is **not yet native-device GLAZE UI, accessibility, localization, or RTL conformance acceptance**. Representative visual review, TalkBack, Switch Access, Voice Access, rendered 200% text, translated/localized copy, bidirectional URL/address behavior, rendered RTL directionality, contrast/high-contrast, Reduced Motion, Reduced Transparency, input, performance, orientation, foldable/form-factor, Touch Assistance where supported, and physical-hardware validation remain required before production approval.
 
 ## Security behavior
 
@@ -134,7 +142,7 @@ These behaviors do not mean the beta has completed Wardveil Security production 
 
 The beta uses privacy-protective defaults where a complete user-controlled Privacy Shield workflow does not yet exist. Third-party cookies are disabled and site permission grants fail closed.
 
-The accessibility chrome policy consumes only Android's boolean accessibility-enabled state. The large-text layout change uses Android-native font/layout measurement. Neither change adds accessibility-service enumeration, accessibility event capture, telemetry, network behavior, persistent accessibility state, or new user-content processing.
+The accessibility chrome policy consumes only Android's boolean accessibility-enabled state. The large-text layout change uses Android-native font/layout measurement. The RTL directionality slice uses Android application/vector/layout metadata. None of these changes adds accessibility-service enumeration, accessibility event capture, telemetry, network behavior, persistent accessibility/locale state, or new user-content processing.
 
 The Android beta does not yet provide the complete production Privacy Shield filtering, consent, diagnostics, private-browsing isolation, or user-control surface required for Stable release.
 
@@ -164,6 +172,8 @@ The Android beta does not yet claim:
 - production or Stable readiness;
 - complete GLAZE UI V1.2 native-device acceptance;
 - representative rendered 200% text acceptance;
+- translated/localized Browser copy acceptance;
+- rendered RTL directionality or bidirectional URL/address-field acceptance;
 - representative TalkBack, Switch Access, Voice Access, focus-order, or announcement-quality acceptance;
 - complete Wardveil Security runtime acceptance;
 - complete Privacy Shield runtime acceptance;
@@ -175,12 +185,12 @@ The Android beta does not yet claim:
 - production GoreeCloud Identity, Vault, Sync, DNS, Network, Mesh, or Everkeep adapters;
 - Play Store or other store publication;
 - signed update, downgrade, rollback, or application-data migration acceptance;
-- sustained real-device performance, battery, compatibility, and accessibility acceptance.
+- sustained real-device performance, battery, compatibility, localization, directionality, and accessibility acceptance.
 
 ## Reporting beta problems
 
-When reporting an Android beta problem, include the Browser version, Android version, device model, Android System WebView version, font-size/display-size settings when relevant, what you attempted, the expected result, and the observed result. Do not include passwords, authentication tokens, private browsing content, or other reusable secrets in bug reports.
+When reporting an Android beta problem, include the Browser version, Android version, device model, Android System WebView version, font-size/display-size settings and language/layout direction when relevant, what you attempted, the expected result, and the observed result. Do not include passwords, authentication tokens, private browsing content, or other reusable secrets in bug reports.
 
 ## Acceptance language
 
-A successful GoreeCloud Browser Android CI run proves only the checks performed by that workflow for the exact source revision: unit tests, Android lint, APK assembly, signature/package/version verification, checksum/source-revision generation, and artifact creation. It does not by itself establish production security, privacy, accessibility, rendered large-text behavior, real-device compatibility, recovery, or Stable qualification.
+A successful GoreeCloud Browser Android CI run proves only the checks performed by that workflow for the exact source revision: unit tests, Android lint, APK assembly, signature/package/version verification, checksum/source-revision generation, and artifact creation. It does not by itself establish production security, privacy, accessibility, rendered large-text behavior, localization, rendered RTL directionality, real-device compatibility, recovery, or Stable qualification.

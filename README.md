@@ -9,16 +9,16 @@ GoreeCloud Browser is on the **0.1.0-beta.1** development channel and is **not p
 The repository contains build-tested engine-independent Browser core, a Linux GTK/X11 native shell path, and a real installable Android beta target. The current stacked Android Development candidate is:
 
 - package: `io.goreecloud.browser.beta`
-- version: `0.1.0-beta.1+android.9`
-- versionCode: `10009`
+- version: `0.1.0-beta.1+android.10`
+- versionCode: `10010`
 - minimum Android API: 26
 - target Android API: 35
 
-The Android stack currently consists of the V1.2 Stable mapping parent, the `+android.8` accessibility-chrome persistence slice, and this `+android.9` large-text content-height hardening slice. Android System WebView/Chromium is used only as the rendering engine dependency. GoreeCloud owns the mobile chrome, URL/search routing, privacy defaults, permission behavior, design-system mapping, and product capability gates. Downloads remain fail-closed until the Android path satisfies the authoritative Wardveil release contract.
+The Android stack currently consists of the V1.2 Stable mapping parent, the `+android.8` accessibility-chrome persistence slice, the `+android.9` large-text content-height hardening slice, and this `+android.10` RTL-directionality hardening slice. Android System WebView/Chromium is used only as the rendering engine dependency. GoreeCloud owns the mobile chrome, URL/search routing, privacy defaults, permission behavior, design-system mapping, and product capability gates. Downloads remain fail-closed until the Android path satisfies the authoritative Wardveil release contract.
 
-The `+android.9` source replaces exact fixed heights on text-bearing top/menu chrome with Android-native content-height measurement while retaining minimum interaction floors. This allows system font scaling to grow the omnibox, scheme/address controls, and Browser-menu actions rather than constraining scaled text to hard 56dp rows. The source contract records 2.0 font scale as a downstream acceptance target; representative rendered 200% text acceptance remains pending.
+The `+android.9` source replaces exact fixed heights on text-bearing top/menu chrome with Android-native content-height measurement while retaining minimum interaction floors. The `+android.10` source keeps the existing logical-layout structure and fixes directional history glyph behavior by enabling Android-native auto-mirroring for Back and Forward; a JVM source contract also verifies application RTL support and guards against physical left/right horizontal-margin fields in the programmatic Browser chrome. These changes are source/runtime hardening only. Representative rendered 200% text, translated/localized copy, bidirectional URL/address behavior, rendered RTL, and combined locale/device acceptance remain pending.
 
-Passing source CI or producing an installable APK does not establish production readiness. Real-runtime, security, privacy, accessibility, current-Stable GLAZE UI, packaging/signing, recovery, compatibility, representative-device, and sustained-use acceptance remain separate gates.
+Passing source CI or producing an installable APK does not establish production readiness. Real-runtime, security, privacy, accessibility, current-Stable GLAZE UI, packaging/signing, recovery, compatibility, representative-device, localization/directionality, and sustained-use acceptance remain separate gates.
 
 ## GLAZE UI requirement
 
@@ -31,7 +31,7 @@ GoreeCloud Browser must track the **current approved Stable GLAZE UI release**. 
 - web entrypoint: `css/glaze-v1.2.0.css`
 - runtime entrypoint: `js/glaze-v1.2.0.mjs`
 
-The current Android branch stack advances Browser from its historical Glaze UI 2.2 and V1.1 mappings to V1.2 Stable authority, preserves the working mobile shell, protects primary top chrome while Android accessibility services are active, and hardens text-bearing chrome against fixed-height clipping under system font scaling.
+The current Android branch stack advances Browser from its historical Glaze UI 2.2 and V1.1 mappings to V1.2 Stable authority, preserves the working mobile shell, protects primary top chrome while Android accessibility services are active, hardens text-bearing chrome against fixed-height clipping under system font scaling, and adds bounded RTL directionality hardening for directional history controls.
 
 The Browser Android mapping records the V1.2 rules applicable to the current shell:
 
@@ -42,6 +42,7 @@ The Browser Android mapping records the V1.2 rules applicable to the current she
 - 48dp ordinary interaction targets and 56dp Touch Assistance targets where applicable;
 - content-height text-bearing top/menu chrome with a normal 56dp/128dp baseline and room to grow with native Android font metrics;
 - 2.0 font scale recorded as a downstream large-text acceptance target without claiming rendered acceptance;
+- Android RTL support with auto-mirrored directional Back/Forward vector controls and logical horizontal-margin source requirements, without claiming localization or rendered RTL acceptance;
 - Light, Dark, and Deep Dark structural appearances;
 - upper-left optical lighting, Frost White as a neutral material reference, and bounded Ice Blue atmosphere rather than chromatic substrate tinting;
 - no default Deep Teal/Soft Amber base-material mapping;
@@ -51,7 +52,7 @@ The Browser Android mapping records the V1.2 rules applicable to the current she
 
 Presentation never manufactures Wardveil security truth, Privacy Shield privacy truth, Everkeep continuity truth, Identity authorization, Mesh coordination, Search authority, Sync authority, or Browser workflow success.
 
-This is repository-local source mapping and hardening only. Browser still requires exact-revision rendered/native visual review, TalkBack, Switch Access, Voice Access, rendered 200% text, RTL/localization, Reduced Motion, Reduced Transparency/effects-free behavior, contrast/high-contrast handling, Touch Assistance mapping where supported, form-factor behavior, performance, representative physical-device evidence, and product-specific production approval.
+This is repository-local source mapping and hardening only. Browser still requires exact-revision rendered/native visual review, TalkBack, Switch Access, Voice Access, rendered 200% text, translated/localized copy, bidirectional URL/address behavior, rendered RTL directionality, Reduced Motion, Reduced Transparency/effects-free behavior, contrast/high-contrast handling, Touch Assistance mapping where supported, form-factor behavior, performance, representative physical-device evidence, and product-specific production approval.
 
 See [`docs/GLAZE_UI_ADOPTION.md`](docs/GLAZE_UI_ADOPTION.md).
 
@@ -92,7 +93,7 @@ A source foundation is not the same as deployed producer connectivity or product
 
 ## Android beta behavior
 
-The current Android beta provides Browser-owned Back, Forward, Home, Reload/Stop, a unified address/search field, page progress, direct HTTP/HTTPS navigation, bare-host HTTPS upgrade, GoreeCloud Search routing for non-URL input, browser-intent handling for web links, Browser-owned menu actions, accessibility-aware scroll chrome, and content-height text-bearing top/menu chrome.
+The current Android beta provides Browser-owned Back, Forward, Home, Reload/Stop, a unified address/search field, page progress, direct HTTP/HTTPS navigation, bare-host HTTPS upgrade, GoreeCloud Search routing for non-URL input, browser-intent handling for web links, Browser-owned menu actions, accessibility-aware scroll chrome, content-height text-bearing top/menu chrome, and bounded native RTL directionality for Back/Forward history controls.
 
 Security/privacy defaults remain deliberately conservative:
 
@@ -104,7 +105,7 @@ Security/privacy defaults remain deliberately conservative:
 - website permissions and geolocation remain default-deny until Browser-owned policy surfaces are accepted;
 - Android downloads remain blocked until Wardveil release requirements are satisfied.
 
-Private Browsing, full tab-management UI, accepted permission surfaces, production Wardveil downloads, full first-party runtime integrations, representative large-text/assistive-technology acceptance, managed updates/rollback, production signing, store distribution, and Stable qualification remain incomplete.
+Private Browsing, full tab-management UI, accepted permission surfaces, production Wardveil downloads, full first-party runtime integrations, representative large-text/assistive-technology/localization/RTL acceptance, managed updates/rollback, production signing, store distribution, and Stable qualification remain incomplete.
 
 ## First-party capability boundary
 
@@ -145,4 +146,4 @@ Suspicious content is held; malicious or unverifiable content remains blocked. B
 
 ## Status
 
-GoreeCloud Browser remains **Development / Beta**. The V1.2/accessibility/large-text branch stack does not become conformant, Stable, production-signed, deployed, or production-approved merely by merging source changes. Those states require their own verified evidence.
+GoreeCloud Browser remains **Development / Beta**. The V1.2/accessibility/large-text/RTL-directionality branch stack does not become conformant, Stable, production-signed, deployed, or production-approved merely by merging source changes. Those states require their own verified evidence.

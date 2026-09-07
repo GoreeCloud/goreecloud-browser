@@ -13,15 +13,15 @@ GoreeCloud Browser is an original GoreeCloud-owned native web browser. GoreeClou
 - GLAZE UI Stable promotion merge revision: `f285b9145e27e6e7027b075c37299d101945c272`
 - GLAZE UI V1.2 source-qualification anchor: `b0eadf9a60f73d45caffb62ffc7e9e0334cddc97`
 - GLAZE UI optical foundation: `tokens/glaze-v1.2-optical-foundation.candidate.json`
-- Android V1.2 source mapping: Development migration parent on `+android.7`; accessibility-chrome hardening stacked as `+android.8`; large-text content-height hardening stacked as `+android.9`; downstream rendered/native-device acceptance pending
+- Android V1.2 source mapping: Development migration parent on `+android.7`; accessibility-chrome hardening stacked as `+android.8`; large-text content-height hardening stacked as `+android.9`; RTL history-control directionality hardening stacked as `+android.10`; downstream rendered/native-device/localization acceptance pending
 - Canonical source repository: `GoreeCloud/goreecloud-browser`
 
 ## Android beta
 
 - User-facing identity: GoreeCloud Browser Beta
 - Debug-beta package: `io.goreecloud.browser.beta`
-- Debug-beta version on this stacked Development branch: `0.1.0-beta.1+android.9`
-- Android versionCode: `10009`
+- Debug-beta version on this stacked Development branch: `0.1.0-beta.1+android.10`
+- Android versionCode: `10010`
 - Minimum Android: API 26
 - Compile/target API: 35
 - Java/Kotlin target: 17
@@ -74,6 +74,8 @@ The installed beta uses a Browser-owned two-region mobile shell:
 - a 56dp persistent icon-only bottom navigation toolbar;
 - full-width web content between those regions;
 - Browser-owned vector controls for Back, Forward, Search Home, Reload/Stop, and Browser menu;
+- Android RTL support declared at the application level, with directional Back and Forward vector controls configured for native auto-mirroring;
+- programmatic Browser chrome using logical start/end horizontal margins rather than physical left/right margin fields in the current source contract;
 - page-load progress overlaid on web content;
 - unfocused address presentation that removes the scheme while keeping the hostname at the leading edge;
 - complete URL exposure and selection when the omnibox receives focus;
@@ -85,9 +87,9 @@ The installed beta uses a Browser-owned two-region mobile shell:
 
 At normal text scale, the baseline expanded Browser-chrome budget is 128dp before Android system bars. This value is no longer a hard maximum: text-bearing top chrome may grow above the baseline when Android font scaling requires additional measured height. The collapsed scrolling state retains only the fixed 56dp bottom navigation toolbar and is allowed only while Android does not report an accessibility service enabled.
 
-The accessibility visibility policy consumes only `AccessibilityManager.isEnabled` and its boolean state-change callback. It does not enumerate service identities, inspect accessibility event/user content, persist accessibility state, add permissions, or create telemetry/network behavior. The large-text layout change uses Android-native text/layout measurement and existing system font scaling and adds no new user-data processing.
+The accessibility visibility policy consumes only `AccessibilityManager.isEnabled` and its boolean state-change callback. It does not enumerate service identities, inspect accessibility event/user content, persist accessibility state, add permissions, or create telemetry/network behavior. The large-text layout change uses Android-native text/layout measurement and existing system font scaling and adds no new user-data processing. The RTL directionality slice uses Android manifest/vector/layout semantics only and adds no permissions, persistence, telemetry, network behavior, or user-content processing.
 
-The source contract records 2.0 font scale as the downstream large-text acceptance target. This source/runtime hardening is not representative 200% rendered acceptance, TalkBack, Switch Access, Voice Access, focus-order, announcement-quality, or physical-device acceptance.
+The source contract records 2.0 font scale as the downstream large-text acceptance target. This source/runtime hardening is not representative 200% rendered acceptance, TalkBack, Switch Access, Voice Access, focus-order, announcement-quality, or physical-device acceptance. The RTL source contract likewise does not establish translated Browser copy, bidirectional address-field acceptance, rendered RTL layout, combined RTL + large-text behavior, or representative locale/device acceptance.
 
 ## GLAZE UI V1.2 Android contract
 
@@ -107,6 +109,7 @@ Browser preserves the working mobile-shell structure while applying the current 
 - 56dp Touch Assistance floor where applicable, without claiming an unwired Android preference/OS mapping;
 - text-bearing Browser chrome uses content height rather than exact fixed heights so native Android `sp` metrics can expand it;
 - 2.0 font scale is recorded as the downstream large-text acceptance target, without claiming rendered acceptance from source alone;
+- Android RTL support plus native auto-mirroring for directional Back/Forward Browser vectors, without claiming localization or rendered RTL acceptance;
 - at most one dominant Glaze panel plus three small floating Glaze controls;
 - Light, Dark, and Deep Dark structural appearance targets;
 - upper-left optical light direction;
@@ -117,11 +120,11 @@ Browser preserves the working mobile-shell structure while applying the current 
 - semantic native labels and visible focus/state treatment;
 - effects-free operation without requiring blur/transparency;
 - Browser-owned vector icons;
-- explicit no-action-bar, no-development-banner, Browser-owned-menu, accessibility-aware scroll-chrome, and large-text content-height contracts.
+- explicit no-action-bar, no-development-banner, Browser-owned-menu, accessibility-aware scroll-chrome, large-text content-height, and RTL-directionality source contracts.
 
 The inherited semantic-state ordering remains represented in the Browser contract. Disabled and error semantics continue to override lower-priority interaction presentation. V1.2 material/atmosphere cannot change security, privacy, identity, recovery, coordination, Search, or Sync truth.
 
-This mapping is not native-device downstream acceptance. Production acceptance requires exact-revision rendered visual review, TalkBack/Switch Access/Voice Access and broader accessibility evidence, rendered 200% text behavior, contrast/high-contrast behavior, Reduced Motion, Reduced Transparency/effects-free behavior, RTL/localization, responsive/form-factor behavior, performance, Touch Assistance mapping where supported, and representative physical-device evidence.
+This mapping is not native-device downstream acceptance. Production acceptance requires exact-revision rendered visual review, TalkBack/Switch Access/Voice Access and broader accessibility evidence, rendered 200% text behavior, contrast/high-contrast behavior, Reduced Motion, Reduced Transparency/effects-free behavior, translated/localized copy, bidirectional text/address behavior, rendered RTL directionality, responsive/form-factor behavior, performance, Touch Assistance mapping where supported, and representative physical-device evidence.
 
 ## Security boundary
 
@@ -135,7 +138,7 @@ Android System WebView remains responsible for engine/platform security mechanis
 
 Privacy Shield is the authoritative privacy and data-use governance system. The beta currently uses privacy-protective defaults including third-party-cookie blocking and denied permission/geolocation requests.
 
-The accessibility chrome policy uses only Android's boolean accessibility-enabled state and does not enumerate services or inspect accessibility event/user content. The large-text change relies only on Android-native layout/font metrics and does not add telemetry, service discovery, persisted preference state, or user-content processing. These are bounded source behaviors, not complete Privacy Shield acceptance.
+The accessibility chrome policy uses only Android's boolean accessibility-enabled state and does not enumerate services or inspect accessibility event/user content. The large-text change relies only on Android-native layout/font metrics and does not add telemetry, service discovery, persisted preference state, or user-content processing. The RTL directionality change is limited to Android source/resource semantics and likewise adds no user-data processing or new authority. These are bounded source behaviors, not complete Privacy Shield acceptance.
 
 The native session-recovery core excludes Private and Isolated Private windows before persistence. This is a source-level privacy invariant, not complete private-browsing runtime acceptance.
 
@@ -162,7 +165,7 @@ At minimum, Stable Android promotion remains blocked by:
 - Browser-owned permission workflows;
 - required Identity/Vault/Sync/DNS/Network/Mesh/Search adapters with accepted producer evidence;
 - representative supported-device testing;
-- TalkBack, Switch Access, Voice Access, accessibility focus/announcement quality, RTL/localization, and rendered 200% text-scaling acceptance;
+- TalkBack, Switch Access, Voice Access, accessibility focus/announcement quality, translated/localized copy, rendered RTL/bidirectional behavior, and rendered 200% text-scaling acceptance;
 - Touch Assistance runtime mapping where the supported Android scope requires it;
 - upgrade/downgrade/data-migration acceptance;
 - release provenance and operational recovery evidence.
