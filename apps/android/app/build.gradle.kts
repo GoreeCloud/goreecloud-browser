@@ -11,7 +11,7 @@ android {
         applicationId = "io.goreecloud.browser"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10011
+        versionCode = 10012
         versionName = "0.1.0-beta.1"
 
         testInstrumentationRunner = "android.app.Instrumentation"
@@ -22,7 +22,12 @@ android {
             // The CI beta is intentionally a distinct application so it can
             // coexist with a future production-signed GoreeCloud Browser.
             applicationIdSuffix = ".beta"
-            versionNameSuffix = "+android.11"
+            versionNameSuffix = "+android.12"
+
+            // Generate Android en-XA/ar-XB pseudolocale resources for the
+            // debug beta so localization expansion/accent/RTL behavior can be
+            // exercised on supported test devices without shipping translations.
+            isPseudoLocalesEnabled = true
         }
 
         getByName("release") {
