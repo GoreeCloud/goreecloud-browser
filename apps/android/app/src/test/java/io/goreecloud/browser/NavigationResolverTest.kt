@@ -51,6 +51,25 @@ class NavigationResolverTest {
     }
 
     @Test
+    fun bareEmailLikeInputUsesSearchInsteadOfUserinfoNavigation() {
+        assertEquals(
+            "https://search.goreecloud.com/search?q=person%40example.com",
+            NavigationResolver.resolve("person@example.com"),
+        )
+        assertEquals(
+            "https://search.goreecloud.com/search?q=person%40localhost%3A8080",
+            NavigationResolver.resolve("person@localhost:8080"),
+        )
+    }
+
+    @Test
+    fun explicitHttpUserinfoRemainsOutsideBareHostInferenceChange() {
+        val address = "https://person@example.com/path"
+        assertTrue(NavigationResolver.isAllowedWebUrl(address))
+        assertEquals(address, NavigationResolver.resolve(address))
+    }
+
+    @Test
     fun bareLocalhostWithPortUpgradesToHttps() {
         assertEquals(
             "https://localhost:8080/path",
