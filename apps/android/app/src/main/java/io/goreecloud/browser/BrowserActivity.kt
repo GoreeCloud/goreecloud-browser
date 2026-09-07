@@ -20,6 +20,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
+import android.view.accessibility.AccessibilityManager
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.webkit.CookieManager
@@ -56,6 +57,11 @@ class BrowserActivity : Activity() {
     private lateinit var reloadButton: ImageButton
     private lateinit var progressBar: ProgressBar
     private lateinit var glaze: GlazeNativeStyle
+    private lateinit var accessibilityManager: AccessibilityManager
+
+    private val accessibilityStateListener = AccessibilityManager.AccessibilityStateChangeListener { enabled ->
+        if (enabled) setTopChromeVisible(true)
+    }
 
     private var currentUrl: String = NavigationResolver.SEARCH_HOME
     private var pageLoading = false
@@ -63,6 +69,7 @@ class BrowserActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        accessibilityManager = getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
         glaze = GlazeNativeStyle(this)
         glaze.applyWindow(this)
 
@@ -78,6 +85,17 @@ class BrowserActivity : Activity() {
             updateOmniboxPresentation()
             updateNavigationControls()
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        accessibilityManager.addAccessibilityStateChangeListener(accessibilityStateListener)
+        if (accessibilityManager.isEnabled) setTopChromeVisible(true)
+    }
+
+    override fun onStop() {
+        accessibilityManager.removeAccessibilityStateChangeListener(accessibilityStateListener)
+        super.onStop()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -329,16 +347,20 @@ class BrowserActivity : Activity() {
         }
 
         webView.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
-            if (!addressField.hasFocus()) {
-                val delta = scrollY - oldScrollY
-                when {
-                    scrollY <= dp(GlazeContract.CHROME_GUTTER_DP) -> setTopChromeVisible(true)
-                    delta > dp(GlazeContract.SCROLL_DIRECTION_SLOP_DP) &&
-                        scrollY > dp(GlazeContract.AUTO_HIDE_SCROLL_THRESHOLD_DP) ->
-                        setTopChromeVisible(false)
-                    delta < -dp(GlazeContract.SCROLL_DIRECTION_SLOP_DP) ->
-                        setTopChromeVisible(true)
-                }
+            when (
+                BrowserChromeVisibilityPolicy.forScroll(
+                    addressFocused = addressField.hasFocus(),
+                    accessibilityEnabled = accessibilityManager.isEnabled,
+                    scrollY = scrollY,
+                    oldScrollY = oldScrollY,
+                    chromeGutterPx = dp(GlazeContract.CHROME_GUTTER_DP),
+                    directionSlopPx = dp(GlazeContract.SCROLL_DIRECTION_SLOP_DP),
+                    autoHideThresholdPx = dp(GlazeContract.AUTO_HIDE_SCROLL_THRESHOLD_DP),
+                )
+            ) {
+                BrowserChromeVisibilityPolicy.Decision.SHOW -> setTopChromeVisible(true)
+                BrowserChromeVisibilityPolicy.Decision.HIDE -> setTopChromeVisible(false)
+                BrowserChromeVisibilityPolicy.Decision.KEEP -> Unit
             }
         }
 
