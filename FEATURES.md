@@ -22,14 +22,17 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 
 - Installable debug-signed APK target.
 - Package `io.goreecloud.browser.beta`.
-- Current stacked Development candidate identity `0.1.0-beta.1+android.14` / versionCode `10014`.
+- Current stacked Development candidate identity `0.1.0-beta.1+android.15` / versionCode `10015`.
 - Android API 26 minimum and API 35 target.
 - Android System WebView/Chromium rendering dependency behind GoreeCloud-owned product behavior.
 - Back, Forward, Reload, Go, unified address/search field, progress state, and web-content region.
-- Direct HTTP/HTTPS navigation.
-- HTTPS upgrade for bare hosts.
+- Structurally validated direct HTTP/HTTPS navigation.
+- Malformed explicit HTTP(S) authority input fails closed to GoreeCloud Search Home rather than being forwarded to WebView or silently converted into a search query.
+- Optional URI authority ports are accepted only when decimal and within `0..65535`.
+- HTTPS upgrade for recognized bare hosts, including `localhost:port` and bracketed IPv6-with-port input.
+- Valid Unicode HTTP(S) host input remains directly navigable without this slice attempting IDN normalization or declaring IDN/confusable safety.
 - GoreeCloud Search for non-URL input.
-- Browser-intent handling for HTTP/HTTPS links.
+- Browser-intent handling for structurally allowed HTTP/HTTPS links.
 - TLS certificate errors fail closed.
 - Android Safe Browsing enabled with return-to-safety behavior.
 - Mixed-content loading disabled.
@@ -49,10 +52,10 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 - Unfocused condensed address presentation removes Unicode bidi-formatting controls, including LRM/RLM, Arabic Letter Mark, embedding/override controls, and isolate controls, while preserving ordinary RTL letters.
 - Unfocused condensed address presentation preserves any explicitly parsed URL port, including non-default ports such as `:8443` and explicitly written default ports such as HTTPS `:443`.
 - Focused omnibox editing continues to expose the untouched authoritative `currentUrl`; the presentation sanitizer/condensing helper does not rewrite navigation, search, clipboard/share URLs, WebView requests, persisted state, or network behavior.
-- Unit tests for Browser-owned navigation resolution, address presentation including explicit-port preservation and bidi-control sanitization, GLAZE UI mapping, accessibility-aware top-chrome visibility policy, large-text content-height source contract, bounded RTL directionality source contract, Android string-resource localization foundation, debug pseudolocale configuration, and focused-vs-unfocused URL source separation.
+- Unit tests for Browser-owned navigation resolution including malformed explicit authority fail-closed behavior, Unicode direct navigation, localhost/IPv6 explicit-port bare-host upgrades and invalid-port handling; address presentation including explicit-port preservation and bidi-control sanitization; GLAZE UI mapping; accessibility-aware top-chrome visibility policy; large-text content-height source contract; bounded RTL directionality source contract; Android string-resource localization foundation; debug pseudolocale configuration; and focused-vs-unfocused URL source separation.
 - CI unit test, Android lint, APK build, exact-source verification, signature/package/version/pseudolocale verification, SHA-256/source-revision recording, and artifact upload.
 
-The string-resource extraction and pseudolocales are localization testability only. Pseudolocales are synthetic Android test resources, not translations. The bidi sanitizer and explicit-port preservation are presentation-only hardening. These changes do not establish translation completeness/quality, locale fallback/plural/grammar behavior, complete origin/Unicode/IDN/confusable handling, bidirectional URL/address editing acceptance, rendered pseudolocale or RTL behavior, or representative locale/device acceptance.
+The string-resource extraction and pseudolocales are localization testability only. Pseudolocales are synthetic Android test resources, not translations. The bidi sanitizer and explicit-port preservation are presentation-only hardening, while navigation-authority validation is local syntax/shape hardening only. These changes do not establish DNS validity, certificate trust, origin safety, Wardveil trust, translation completeness/quality, locale fallback/plural/grammar behavior, complete Unicode/IDN/confusable handling, bidirectional URL/address editing acceptance, rendered pseudolocale or RTL behavior, or representative locale/device acceptance.
 
 ## Android beta — GLAZE UI V1.2 source mapping candidate
 
@@ -73,15 +76,16 @@ The string-resource extraction and pseudolocales are localization testability on
 - Debug `en-XA` and `ar-XB` pseudolocale generation is build-tested and APK-verified for later localization stress testing, without claiming rendered acceptance.
 - Condensed unfocused address presentation strips Unicode bidi-formatting controls without mutating the authoritative URL, while ordinary RTL letters remain permitted in presentation text.
 - Condensed unfocused address presentation retains every explicitly parsed URL port so a visually condensed host does not hide an explicit endpoint component.
+- Browser-owned navigation resolution now requires structurally valid HTTP(S) authority syntax and bounded optional ports before a URL is reported allowed; this is a navigation-policy source contract, not Glaze security authority.
 - Light, Dark, and Deep Dark structural appearance targets recorded.
 - Upper-left optical light direction, Frost White neutral material reference, and bounded Ice Blue atmospheric accent recorded without restoring chromatic substrate tinting.
 - Nested backdrop blur remains disabled.
 - Environmental Color Memory is not required and this mapping does not introduce environmental-content sampling or remote color derivation.
 - Calm expression and Balanced clarity retained for the current Browser shell.
 - Effects-free fallback remains first class and does not require blur/transparency.
-- Contract tests cover current Stable provenance, target floors, Application authority, Glaze budget, V1.2 neutral-material/appearance bounds, no nested blur, no required environmental sampling, preserved semantic-state priority, text-content-height source contract, bounded RTL directionality source requirements, Android localization-resource foundation, debug-only pseudolocale configuration, presentation-only bidi address sanitization, and explicit-port presentation correctness.
+- Contract tests cover current Stable provenance, target floors, Application authority, Glaze budget, V1.2 neutral-material/appearance bounds, no nested blur, no required environmental sampling, preserved semantic-state priority, text-content-height source contract, bounded RTL directionality source requirements, Android localization-resource foundation, debug-only pseudolocale configuration, presentation-only bidi address sanitization, explicit-port presentation correctness, and the independent Browser navigation-authority source boundary.
 
-This section is repository-local source migration and hardening evidence only. A successful build does not establish Browser-specific V1.2 rendered/native-device visual, accessibility, localization, Human Visual Excellence, performance, or production acceptance. The source changes do not establish representative TalkBack, Switch Access, Voice Access, rendered 200% text, translated/localized copy, rendered pseudolocale/RTL behavior, focus-order, announcement-quality, complete origin/Unicode/IDN/confusable behavior, bidirectional editing, or physical-device acceptance.
+This section is repository-local source migration and hardening evidence only. A successful build does not establish Browser-specific V1.2 rendered/native-device visual, accessibility, localization, Human Visual Excellence, performance, security, or production acceptance. The source changes do not establish representative TalkBack, Switch Access, Voice Access, rendered 200% text, translated/localized copy, rendered pseudolocale/RTL behavior, focus-order, announcement-quality, DNS validity, certificate or origin trust, complete Unicode/IDN/confusable behavior, bidirectional editing, or physical-device acceptance.
 
 ## Planned / incomplete Android capabilities
 
@@ -99,7 +103,7 @@ This section is repository-local source migration and hardening evidence only. A
 - Complete Touch Assistance Android runtime mapping and native acceptance where supported.
 - Actual translated/localized Browser resources and locale coverage.
 - Representative pseudolocale rendering and layout stress review on supported test devices.
-- Complete origin/Unicode/IDN/confusable review and representative bidirectional URL/address editing acceptance.
+- Complete DNS/origin/Unicode/IDN/confusable review and representative bidirectional URL/address editing acceptance.
 - Representative TalkBack, Switch Access, Voice Access, rendered 200% text, translation-quality/locale fallback, rendered RTL directionality, and accessibility announcement/focus-order acceptance.
 - Bookmarks, history, library, settings, downloads UI, Reader Mode, and Wayfinder mobile surfaces.
 - Controlled beta/production signing, managed updates, rollback, and migration.
