@@ -32,11 +32,16 @@ class NavigationResolverTest {
         assertFalse(NavigationResolver.isAllowedWebUrl("https://not a url"))
         assertFalse(NavigationResolver.isAllowedWebUrl("https://example.com:bad"))
         assertFalse(NavigationResolver.isAllowedWebUrl("https://example.com:65536"))
+        assertFalse(NavigationResolver.isAllowedWebUrl("https:example.com"))
 
         assertEquals(NavigationResolver.SEARCH_HOME, NavigationResolver.resolve("https://"))
         assertEquals(
             NavigationResolver.SEARCH_HOME,
             NavigationResolver.resolve("https://example.com:bad"),
+        )
+        assertEquals(
+            NavigationResolver.SEARCH_HOME,
+            NavigationResolver.resolve("https:example.com"),
         )
     }
 
@@ -74,6 +79,44 @@ class NavigationResolverTest {
         assertEquals(
             "https://search.goreecloud.com/search?q=privacy%20browser",
             NavigationResolver.resolve("privacy browser"),
+        )
+    }
+
+    @Test
+    fun malformedWebSchemesNeverQualifyForExternalHandoff() {
+        assertFalse(
+            NavigationResolver.shouldHandOffExternally(
+                "https://example.com:bad",
+                hasUserGesture = true,
+            ),
+        )
+        assertFalse(
+            NavigationResolver.shouldHandOffExternally(
+                "https:example.com",
+                hasUserGesture = true,
+            ),
+        )
+        assertFalse(
+            NavigationResolver.shouldHandOffExternally(
+                "HTTP://example.com:65536",
+                hasUserGesture = true,
+            ),
+        )
+    }
+
+    @Test
+    fun nonWebSchemeNeedsUserGestureForExternalHandoff() {
+        assertTrue(
+            NavigationResolver.shouldHandOffExternally(
+                "intent://example",
+                hasUserGesture = true,
+            ),
+        )
+        assertFalse(
+            NavigationResolver.shouldHandOffExternally(
+                "intent://example",
+                hasUserGesture = false,
+            ),
         )
     }
 

@@ -369,7 +369,9 @@ class BrowserActivity : Activity() {
                 val target = request.url.toString()
                 if (NavigationResolver.isAllowedWebUrl(target)) return false
 
-                if (request.hasGesture()) openExternalUri(request.url)
+                if (NavigationResolver.shouldHandOffExternally(target, request.hasGesture())) {
+                    openExternalUri(request.url)
+                }
                 return true
             }
 

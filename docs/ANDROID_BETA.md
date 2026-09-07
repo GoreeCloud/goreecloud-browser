@@ -2,8 +2,8 @@
 
 **Target:** Android installable beta APK  
 **Package:** `io.goreecloud.browser.beta`  
-**Candidate version:** `0.1.0-beta.1+android.15`  
-**Candidate versionCode:** `10015`  
+**Candidate version:** `0.1.0-beta.1+android.16`  
+**Candidate versionCode:** `10016`  
 **Minimum Android:** 8.0 / API 26  
 **Target Android API:** 35  
 **Current GLAZE UI target:** 1.2.0 Stable  
@@ -15,13 +15,13 @@
 
 This target is a real installable GoreeCloud Browser beta for Android. Android System WebView/Chromium is a replaceable web-engine dependency; GoreeCloud owns the Android browser chrome, navigation/search policy, privacy defaults, security gates, design-system mapping, and product behavior.
 
-The `+android.15` slice is stacked on the V1.2 migration, `+android.8` accessibility-chrome hardening, `+android.9` large-text content-height hardening, `+android.10` RTL directionality hardening, `+android.11` localization-resource foundation, `+android.12` debug pseudolocale testability, `+android.13` bidi-presentation hardening, and `+android.14` explicit-port presentation correctness. It hardens Browser-owned web-navigation authority parsing: structurally valid HTTP(S) authorities remain directly navigable, malformed explicit HTTP(S) input fails closed to GoreeCloud Search Home, optional authority ports must be decimal and within `0..65535`, and recognized bare `localhost:port` and bracketed IPv6-with-port inputs are correctly upgraded to HTTPS. Valid Unicode HTTP(S) host input remains permitted without this slice performing IDN normalization or declaring IDN/confusable safety.
+The `+android.16` slice is stacked on the V1.2 migration, `+android.8` accessibility-chrome hardening, `+android.9` large-text content-height hardening, `+android.10` RTL directionality hardening, `+android.11` localization-resource foundation, `+android.12` debug pseudolocale testability, `+android.13` bidi-presentation hardening, `+android.14` explicit-port presentation correctness, and `+android.15` navigation-authority validation. It keeps malformed HTTP(S) page-link attempts inside Browser rather than handing them to another Android application merely because the request has a user gesture. External Android handoff remains eligible only for a user-gestured non-web scheme. It also treats malformed explicit `http:` / `https:` input without `//` as a failed web-navigation attempt that goes to GoreeCloud Search Home rather than becoming query text.
 
 The inherited debug build still generates Android `en-XA` and `ar-XB` pseudolocales only for the debug beta build type. Android CI verifies the generated debug APK itself: `aapt` badging must contain pseudolocalized `application-label-en-XA` and `application-label-ar-XB` resources and list both `en-XA` and `ar-XB` locales before the artifact can be uploaded.
 
-This remains localization/directionality testability plus source/runtime presentation and navigation-policy hardening only. Pseudolocales are synthetic Android test resources, not translations. Bidi sanitization and explicit-port preservation are presentation-only. Navigation-authority validation is local syntax/shape validation only and is not DNS validation, certificate verification, origin trust, IDN/confusable safety, or a Wardveil verdict. This slice does not establish rendered pseudolocale behavior, translation completeness/quality, locale fallback/plural/grammar behavior, rendered RTL layout, combined locale + large-text behavior, or representative locale/device acceptance.
+This remains localization/directionality testability plus source/runtime presentation and navigation/handoff-policy hardening only. Pseudolocales are synthetic Android test resources, not translations. Bidi sanitization and explicit-port preservation are presentation-only. Navigation-authority and external-handoff validation are local syntax/routing boundaries only and are not DNS validation, certificate verification, origin trust, IDN/confusable safety, complete scheme/intent/deep-link safety, external-application trust, or a Wardveil verdict. This slice does not establish rendered pseudolocale behavior, translation completeness/quality, locale fallback/plural/grammar behavior, rendered RTL layout, combined locale + large-text behavior, or representative locale/device acceptance.
 
-Historical `+android.5` / Glaze UI 2.2, intermediate `+android.6` / V1.1, parent `+android.7` / V1.2-only mapping, `+android.8` accessibility-chrome candidate, `+android.9` large-text candidate, `+android.10` RTL-directionality candidate, `+android.11` localization-resource candidate, `+android.12` pseudolocale-testability candidate, `+android.13` bidi-presentation candidate, and `+android.14` explicit-port-presentation candidate remain rollback/comparison inputs. Central GLAZE UI V1.2 Stable promotion and these source hardening slices do not auto-promote Browser.
+Historical `+android.5` / Glaze UI 2.2, intermediate `+android.6` / V1.1, parent `+android.7` / V1.2-only mapping, `+android.8` accessibility-chrome candidate, `+android.9` large-text candidate, `+android.10` RTL-directionality candidate, `+android.11` localization-resource candidate, `+android.12` pseudolocale-testability candidate, `+android.13` bidi-presentation candidate, `+android.14` explicit-port-presentation candidate, and `+android.15` navigation-authority candidate remain rollback/comparison inputs. Central GLAZE UI V1.2 Stable promotion and these source hardening slices do not auto-promote Browser.
 
 ## Implemented beta behavior
 
@@ -30,11 +30,13 @@ The Android beta provides:
 - GoreeCloud Browser Beta application identity and launcher activity;
 - structurally validated HTTP/HTTPS browser intent handling;
 - direct HTTP/HTTPS navigation independent from search when the bounded URI authority is valid;
-- malformed explicit HTTP(S) input failing closed to GoreeCloud Search Home instead of being forwarded to WebView or converted to a search query;
+- malformed explicit HTTP(S) input, including explicit `http:` / `https:` forms without `//`, failing closed to GoreeCloud Search Home instead of being forwarded to WebView or converted to a search query;
 - optional authority-port validation requiring decimal values in the inclusive `0..65535` range;
 - bare-host HTTPS upgrade, including recognized `localhost:port` and bracketed IPv6-with-port input;
 - valid Unicode HTTP(S) host input preserved for direct navigation without IDN-normalization or confusable-safety claims;
 - GoreeCloud Search as the sole query authority for ordinary non-URL input;
+- Browser-owned WebView routing that keeps malformed HTTP(S) page-link attempts inside Browser instead of externalizing them through Android `ACTION_VIEW`;
+- external Android handoff eligibility only for a user-gestured non-web scheme;
 - JavaScript and DOM storage for modern web compatibility;
 - cleartext application traffic disabled by the Android manifest;
 - mixed-content loading disabled;
@@ -48,15 +50,16 @@ The Android beta provides:
 - content-height text-bearing chrome so Android font scaling can expand the omnibox and menu actions rather than forcing them into fixed 56dp boxes;
 - application-level Android RTL support and native auto-mirroring for directional Back/Forward vector controls;
 - Browser-owned visible/accessibility natural-language chrome copy sourced from Android string resources, with protocol/status tokens explicitly non-translatable;
+- a source-wiring contract that requires `BrowserActivity` to consume the Browser-owned external-handoff policy and rejects the prior unconditional user-gesture externalization form;
 - debug-only Android pseudolocale generation for `en-XA` and `ar-XB`;
 - presentation-only removal of Unicode bidi-formatting controls from the condensed unfocused address, including LRM/RLM, Arabic Letter Mark, embedding/override controls, and isolate controls;
 - preservation of ordinary RTL letters in presentation text;
 - preservation of explicitly parsed URL ports in condensed presentation, including non-default and explicitly written default ports;
 - preservation of the untouched authoritative `currentUrl` when the omnibox is focused;
-- unit tests for unified address/search policy including malformed explicit authority fail-closed behavior, Unicode direct navigation, localhost/IPv6 explicit-port bare-host upgrades and invalid-port handling; address presentation including bidi-control sanitization and explicit-port preservation; accessibility-aware chrome visibility; GLAZE UI Android mapping/large-text source contracts; bounded RTL directionality source requirements; localization-resource source requirements; debug-only pseudolocale build boundary; and focused-vs-unfocused URL source separation;
+- unit tests for unified address/search and handoff policy including malformed explicit authority fail-closed behavior, malformed web-scheme handling without `//`, Unicode direct navigation, localhost/IPv6 explicit-port bare-host upgrades, invalid-port handling, malformed HTTP(S) handoff rejection, and user-gesture-gated non-web handoff; address presentation including bidi-control sanitization and explicit-port preservation; accessibility-aware chrome visibility; GLAZE UI Android mapping/large-text source contracts; bounded RTL directionality source requirements; localization-resource and Activity-handoff wiring requirements; debug-only pseudolocale build boundary; and focused-vs-unfocused URL source separation;
 - CI build, lint, unit-test, APK signature verification, package/label/version/pseudolocale verification, SHA-256 generation, exact-source revision recording, and artifact upload.
 
-The presence of string resources and pseudolocales is not translated-locale acceptance. The default Browser resource set remains English until separately governed translations are added and validated. The address presentation helper does not rewrite navigation, search, clipboard/share URLs, WebView requests, persisted state, permissions, telemetry, or network traffic. The navigation-authority validator performs local parsing only and does not resolve DNS, validate certificates, classify origin trust, or contact a remote service.
+The presence of string resources and pseudolocales is not translated-locale acceptance. The default Browser resource set remains English until separately governed translations are added and validated. The address presentation helper does not rewrite navigation, search, clipboard/share URLs, WebView requests, persisted state, permissions, telemetry, or network traffic. The navigation-authority and external-handoff validators perform local parsing/routing only and do not resolve DNS, validate certificates, classify origin trust, establish scheme/intent/deep-link safety, trust external applications, or contact a remote service.
 
 ## Mobile browser chrome
 
@@ -86,7 +89,7 @@ The beta preserves the current compact native mobile structure:
 
 The Browser menu is not a substitute for future full Settings, tabs, private-browsing, permissions, downloads, security, privacy, or account surfaces.
 
-The accessibility-aware collapse policy, large-text layout changes, RTL-directionality changes, localization-resource extraction, pseudolocale generation, bidi-address presentation hardening, explicit-port presentation hardening, and navigation-authority validation are source/build/runtime hardening and testability. Representative TalkBack, Switch Access, Voice Access, focus-order, announcement-quality, rendered 200% text behavior, rendered pseudolocale behavior, actual translated/localized copy, translation quality/completeness, DNS validity, certificate/origin trust, complete Unicode/IDN/confusable behavior, bidirectional URL/address editing, rendered RTL directionality, and physical-device behavior remain separate validation gates.
+The accessibility-aware collapse policy, large-text layout changes, RTL-directionality changes, localization-resource extraction, pseudolocale generation, bidi-address presentation hardening, explicit-port presentation hardening, navigation-authority validation, and malformed-web external-handoff hardening are source/build/runtime hardening and testability. Representative TalkBack, Switch Access, Voice Access, focus-order, announcement-quality, rendered 200% text behavior, rendered pseudolocale behavior, actual translated/localized copy, translation quality/completeness, DNS validity, certificate/origin trust, complete Unicode/IDN/confusable behavior, complete scheme/intent/deep-link and external-app handoff behavior, bidirectional URL/address editing, rendered RTL directionality, and physical-device behavior remain separate validation gates.
 
 ## GLAZE UI V1.2 Android mapping
 
@@ -114,7 +117,7 @@ The current Browser source mapping records:
 - Browser-owned natural-language chrome/accessibility copy sourced from Android resources for future localization, with protocol/status tokens explicitly non-translatable;
 - debug-only `en-XA` and `ar-XB` pseudolocales for later expansion/RTL stress testing;
 - condensed unfocused address presentation strips Unicode bidi-formatting controls, preserves ordinary RTL letters and explicitly parsed ports, and does not modify the authoritative full URL exposed on focus;
-- Browser navigation applies a separate local authority-syntax validation contract that cannot manufacture Glaze security, origin, certificate, or Wardveil authority;
+- Browser navigation applies separate local authority-syntax and external-handoff contracts that cannot manufacture Glaze security, origin, certificate, scheme, intent, external-application, or Wardveil authority;
 - Light, Dark, and Deep Dark appearance targets;
 - Calm expression and Balanced clarity;
 - upper-left optical light direction;
@@ -125,13 +128,13 @@ The current Browser source mapping records:
 - visible semantic focus/state treatment;
 - effects-free fallback that does not require blur, transparency, or animation;
 - vector icons for Browser-owned chrome;
-- explicit no-action-bar, no-development-status, Browser-owned-menu, accessibility-aware scroll-chrome, text-content-height, bounded RTL-directionality, localization-resource, debug-pseudolocale, bidi-address-presentation, explicit-port-presentation, and independent navigation-authority source contracts.
+- explicit no-action-bar, no-development-status, Browser-owned-menu, accessibility-aware scroll-chrome, text-content-height, bounded RTL-directionality, localization-resource, debug-pseudolocale, bidi-address-presentation, explicit-port-presentation, navigation-authority, and malformed-web external-handoff source contracts.
 
-Protected semantic meaning, focus, accessibility, and required boundaries override atmosphere. GLAZE UI presentation does not manufacture security, privacy, identity, recovery, coordination, Search, Sync, DNS, certificate, origin, or Wardveil truth.
+Protected semantic meaning, focus, accessibility, and required boundaries override atmosphere. GLAZE UI presentation does not manufacture security, privacy, identity, recovery, coordination, Search, Sync, DNS, certificate, origin, scheme, intent, external-application, or Wardveil truth.
 
 The 56dp Touch Assistance floor is represented in source, but this branch does not claim a complete GoreeCloud Touch Assistance runtime preference or OS mapping.
 
-This is **not** complete downstream GLAZE UI acceptance. Native-device visual quality, TalkBack, Switch Access, Voice Access, rendered 200% text/large-text reflow, rendered pseudolocale stress review, actual translations and translation-quality/completeness review, locale fallback/grammar behavior, complete DNS/origin/Unicode/IDN/confusable review, bidirectional URL/address editing, rendered RTL directionality, Reduced Motion, Reduced Transparency/effects-free behavior, contrast/high-contrast behavior, orientation, foldable/safe-area behavior, performance, Touch Assistance behavior, and representative physical-hardware acceptance remain separate gates.
+This is **not** complete downstream GLAZE UI acceptance. Native-device visual quality, TalkBack, Switch Access, Voice Access, rendered 200% text/large-text reflow, rendered pseudolocale stress review, actual translations and translation-quality/completeness review, locale fallback/grammar behavior, complete DNS/origin/Unicode/IDN/confusable review, complete scheme/intent/deep-link and external-handoff review, bidirectional URL/address editing, rendered RTL directionality, Reduced Motion, Reduced Transparency/effects-free behavior, contrast/high-contrast behavior, orientation, foldable/safe-area behavior, performance, Touch Assistance behavior, and representative physical-hardware acceptance remain separate gates.
 
 ## APK build and evidence
 
@@ -151,7 +154,7 @@ Expected APK path:
 apps/android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Historical `+android.5`, intermediate `+android.6`, parent `+android.7`, `+android.8`, `+android.9`, `+android.10`, `+android.11`, `+android.12`, `+android.13`, and `+android.14` evidence are not inherited by this materially changed `+android.15` candidate. Fresh exact-source workflow evidence is required again after documentation reconciliation.
+Historical `+android.5`, intermediate `+android.6`, parent `+android.7`, `+android.8`, `+android.9`, `+android.10`, `+android.11`, `+android.12`, `+android.13`, `+android.14`, and `+android.15` evidence are not inherited by this materially changed `+android.16` candidate. Fresh exact-source workflow evidence is required again after documentation reconciliation.
 
 ## Signing boundary
 
@@ -161,7 +164,9 @@ CI uses Android debug signing so the APK is installable without placing a GoreeC
 
 The beta fails closed where platform integration is incomplete:
 
-- malformed explicit HTTP(S) authority input fails to GoreeCloud Search Home rather than being forwarded to WebView or submitted as a search query;
+- malformed explicit HTTP(S) input fails to GoreeCloud Search Home rather than being forwarded to WebView or submitted as a search query;
+- malformed HTTP(S) page-link attempts remain Browser-owned rather than being externalized through Android `ACTION_VIEW` merely because a user gesture occurred;
+- external Android handoff requires both a user gesture and a non-web scheme;
 - downloads remain unavailable until Wardveil verification/release is integrated;
 - site permission and geolocation requests are denied rather than silently granted;
 - certificate errors cannot be bypassed by this shell;
@@ -169,13 +174,13 @@ The beta fails closed where platform integration is incomplete:
 - third-party cookies are disabled;
 - local file/content access from WebView is disabled.
 
-The accessibility chrome policy reads only `AccessibilityManager.isEnabled` and listens only for enabled/disabled state changes. It does not enumerate installed or enabled accessibility services, retain accessibility state, inspect accessibility event content, or add network/telemetry behavior. The large-text reflow change uses Android-native layout measurement and existing system font scaling. The RTL directionality change uses Android manifest/vector/layout source semantics. The localization-resource change moves Browser-owned copy between application source/resource files. The pseudolocale change generates synthetic debug resources at build time. The bidi-presentation change transforms only the local condensed address string. The explicit-port change uses the already parsed local `URI.port` value for the same condensed presentation. The navigation-authority change performs local URI/authority parsing only; malformed explicit navigation text fails to Search Home specifically so it is not silently disclosed to GoreeCloud Search as query text. These changes add no user-data collection, service enumeration, new network traffic, telemetry, permissions, persistent accessibility/locale state, or user-content inspection.
+The accessibility chrome policy reads only `AccessibilityManager.isEnabled` and listens only for enabled/disabled state changes. It does not enumerate installed or enabled accessibility services, retain accessibility state, inspect accessibility event content, or add network/telemetry behavior. The large-text reflow change uses Android-native layout measurement and existing system font scaling. The RTL directionality change uses Android manifest/vector/layout source semantics. The localization-resource change moves Browser-owned copy between application source/resource files. The pseudolocale change generates synthetic debug resources at build time. The bidi-presentation change transforms only the local condensed address string. The explicit-port change uses the already parsed local `URI.port` value for the same condensed presentation. The navigation-authority change performs local URI/authority parsing only; malformed explicit navigation text fails to Search Home specifically so it is not silently disclosed to GoreeCloud Search as query text. The malformed-web handoff change applies a local scheme/gesture rule only; rejected HTTP(S) link attempts stay in Browser so they are not disclosed to another Android app through `ACTION_VIEW`. These changes add no user-data collection, service enumeration, new network traffic, telemetry, permissions, persistent accessibility/locale state, or user-content inspection.
 
-These behaviors do not establish complete Wardveil Security or Privacy Shield acceptance. Android engine-level Safe Browsing is not a substitute for GoreeCloud Wardveil runtime evidence. The omnibox scheme indicator is parsed-URL presentation, not a Wardveil or certificate-verification badge. Navigation-authority validation, bidi sanitization, and explicit-port preservation do not establish DNS validity, certificate trust, site trust, complete origin safety, IDN/confusable safety, or complete anti-spoofing acceptance.
+These behaviors do not establish complete Wardveil Security or Privacy Shield acceptance. Android engine-level Safe Browsing is not a substitute for GoreeCloud Wardveil runtime evidence. The omnibox scheme indicator is parsed-URL presentation, not a Wardveil or certificate-verification badge. Navigation/handoff validation, bidi sanitization, and explicit-port preservation do not establish DNS validity, certificate trust, site trust, complete origin safety, IDN/confusable safety, complete scheme/intent/deep-link safety, external-application trust, or complete anti-spoofing acceptance.
 
 ## Deliberate beta restrictions
 
-The Android beta does not yet claim production/Stable readiness, complete GLAZE UI V1.2 downstream acceptance, complete Touch Assistance runtime mapping, rendered pseudolocale acceptance, actual translation/localization acceptance, complete DNS/origin/Unicode/IDN/confusable or RTL/bidirectional acceptance, production first-party service integration, Private Browsing acceptance, Android Wardveil download release, complete Privacy Shield behavior, Everkeep acceptance, Browser-owned website permission UI, accepted multi-tab product UI, controlled production signing, managed update/rollback, store publication, or sustained real-device acceptance.
+The Android beta does not yet claim production/Stable readiness, complete GLAZE UI V1.2 downstream acceptance, complete Touch Assistance runtime mapping, rendered pseudolocale acceptance, actual translation/localization acceptance, complete DNS/origin/Unicode/IDN/confusable or RTL/bidirectional acceptance, complete scheme/intent/deep-link or external-application handoff acceptance, production first-party service integration, Private Browsing acceptance, Android Wardveil download release, complete Privacy Shield behavior, Everkeep acceptance, Browser-owned website permission UI, accepted multi-tab product UI, controlled production signing, managed update/rollback, store publication, or sustained real-device acceptance.
 
 ## Promotion gates
 
@@ -194,10 +199,11 @@ Before Android can be described as production-approved or Stable, GoreeCloud mus
 11. Rendered `en-XA` and `ar-XB` pseudolocale stress review across representative screen sizes/configurations.
 12. Actual translated/localized Browser resources with translation completeness/quality, locale fallback/plural/grammar, and representative locale acceptance.
 13. Complete DNS/origin/Unicode/IDN/confusable review plus bidirectional URL/address editing and rendered RTL directionality acceptance.
-14. TalkBack, Switch Access, Voice Access, rendered 200% text, Reduced Motion, Reduced Transparency, Increased Contrast/high-contrast behavior, and Touch Assistance acceptance where supported across representative locales.
-15. Signed upgrade/downgrade/rollback and application-data migration tests.
-16. Release artifact provenance, checksums, release notes, and production acceptance evidence.
+14. Complete scheme/intent/deep-link and external-application handoff acceptance.
+15. TalkBack, Switch Access, Voice Access, rendered 200% text, Reduced Motion, Reduced Transparency, Increased Contrast/high-contrast behavior, and Touch Assistance acceptance where supported across representative locales.
+16. Signed upgrade/downgrade/rollback and application-data migration tests.
+17. Release artifact provenance, checksums, release notes, and production acceptance evidence.
 
 ## Status language
 
-A passing CI workflow proves only that the exact source revision produced a structurally valid installable debug-signed APK and passed the checks actually run, including generated debug pseudolocale presence, source-level bidi and explicit-port presentation tests, malformed explicit HTTP(S) authority fail-closed tests, bounded authority-port validation, Unicode direct-navigation coverage, and bare localhost/bracketed-IPv6 port-upgrade coverage. It does not by itself prove production security, privacy, performance, compatibility, accessibility, rendered pseudolocale behavior, translation/localization quality, DNS validity, certificate/origin trust, complete Unicode/IDN/confusable handling, directionality/editing acceptance, recovery, GLAZE UI native-device acceptance, or Stable qualification.
+A passing CI workflow proves only that the exact source revision produced a structurally valid installable debug-signed APK and passed the checks actually run, including generated debug pseudolocale presence, source-level bidi and explicit-port presentation tests, malformed explicit HTTP(S) authority fail-closed tests including explicit web-scheme forms without `//`, bounded authority-port validation, Unicode direct-navigation coverage, bare localhost/bracketed-IPv6 port-upgrade coverage, malformed HTTP(S) external-handoff rejection, user-gesture-gated non-web handoff coverage, and Activity handoff-policy source wiring. It does not by itself prove production security, privacy, performance, compatibility, accessibility, rendered pseudolocale behavior, translation/localization quality, DNS validity, certificate/origin trust, complete Unicode/IDN/confusable handling, complete scheme/intent/deep-link or external-application trust, directionality/editing acceptance, recovery, GLAZE UI native-device acceptance, or Stable qualification.

@@ -36,9 +36,17 @@ object NavigationResolver {
         return authorityHost(authority) != null
     }
 
+    /**
+     * External Android handoff is reserved for an explicit user gesture on a
+     * non-web scheme. HTTP(S) attempts stay Browser-owned even when malformed,
+     * so rejected web navigation cannot escape the Browser fail-closed path.
+     */
+    fun shouldHandOffExternally(url: String, hasUserGesture: Boolean): Boolean =
+        hasUserGesture && !hasHttpScheme(url)
+
     private fun hasHttpScheme(value: String): Boolean {
-        return value.startsWith("https://", ignoreCase = true) ||
-            value.startsWith("http://", ignoreCase = true)
+        return value.startsWith("https:", ignoreCase = true) ||
+            value.startsWith("http:", ignoreCase = true)
     }
 
     private fun looksLikeHost(value: String): Boolean {

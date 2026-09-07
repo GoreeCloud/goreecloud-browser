@@ -66,6 +66,12 @@ class LocalizationSourceContractTest {
         assertTrue(activity.contains("menuAction(R.string.copy_page_address"))
         assertTrue(activity.contains("getString(R.string.beta_info, BuildConfig.VERSION_NAME)"))
         assertTrue(activity.contains("getString(R.string.address_scheme_description, schemeBadge.text)"))
+        assertTrue(
+            activity.contains(
+                "NavigationResolver.shouldHandOffExternally(target, request.hasGesture())",
+            ),
+        )
+        assertFalse(activity.contains("if (request.hasGesture()) openExternalUri(request.url)"))
     }
 
     @Test
@@ -77,7 +83,7 @@ class LocalizationSourceContractTest {
 
         assertTrue(debugBlock.contains("isPseudoLocalesEnabled = true"))
         assertFalse(releaseBlock.contains("isPseudoLocalesEnabled = true"))
-        assertTrue(debugBlock.contains("versionNameSuffix = \"+android.15\""))
+        assertTrue(debugBlock.contains("versionNameSuffix = \"+android.16\""))
     }
 
     private fun sourceText(relativePath: String): String {
