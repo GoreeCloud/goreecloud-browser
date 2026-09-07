@@ -8,24 +8,29 @@ import org.junit.Test
 class GlazeContractTest {
     @Test
     fun androidBrowserTargetsCurrentStableGlazeContract() {
-        assertEquals("1.1.0", GlazeContract.VERSION)
-        assertEquals("v1.1.0", GlazeContract.STABLE_TAG)
+        assertEquals("1.2.0", GlazeContract.VERSION)
         assertEquals(
-            "15cc76d2bcd4065552dc31c77145b63f34d9e7b2",
+            "f285b9145e27e6e7027b075c37299d101945c272",
             GlazeContract.STABLE_RELEASE_REVISION,
         )
         assertEquals(
-            "8ea1f789bbabf943c3359514dc1506b24fa3c51b",
-            GlazeContract.ACCEPTED_VISUAL_SOURCE,
+            "b0eadf9a60f73d45caffb62ffc7e9e0334cddc97",
+            GlazeContract.SOURCE_QUALIFICATION_ANCHOR,
         )
         assertEquals(
-            "contracts/v1.1/optical-refinement.json",
+            "tokens/glaze-v1.2-optical-foundation.candidate.json",
             GlazeContract.OPTICAL_CONTRACT,
+        )
+        assertEquals("css/glaze-v1.2.0.css", GlazeContract.STABLE_WEB_ENTRYPOINT)
+        assertEquals("js/glaze-v1.2.0.mjs", GlazeContract.STABLE_RUNTIME_ENTRYPOINT)
+        assertEquals(
+            "neutral-glass-is-material-color-is-accent",
+            GlazeContract.MATERIAL_RULE,
         )
     }
 
     @Test
-    fun touchTargetFloorsMatchV11AccessibilityContract() {
+    fun touchTargetFloorsMatchV12AccessibilityContract() {
         assertEquals(48, GlazeContract.targetFloorDp(touchAssistance = false))
         assertEquals(56, GlazeContract.targetFloorDp(touchAssistance = true))
         assertTrue(GlazeContract.satisfiesGeneralTargetFloor(48))
@@ -54,12 +59,12 @@ class GlazeContractTest {
     }
 
     @Test
-    fun v11OpticalAtmosphereRemainsBoundedAndNonAuthoritative() {
+    fun v12OpticalMaterialRemainsNeutralAndAccentBounded() {
         val mapping = GlazeContract.ANDROID_BROWSER_MAPPING
 
         assertEquals("upper-left", GlazeContract.OPTICAL_LIGHT_ORIGIN)
-        assertEquals("deep-teal", GlazeContract.ATMOSPHERE_PRIMARY)
-        assertEquals("soft-amber", GlazeContract.ATMOSPHERE_SECONDARY)
+        assertEquals("frost-white", GlazeContract.MATERIAL_PRIMARY)
+        assertEquals("ice-blue", GlazeContract.ATMOSPHERE_ACCENT)
         assertEquals(
             setOf(
                 GlazeContract.Appearance.Light,
