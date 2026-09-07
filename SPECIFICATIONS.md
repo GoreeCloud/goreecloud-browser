@@ -9,19 +9,19 @@ GoreeCloud Browser is an original GoreeCloud-owned native web browser. GoreeClou
 - Browser channel: `0.1.0-beta.1`
 - Production approved: No
 - Stable: No
-- Current mandatory GLAZE UI target: `1.1.0`
-- GLAZE UI Stable tag: `v1.1.0`
-- GLAZE UI Stable release revision: `15cc76d2bcd4065552dc31c77145b63f34d9e7b2`
-- Approved V1.1 visual source: `8ea1f789bbabf943c3359514dc1506b24fa3c51b`
-- Android V1.1 source mapping: migration candidate on `+android.6`; downstream native-device acceptance pending
+- Current mandatory GLAZE UI target: `1.2.0`
+- GLAZE UI Stable promotion merge revision: `f285b9145e27e6e7027b075c37299d101945c272`
+- GLAZE UI V1.2 source-qualification anchor: `b0eadf9a60f73d45caffb62ffc7e9e0334cddc97`
+- GLAZE UI optical foundation: `tokens/glaze-v1.2-optical-foundation.candidate.json`
+- Android V1.2 source mapping: Development migration candidate on `+android.7`; downstream rendered/native-device acceptance pending
 - Canonical source repository: `GoreeCloud/goreecloud-browser`
 
 ## Android beta
 
 - User-facing identity: GoreeCloud Browser Beta
 - Debug-beta package: `io.goreecloud.browser.beta`
-- Debug-beta version on this migration branch: `0.1.0-beta.1+android.6`
-- Android versionCode: `10006`
+- Debug-beta version on this migration branch: `0.1.0-beta.1+android.7`
+- Android versionCode: `10007`
 - Minimum Android: API 26
 - Compile/target API: 35
 - Java/Kotlin target: 17
@@ -81,12 +81,15 @@ The installed beta uses a Browser-owned two-region mobile shell:
 
 Expanded fixed Browser chrome is 128dp before Android system bars. The collapsed scrolling state retains only the 56dp bottom navigation toolbar.
 
-## GLAZE UI V1.1 Android contract
+## GLAZE UI V1.2 Android contract
 
-This migration maps Browser-owned Android chrome to the sole current Stable consumer target, GLAZE UI V1.1 (`1.1.0`). The source records Stable release revision `15cc76d2bcd4065552dc31c77145b63f34d9e7b2`, approved V1.1 visual source `8ea1f789bbabf943c3359514dc1506b24fa3c51b`, and optical contract `contracts/v1.1/optical-refinement.json`.
+This migration maps Browser-owned Android chrome to the current Stable consumer target, GLAZE UI V1.2 (`1.2.0`). The source records Stable promotion merge revision `f285b9145e27e6e7027b075c37299d101945c272`, V1.2 source-qualification anchor `b0eadf9a60f73d45caffb62ffc7e9e0334cddc97`, optical foundation `tokens/glaze-v1.2-optical-foundation.candidate.json`, and Stable web/runtime entrypoints.
+
+The `.candidate` suffix in the promoted optical-foundation source path is upstream provenance and does not make V1.2 a Candidate. Live lifecycle authority is V1.2 Stable / `1.2.0`.
 
 Browser preserves the working mobile-shell structure while applying the current authority contract:
 
+- governing material rule: **Neutral glass is the material. Color is an accent.**
 - Canvas for the root background and top chrome;
 - Soft Glaze for the omnibox and Browser menu sheet;
 - Surface for the address-field role and bottom navigation;
@@ -97,7 +100,8 @@ Browser preserves the working mobile-shell structure while applying the current 
 - at most one dominant Glaze panel plus three small floating Glaze controls;
 - Light, Dark, and Deep Dark structural appearance targets;
 - upper-left optical light direction;
-- bounded Deep Teal + Soft Amber atmosphere subordinate to neutral structure and semantic/accessibility authority;
+- Frost White neutral material reference and bounded Ice Blue atmosphere outside semantic authority;
+- no default Deep Teal, Soft Amber, green, aqua, or other chromatic substrate mapping;
 - no nested backdrop blur;
 - no required Environmental Color Memory, environmental-content sampling, or remote color derivation;
 - semantic native labels and visible focus/state treatment;
@@ -105,7 +109,7 @@ Browser preserves the working mobile-shell structure while applying the current 
 - Browser-owned vector icons;
 - explicit no-action-bar, no-development-banner, Browser-owned-menu, and scroll-aware top-chrome contracts.
 
-The inherited semantic-state ordering remains represented in the Browser contract. Disabled and error semantics continue to override lower-priority interaction presentation. V1.1 atmosphere cannot change security, privacy, identity, recovery, coordination, Search, or Sync truth.
+The inherited semantic-state ordering remains represented in the Browser contract. Disabled and error semantics continue to override lower-priority interaction presentation. V1.2 material/atmosphere cannot change security, privacy, identity, recovery, coordination, Search, or Sync truth.
 
 This mapping is not native-device downstream acceptance. Production acceptance requires exact-revision rendered visual review, TalkBack/accessibility evidence, 200% text, contrast/high-contrast behavior, Reduced Motion, Reduced Transparency/effects-free behavior, RTL/localization, responsive/form-factor behavior, performance, Touch Assistance mapping where supported, and representative physical-device evidence.
 
@@ -138,7 +142,7 @@ GoreeCloud Identity is authoritative for identity/authentication/authorization. 
 At minimum, Stable Android promotion remains blocked by:
 
 - controlled signing and update/rollback key operations;
-- complete GLAZE UI V1.1 native-device visual/accessibility/form-factor acceptance on the exact Browser revision;
+- complete GLAZE UI V1.2 native-device visual/accessibility/form-factor acceptance on the exact Browser revision;
 - authenticated Wardveil download verification/release integration;
 - accepted Privacy Shield runtime integration;
 - accepted Everkeep recovery/continuity integration;
