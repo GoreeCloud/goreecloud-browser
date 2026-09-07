@@ -134,6 +134,7 @@ class GlazeNativeStyle(private val context: Context) {
     }
 
     fun styleAddressField(field: EditText) {
+        field.gravity = Gravity.CENTER_VERTICAL
         field.setTextColor(palette.textPrimary)
         field.setHintTextColor(palette.textSecondary)
         field.textSize = 16f
