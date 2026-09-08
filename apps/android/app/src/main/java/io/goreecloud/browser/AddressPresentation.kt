@@ -17,7 +17,8 @@ object AddressPresentation {
         val port = uri.port.takeIf { it >= 0 }?.let { ":$it" }.orEmpty()
         val path = uri.rawPath.orEmpty().takeUnless { it == "/" }.orEmpty()
         val query = uri.rawQuery?.let { "?$it" }.orEmpty()
-        return withoutBidiControls(host + port + path + query)
+        val fragment = uri.rawFragment?.let { "#$it" }.orEmpty()
+        return withoutBidiControls(host + port + path + query + fragment)
     }
 
     /**

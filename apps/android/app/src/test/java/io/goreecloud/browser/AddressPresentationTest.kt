@@ -21,6 +21,22 @@ class AddressPresentationTest {
     }
 
     @Test
+    fun condensedAddressPreservesFragment() {
+        assertEquals(
+            "example.com/path?q=browser#section-a",
+            AddressPresentation.condensed("https://example.com/path?q=browser#section-a"),
+        )
+    }
+
+    @Test
+    fun condensedAddressPreservesRawEscapingInFragment() {
+        assertEquals(
+            "example.com/path#section%20one",
+            AddressPresentation.condensed("https://example.com/path#section%20one"),
+        )
+    }
+
+    @Test
     fun condensedAddressPreservesExplicitPort() {
         assertEquals(
             "example.com:8443/path?q=browser",
@@ -55,6 +71,14 @@ class AddressPresentationTest {
         assertEquals(
             "example.com/payload?q=value",
             AddressPresentation.withoutBidiControls(controlled),
+        )
+    }
+
+    @Test
+    fun condensedAddressRemovesBidiControlsFromFragment() {
+        assertEquals(
+            "example.com/path#section",
+            AddressPresentation.condensed("https://example.com/path#\u202Esection\u202C"),
         )
     }
 
