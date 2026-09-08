@@ -13,7 +13,7 @@
         android:theme="@style/Theme.GoreeCloud.Browser"
         android:usesCleartextTraffic="false">
         <activity
-            android:name=".BrowserActivity"
+            android:name=".BrowserActivityV2"
             android:exported="true"
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize">
