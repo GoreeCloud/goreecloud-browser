@@ -1,19 +1,23 @@
 package io.goreecloud.browser
 
 /**
- * Browser-owned Android-native mapping metadata for GLAZE UI V1.2 Stable.
+ * Browser-owned Android-native mapping metadata for GLAZE UI V1.3 Stable.
  *
- * This records the semantic and optical contract consumed by the Android shell.
- * It is repository-local source mapping evidence only; rendered/native-device
- * visual, accessibility, form-factor, performance, and production acceptance
- * remain separate promotion gates.
+ * V1.3 — Adaptive Resonance extends the V1.2 neutral-glass rendering foundation
+ * with bounded adaptive expression, ergonomic composition, and resilience
+ * requirements. This repository-local mapping is source evidence only; rendered
+ * device, accessibility, workflow, performance, rollback, and production
+ * acceptance remain independent Browser promotion gates.
  */
 object GlazeContract {
-    const val VERSION = "1.2.0"
-    const val STABLE_RELEASE_REVISION = "f285b9145e27e6e7027b075c37299d101945c272"
+    const val VERSION = "1.3.0"
+    const val RELEASE_THEME = "Adaptive Resonance"
+    const val STABLE_RELEASE_REVISION = "fc7cc91d2eace8da2371371c2855c24cbcb326a1"
     const val OPTICAL_CONTRACT = "tokens/glaze-v1.2-optical-foundation.candidate.json"
-    const val STABLE_WEB_ENTRYPOINT = "css/glaze-v1.2.0.css"
-    const val STABLE_RUNTIME_ENTRYPOINT = "js/glaze-v1.2.0.mjs"
+    const val ADAPTIVE_CONTRACT = "contracts/v1.3/adaptive-resonance.plan.json"
+    const val STABLE_WEB_ENTRYPOINT = "css/glaze-v1.3.0.css"
+    const val STABLE_RUNTIME_ENTRYPOINT = "js/glaze-v1.3.0.mjs"
+    const val ROLLBACK_BASELINE_VERSION = "1.2.0"
     const val MATERIAL_RULE = "neutral-glass-is-material-color-is-accent"
 
     const val GENERAL_TARGET_DP = 48
