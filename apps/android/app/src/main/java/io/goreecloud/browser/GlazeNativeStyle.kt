@@ -207,6 +207,10 @@ class GlazeNativeStyle(private val context: Context) {
         cornerDp: Int,
     ): StateListDrawable = StateListDrawable().apply {
         addState(
+            intArrayOf(-android.R.attr.state_enabled),
+            material(resting, dp(cornerDp), outlined = true),
+        )
+        addState(
             intArrayOf(android.R.attr.state_pressed),
             material(active, dp(cornerDp), focused = true, outlined = false),
         )
