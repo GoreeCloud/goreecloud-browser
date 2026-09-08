@@ -115,6 +115,23 @@ class GlazeContractTest {
     }
 
     @Test
+    fun resilienceProfileFailsSolidForReducedTransparencyAndContrast() {
+        val normal = GlazeContract.resilienceProfile(false, false)
+        assertEquals(GlazeContract.Clarity.Balanced, normal.clarity)
+        assertTrue(normal.transparencyAllowed)
+        assertEquals(1, normal.outlineWidthDp)
+
+        val reduced = GlazeContract.resilienceProfile(true, false)
+        assertEquals(GlazeContract.Clarity.Solid, reduced.clarity)
+        assertFalse(reduced.transparencyAllowed)
+
+        val contrast = GlazeContract.resilienceProfile(false, true)
+        assertEquals(GlazeContract.Clarity.Solid, contrast.clarity)
+        assertTrue(contrast.transparencyAllowed)
+        assertEquals(2, contrast.outlineWidthDp)
+    }
+
+    @Test
     fun mobileChromeBudgetsExpandedAndCollapsedViewportStates() {
         assertEquals(128, GlazeContract.fixedChromeHeightDp())
         assertEquals(56, GlazeContract.collapsedChromeHeightDp())
