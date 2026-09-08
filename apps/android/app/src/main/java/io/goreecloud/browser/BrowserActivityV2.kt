@@ -345,11 +345,10 @@ class BrowserActivityV2 : Activity() {
 
     private fun refreshChrome() {
         if (!::addressField.isInitialized) return
-        val uri = runCatching { Uri.parse(currentUrl) }.getOrNull()
-        pageTitle.text = when {
-            currentUrl == INTERNAL_HOME -> "GoreeCloud Browser"
-            webView.title.isNullOrBlank() -> uri?.host ?: "GoreeCloud Browser"
-            else -> webView.title
+        pageTitle.text = if (currentUrl == INTERNAL_HOME) {
+            "GoreeCloud Browser"
+        } else {
+            PageTitlePresentation.display(webView.title, currentUrl)
         }
         if (!addressField.hasFocus()) {
             addressField.setText(if (currentUrl == INTERNAL_HOME) "" else AddressPresentation.condensed(currentUrl))
