@@ -26,7 +26,12 @@ import android.widget.TextView
  * tinting the material substrate with the accent color. Native Android controls
  * retain their semantics, focus behavior, hit targets, and effects-free fallback.
  */
-class GlazeNativeStyle(private val context: Context) {
+class GlazeNativeStyle(
+    private val context: Context,
+    reducedTransparency: Boolean = false,
+    increasedContrast: Boolean = false,
+) {
+    private val resilience = GlazeContract.resilienceProfile(reducedTransparency, increasedContrast)
     data class Palette(
         val canvas: Int,
         val surface: Int,
@@ -214,7 +219,7 @@ class GlazeNativeStyle(private val context: Context) {
         setColor(colorFor(level))
         if (focused || outlined) {
             setStroke(
-                dp(if (focused) 3 else 1),
+                dp(if (focused) 3 else resilience.outlineWidthDp),
                 if (focused) palette.accent else palette.outline,
             )
         }
@@ -238,27 +243,27 @@ class GlazeNativeStyle(private val context: Context) {
         return if (night) {
             Palette(
                 canvas = canvas,
-                surface = 0x9E19191B.toInt(),
-                softGlaze = 0xA61C1D20.toInt(),
-                glaze = 0xB31A1C21.toInt(),
-                deepGlaze = 0xCC17191D.toInt(),
-                liveGlaze = 0xD91A1C21.toInt(),
+                surface = if (resilience.transparencyAllowed) 0x9E19191B.toInt() else 0xFF19191B.toInt(),
+                softGlaze = if (resilience.transparencyAllowed) 0xA61C1D20.toInt() else 0xFF1C1D20.toInt(),
+                glaze = if (resilience.transparencyAllowed) 0xB31A1C21.toInt() else 0xFF1A1C21.toInt(),
+                deepGlaze = if (resilience.transparencyAllowed) 0xCC17191D.toInt() else 0xFF17191D.toInt(),
+                liveGlaze = if (resilience.transparencyAllowed) 0xD91A1C21.toInt() else 0xFF1A1C21.toInt(),
                 textPrimary = text,
                 textSecondary = secondary,
-                outline = 0x1AFFFFFF,
+                outline = if (resilience.outlineWidthDp > 1) 0xFFFFFFFF.toInt() else 0x1AFFFFFF,
                 accent = accent,
             )
         } else {
             Palette(
                 canvas = canvas,
-                surface = 0x94FFFFFF.toInt(),
-                softGlaze = 0xA8FFFFFF.toInt(),
-                glaze = 0xBFFFFFFF.toInt(),
-                deepGlaze = 0xD9FFFFFF.toInt(),
-                liveGlaze = 0xE8FFFFFF.toInt(),
+                surface = if (resilience.transparencyAllowed) 0x94FFFFFF.toInt() else 0xFFFFFFFF.toInt(),
+                softGlaze = if (resilience.transparencyAllowed) 0xA8FFFFFF.toInt() else 0xFFFFFFFF.toInt(),
+                glaze = if (resilience.transparencyAllowed) 0xBFFFFFFF.toInt() else 0xFFFFFFFF.toInt(),
+                deepGlaze = if (resilience.transparencyAllowed) 0xD9FFFFFF.toInt() else 0xFFFFFFFF.toInt(),
+                liveGlaze = if (resilience.transparencyAllowed) 0xE8FFFFFF.toInt() else 0xFFFFFFFF.toInt(),
                 textPrimary = text,
                 textSecondary = secondary,
-                outline = 0x1A505050,
+                outline = if (resilience.outlineWidthDp > 1) 0xFF202020.toInt() else 0x1A505050,
                 accent = accent,
             )
         }
