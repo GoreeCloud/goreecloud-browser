@@ -48,12 +48,15 @@ platform_systems:
     notes: Browser has source-level normal-session recovery/checkpoint boundaries and excludes Private and Isolated Private state before persistence, but accepted Everkeep backup, durable protected recovery storage, restore execution, migration, rollback, and production continuity acceptance remain incomplete.
   glaze_ui:
     result: applicable-migration-required
-    version: '2.2.0'
+    version: '1.2.0'
     evidence:
+      - apps/android/app/src/main/java/io/goreecloud/browser/GlazeContract.kt
+      - apps/android/app/src/main/java/io/goreecloud/browser/GlazeNativeStyle.kt
+      - apps/android/app/src/test/java/io/goreecloud/browser/GlazeContractTest.kt
       - README.md
       - SPECIFICATIONS.md
       - docs/GLAZE_UI_ADOPTION.md
-    notes: Authoritative Browser main still maps Android Browser-owned presentation to the superseded Glaze UI 2.2.0 line. Current published Stable consumer authority is V1.1 / 1.1.0, so migration is required. Draft PR #18 contains a Development V1.1 source mapping, but it is unmerged and downstream acceptance is incomplete; the published 1.1.0 source also has the known immutable import-closure defect pending a corrected consumer-eligible Stable release.
+    notes: Browser Android Development source now targets current Stable GLAZE UI V1.2 / 1.2.0 at promotion revision f285b9145e27e6e7027b075c37299d101945c272. Browser-owned chrome follows Frosted Neutral: neutral glass is the material, color is bounded to accent, Light/Dark/Deep Dark contract support is declared, 48/56 dp target floors remain preserved, and the implementation retains native/effects-free fallback behavior. Complete rendered, accessibility, adaptive/form-factor, representative-device, Human Visual Excellence, release, and production acceptance remain required before application conformance can be claimed.
   mesh:
     result: applicable-blocked
     version: null
@@ -111,10 +114,10 @@ external_dependencies:
 
 compatibility:
   platform_contract: '0.2'
-  glaze_ui_required: '1.1.0'
+  glaze_ui_required: '1.2.0'
   requires:
     - goreecloud-platform-contract==0.2
-    - glaze-ui==1.1.0
+    - glaze-ui==1.2.0
   provides:
     - browser-engine-layer
     - browser-native-shell-beta
@@ -133,15 +136,18 @@ conformance:
     - docs/ANDROID_BETA.md
     - docs/GLAZE_UI_ADOPTION.md
     - docs/WARDVEIL_DOWNLOAD_SCANNING.md
+    - apps/android/app/src/main/java/io/goreecloud/browser/GlazeContract.kt
+    - apps/android/app/src/main/java/io/goreecloud/browser/GlazeNativeStyle.kt
+    - apps/android/app/src/test/java/io/goreecloud/browser/GlazeContractTest.kt
   blockers:
     - GoreeCloud Manager operational integration and acceptance are incomplete.
     - Producer-authoritative Privacy Shield runtime integration and complete Browser privacy acceptance are incomplete.
     - Authenticated Wardveil Security runtime download verification, scanner health, quarantine evidence, and production security acceptance are incomplete.
     - Everkeep protected durable backup, clean-environment restore, migration, rollback, and production continuity acceptance are incomplete.
-    - Authoritative Browser main still targets superseded Glaze UI 2.2.0; current published Stable V1.1 / 1.1.0 migration and downstream Browser acceptance remain incomplete, and the known immutable 1.1.0 import-closure defect still requires a corrected consumer-eligible Stable release before current conformance can be claimed.
+    - GLAZE UI V1.2 / 1.2.0 source/material mapping exists, but complete Browser-specific rendered/accessibility/adaptive/representative-device/Human Visual Excellence acceptance remains incomplete.
     - GoreeCloud Mesh registration, discovery, transport, dependency/event integration, and runtime acceptance are incomplete.
     - GoreeCloud Identity profile, session, authorization, synchronization identity, and device-authorization integration are incomplete.
     - Browser does not expose accepted health/readiness interfaces for GoreeCloud Manager or platform observability.
     - Desktop render-capable CEF/Chromium integration and its real-runtime acceptance remain incomplete.
     - Android production signing, representative-device acceptance, accessibility, localization/RTL, migration, update, rollback, and release provenance remain incomplete.
-    - No Stable or production-approved GoreeCloud Browser release evidence is declared.
+    - No Release Candidate, Stable, or production-approved GoreeCloud Browser release evidence is declared.
