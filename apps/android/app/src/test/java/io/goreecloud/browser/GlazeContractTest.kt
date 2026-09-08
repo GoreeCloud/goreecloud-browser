@@ -8,17 +8,23 @@ import org.junit.Test
 class GlazeContractTest {
     @Test
     fun androidBrowserTargetsCurrentStableGlazeContract() {
-        assertEquals("1.2.0", GlazeContract.VERSION)
+        assertEquals("1.3.0", GlazeContract.VERSION)
+        assertEquals("Adaptive Resonance", GlazeContract.RELEASE_THEME)
         assertEquals(
-            "f285b9145e27e6e7027b075c37299d101945c272",
+            "fc7cc91d2eace8da2371371c2855c24cbcb326a1",
             GlazeContract.STABLE_RELEASE_REVISION,
         )
         assertEquals(
             "tokens/glaze-v1.2-optical-foundation.candidate.json",
             GlazeContract.OPTICAL_CONTRACT,
         )
-        assertEquals("css/glaze-v1.2.0.css", GlazeContract.STABLE_WEB_ENTRYPOINT)
-        assertEquals("js/glaze-v1.2.0.mjs", GlazeContract.STABLE_RUNTIME_ENTRYPOINT)
+        assertEquals(
+            "contracts/v1.3/adaptive-resonance.plan.json",
+            GlazeContract.ADAPTIVE_CONTRACT,
+        )
+        assertEquals("css/glaze-v1.3.0.css", GlazeContract.STABLE_WEB_ENTRYPOINT)
+        assertEquals("js/glaze-v1.3.0.mjs", GlazeContract.STABLE_RUNTIME_ENTRYPOINT)
+        assertEquals("1.2.0", GlazeContract.ROLLBACK_BASELINE_VERSION)
         assertEquals(
             "neutral-glass-is-material-color-is-accent",
             GlazeContract.MATERIAL_RULE,
@@ -26,7 +32,7 @@ class GlazeContractTest {
     }
 
     @Test
-    fun touchTargetFloorsMatchV12AccessibilityContract() {
+    fun touchTargetFloorsMatchV13AccessibilityContract() {
         assertEquals(48, GlazeContract.targetFloorDp(touchAssistance = false))
         assertEquals(56, GlazeContract.targetFloorDp(touchAssistance = true))
         assertTrue(GlazeContract.satisfiesGeneralTargetFloor(48))
@@ -55,7 +61,7 @@ class GlazeContractTest {
     }
 
     @Test
-    fun v12OpticalMaterialRemainsNeutralAndAccentBounded() {
+    fun v13MaterialRetainsNeutralFoundationAndBoundedAccent() {
         val mapping = GlazeContract.ANDROID_BROWSER_MAPPING
 
         assertEquals("upper-left", GlazeContract.OPTICAL_LIGHT_ORIGIN)
