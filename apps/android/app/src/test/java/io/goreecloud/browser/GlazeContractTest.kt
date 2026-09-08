@@ -8,19 +8,25 @@ import org.junit.Test
 class GlazeContractTest {
     @Test
     fun androidBrowserTargetsCurrentStableGlazeContract() {
-        assertEquals("2.2.0", GlazeContract.VERSION)
+        assertEquals("1.2.0", GlazeContract.VERSION)
         assertEquals(
-            "6731098b28dd0393faa878c70d989a221d714a20",
+            "f285b9145e27e6e7027b075c37299d101945c272",
             GlazeContract.STABLE_RELEASE_REVISION,
         )
         assertEquals(
-            "0411b0f6dd877aea30e2c5674e1acde0105fd97b",
-            GlazeContract.ACCEPTED_VISUAL_SOURCE,
+            "tokens/glaze-v1.2-optical-foundation.candidate.json",
+            GlazeContract.OPTICAL_CONTRACT,
+        )
+        assertEquals("css/glaze-v1.2.0.css", GlazeContract.STABLE_WEB_ENTRYPOINT)
+        assertEquals("js/glaze-v1.2.0.mjs", GlazeContract.STABLE_RUNTIME_ENTRYPOINT)
+        assertEquals(
+            "neutral-glass-is-material-color-is-accent",
+            GlazeContract.MATERIAL_RULE,
         )
     }
 
     @Test
-    fun touchTargetFloorsMatchGlaze22AccessibilityContract() {
+    fun touchTargetFloorsMatchV12AccessibilityContract() {
         assertEquals(48, GlazeContract.targetFloorDp(touchAssistance = false))
         assertEquals(56, GlazeContract.targetFloorDp(touchAssistance = true))
         assertTrue(GlazeContract.satisfiesGeneralTargetFloor(48))
@@ -42,13 +48,33 @@ class GlazeContractTest {
         assertEquals(GlazeContract.ShellSurface.Application, mapping.shellSurface)
         assertEquals(GlazeContract.Clarity.Balanced, mapping.clarity)
         assertEquals(GlazeContract.Expression.Calm, mapping.expression)
+        assertEquals(GlazeContract.DensityProfile.Standard, mapping.density)
         assertTrue(GlazeContract.satisfiesSystemGlazeBudget(mapping))
         assertFalse(mapping.declaresUniversalSearch)
         assertFalse(mapping.declaresControlCenter)
     }
 
     @Test
-    fun mobileChromeRemovesDevelopmentScaffoldingFromNormalBrowsing() {
+    fun v12OpticalMaterialRemainsNeutralAndAccentBounded() {
+        val mapping = GlazeContract.ANDROID_BROWSER_MAPPING
+
+        assertEquals("upper-left", GlazeContract.OPTICAL_LIGHT_ORIGIN)
+        assertEquals("frost-white", GlazeContract.MATERIAL_PRIMARY)
+        assertEquals("ice-blue", GlazeContract.ATMOSPHERE_ACCENT)
+        assertEquals(
+            setOf(
+                GlazeContract.Appearance.Light,
+                GlazeContract.Appearance.Dark,
+                GlazeContract.Appearance.DeepDark,
+            ),
+            mapping.supportedAppearances,
+        )
+        assertFalse(mapping.nestedBackdropBlur)
+        assertFalse(mapping.environmentalColorSamplingRequired)
+    }
+
+    @Test
+    fun mobileChromeKeepsProductionInteractionCharacteristics() {
         val mapping = GlazeContract.ANDROID_BROWSER_MAPPING
 
         assertTrue(mapping.noActionBar)
@@ -61,7 +87,7 @@ class GlazeContractTest {
     }
 
     @Test
-    fun interactionPriorityKeepsDisabledAboveErrorAndFocus() {
+    fun semanticPriorityKeepsDisabledAboveErrorAndFocus() {
         assertTrue(
             GlazeContract.statePriority(GlazeContract.InteractionState.Disabled) >
                 GlazeContract.statePriority(GlazeContract.InteractionState.Error),
@@ -92,8 +118,6 @@ class GlazeContractTest {
     fun mobileChromeBudgetsExpandedAndCollapsedViewportStates() {
         assertEquals(128, GlazeContract.fixedChromeHeightDp())
         assertEquals(56, GlazeContract.collapsedChromeHeightDp())
-        assertTrue(
-            GlazeContract.collapsedChromeHeightDp() < GlazeContract.fixedChromeHeightDp(),
-        )
+        assertTrue(GlazeContract.collapsedChromeHeightDp() < GlazeContract.fixedChromeHeightDp())
     }
 }
