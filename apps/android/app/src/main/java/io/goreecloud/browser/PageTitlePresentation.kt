@@ -32,11 +32,11 @@ object PageTitlePresentation {
         return cleaned.take(MAX_TITLE_LENGTH)
     }
 
-    private fun fallbackFor(currentUrl: String): String =
-        runCatching { URI(currentUrl).host }
-            .getOrNull()
-            ?.takeIf { it.isNotBlank() }
-            ?: FALLBACK
+    private fun fallbackFor(currentUrl: String): String {
+        val uri = runCatching { URI(currentUrl) }.getOrNull() ?: return FALLBACK
+        if (uri.scheme?.lowercase() !in setOf("http", "https")) return FALLBACK
+        return uri.host?.takeIf { it.isNotBlank() } ?: FALLBACK
+    }
 
     private fun looksLikeRawNavigationText(value: String): Boolean {
         if (value.startsWith("/")) return true
