@@ -56,7 +56,7 @@ platform_systems:
       - README.md
       - SPECIFICATIONS.md
       - docs/GLAZE_UI_ADOPTION.md
-    notes: Browser Android Development source now targets current Stable GLAZE UI V1.2 / 1.2.0 at promotion revision f285b9145e27e6e7027b075c37299d101945c272. Browser-owned chrome follows Frosted Neutral: neutral glass is the material, color is bounded to accent, Light/Dark/Deep Dark contract support is declared, 48/56 dp target floors remain preserved, and the implementation retains native/effects-free fallback behavior. Complete rendered, accessibility, adaptive/form-factor, representative-device, Human Visual Excellence, release, and production acceptance remain required before application conformance can be claimed.
+    notes: Browser Android Development source now targets current Stable GLAZE UI V1.2 / 1.2.0 at promotion revision f285b9145e27e6e7027b075c37299d101945c272. Browser-owned chrome follows Frosted Neutral; neutral glass is the material, color is bounded to accent, Light/Dark/Deep Dark contract support is declared, 48/56 dp target floors remain preserved, and the implementation retains native/effects-free fallback behavior. Complete rendered, accessibility, adaptive/form-factor, representative-device, Human Visual Excellence, release, and production acceptance remain required before application conformance can be claimed.
   mesh:
     result: applicable-blocked
     version: null
