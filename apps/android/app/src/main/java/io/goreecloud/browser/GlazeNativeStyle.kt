@@ -19,11 +19,12 @@ import android.widget.ProgressBar
 import android.widget.TextView
 
 /**
- * Effects-free Android-native Glaze UI 2.0 mapping for Browser-owned chrome.
+ * Effects-optional Android-native GLAZE UI V1.2 mapping for Browser-owned chrome.
  *
- * Native controls retain Android semantics while Browser maps the current Glaze
- * material hierarchy, target floor, focus/pressed state, spacing and appearance
- * behavior. Blur and transparency are deliberately not required for usability.
+ * V1.2 rule: neutral glass is the material; color is an accent. Browser chrome
+ * therefore uses neutral Frost White / graphite material levels instead of
+ * tinting the material substrate with the accent color. Native Android controls
+ * retain their semantics, focus behavior, hit targets, and effects-free fallback.
  */
 class GlazeNativeStyle(private val context: Context) {
     data class Palette(
@@ -74,11 +75,7 @@ class GlazeNativeStyle(private val context: Context) {
             dp(GlazeContract.CHROME_GUTTER_DP),
             dp(GlazeContract.CHROME_GUTTER_DP),
         )
-        view.background = material(
-            GlazeContract.MaterialLevel.Canvas,
-            0,
-            outlined = false,
-        )
+        view.background = material(GlazeContract.MaterialLevel.Canvas, 0, outlined = false)
     }
 
     fun styleOmniboxCapsule(view: LinearLayout) {
@@ -100,11 +97,7 @@ class GlazeNativeStyle(private val context: Context) {
         view.minWidth = dp(44)
         view.minimumWidth = dp(44)
         view.setPadding(dp(8), 0, dp(8), 0)
-        view.background = material(
-            GlazeContract.MaterialLevel.Surface,
-            dp(18),
-            outlined = false,
-        )
+        view.background = material(GlazeContract.MaterialLevel.Surface, dp(18), outlined = false)
     }
 
     fun styleChromeButton(button: ImageButton, role: GlazeContract.ButtonRole) {
@@ -145,11 +138,7 @@ class GlazeNativeStyle(private val context: Context) {
     fun styleBottomToolbar(view: LinearLayout) {
         view.gravity = Gravity.CENTER_VERTICAL
         view.setPadding(dp(6), 0, dp(6), 0)
-        view.background = material(
-            GlazeContract.MaterialLevel.Surface,
-            0,
-            outlined = false,
-        )
+        view.background = material(GlazeContract.MaterialLevel.Surface, 0, outlined = false)
     }
 
     fun styleMenuSheet(view: LinearLayout) {
@@ -205,7 +194,7 @@ class GlazeNativeStyle(private val context: Context) {
     ): StateListDrawable = StateListDrawable().apply {
         addState(
             intArrayOf(android.R.attr.state_pressed),
-            material(active, dp(cornerDp), focused = true, outlined = false),
+            material(active, dp(cornerDp), focused = false, outlined = true),
         )
         addState(
             intArrayOf(android.R.attr.state_focused),
@@ -225,7 +214,7 @@ class GlazeNativeStyle(private val context: Context) {
         setColor(colorFor(level))
         if (focused || outlined) {
             setStroke(
-                dp(if (focused) 2 else 1),
+                dp(if (focused) 3 else 1),
                 if (focused) palette.accent else palette.outline,
             )
         }
@@ -241,46 +230,38 @@ class GlazeNativeStyle(private val context: Context) {
     }
 
     private fun buildPalette(): Palette {
-        val fallbackCanvas = if (night) Color.rgb(18, 19, 22) else Color.rgb(248, 249, 252)
-        val fallbackText = if (night) Color.WHITE else Color.rgb(27, 29, 33)
-        val fallbackSecondary = if (night) Color.rgb(194, 198, 207) else Color.rgb(88, 92, 101)
-        val fallbackAccent = if (night) Color.rgb(147, 179, 255) else Color.rgb(68, 101, 238)
+        val canvas = if (night) Color.rgb(11, 13, 17) else Color.rgb(245, 247, 250)
+        val text = if (night) Color.rgb(245, 247, 250) else Color.rgb(21, 26, 35)
+        val secondary = if (night) Color.rgb(176, 183, 195) else Color.rgb(93, 102, 117)
+        val accent = Color.rgb(120, 167, 255)
 
-        val canvas = themedColor(android.R.attr.colorBackground, fallbackCanvas)
-        val text = themedColor(android.R.attr.textColorPrimary, fallbackText)
-        val secondary = themedColor(android.R.attr.textColorSecondary, fallbackSecondary)
-        val accent = themedColor(android.R.attr.colorAccent, fallbackAccent)
-
-        return Palette(
-            canvas = canvas,
-            surface = blend(canvas, text, if (night) 0.055f else 0.028f),
-            softGlaze = blend(canvas, accent, if (night) 0.10f else 0.055f),
-            glaze = blend(canvas, accent, if (night) 0.16f else 0.09f),
-            deepGlaze = blend(canvas, accent, if (night) 0.24f else 0.15f),
-            liveGlaze = blend(canvas, accent, if (night) 0.34f else 0.22f),
-            textPrimary = text,
-            textSecondary = secondary,
-            outline = blend(canvas, text, if (night) 0.20f else 0.13f),
-            accent = accent,
-        )
-    }
-
-    private fun themedColor(attribute: Int, fallback: Int): Int {
-        val values = context.obtainStyledAttributes(intArrayOf(attribute))
-        return try {
-            values.getColor(0, fallback)
-        } finally {
-            values.recycle()
+        return if (night) {
+            Palette(
+                canvas = canvas,
+                surface = 0x9E19191B.toInt(),
+                softGlaze = 0xA61C1D20.toInt(),
+                glaze = 0xB31A1C21.toInt(),
+                deepGlaze = 0xCC17191D.toInt(),
+                liveGlaze = 0xD91A1C21.toInt(),
+                textPrimary = text,
+                textSecondary = secondary,
+                outline = 0x1AFFFFFF,
+                accent = accent,
+            )
+        } else {
+            Palette(
+                canvas = canvas,
+                surface = 0x94FFFFFF.toInt(),
+                softGlaze = 0xA8FFFFFF.toInt(),
+                glaze = 0xBFFFFFFF.toInt(),
+                deepGlaze = 0xD9FFFFFF.toInt(),
+                liveGlaze = 0xE8FFFFFF.toInt(),
+                textPrimary = text,
+                textSecondary = secondary,
+                outline = 0x1A505050,
+                accent = accent,
+            )
         }
-    }
-
-    private fun blend(base: Int, overlay: Int, amount: Float): Int {
-        val inverse = 1f - amount
-        return Color.rgb(
-            (Color.red(base) * inverse + Color.red(overlay) * amount).toInt(),
-            (Color.green(base) * inverse + Color.green(overlay) * amount).toInt(),
-            (Color.blue(base) * inverse + Color.blue(overlay) * amount).toInt(),
-        )
     }
 
     fun dp(value: Int): Int = (value * context.resources.displayMetrics.density).toInt()
