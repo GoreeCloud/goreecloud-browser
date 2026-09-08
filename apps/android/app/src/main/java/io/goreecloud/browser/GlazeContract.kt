@@ -86,6 +86,12 @@ object GlazeContract {
         CriticalSystem,
     }
 
+    data class ResilienceProfile(
+        val clarity: Clarity,
+        val transparencyAllowed: Boolean,
+        val outlineWidthDp: Int,
+    )
+
     enum class InteractionState {
         Rest,
         Hover,
@@ -162,6 +168,15 @@ object GlazeContract {
     fun satisfiesSystemGlazeBudget(mapping: AndroidBrowserMapping): Boolean =
         mapping.dominantGlazePanels in 0..MAX_DOMINANT_GLAZE_PANELS &&
             mapping.smallFloatingGlazeControls in 0..MAX_SMALL_FLOATING_GLAZE_CONTROLS
+
+    fun resilienceProfile(
+        reducedTransparency: Boolean,
+        increasedContrast: Boolean,
+    ): ResilienceProfile = ResilienceProfile(
+        clarity = if (reducedTransparency || increasedContrast) Clarity.Solid else Clarity.Balanced,
+        transparencyAllowed = !reducedTransparency,
+        outlineWidthDp = if (increasedContrast) 2 else 1,
+    )
 
     /** Higher value means higher preserved semantic presentation priority. */
     fun statePriority(state: InteractionState): Int = when (state) {
