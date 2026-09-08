@@ -23,24 +23,23 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 
 /**
- * Second-generation Android shell for GoreeCloud Browser.
+ * GoreeCloud Browser Android shell.
  *
- * The browser engine remains Android System WebView/Chromium. GoreeCloud owns
- * the visible browser chrome, start surface, navigation behavior, privacy
- * defaults and Glaze UI presentation.
+ * Chromium/WebView remains the engine. GoreeCloud owns the visible browser
+ * chrome, local start surface, navigation behavior, privacy defaults, and
+ * Glaze UI presentation.
  */
 class BrowserActivityV2 : Activity() {
     private lateinit var glaze: GlazeNativeStyle
     private lateinit var webView: WebView
     private lateinit var addressField: EditText
-    private lateinit var schemeBadge: TextView
     private lateinit var pageTitle: TextView
-    private lateinit var tabCount: TextView
     private lateinit var backButton: ImageButton
     private lateinit var forwardButton: ImageButton
     private lateinit var reloadButton: ImageButton
@@ -106,74 +105,39 @@ class BrowserActivityV2 : Activity() {
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         glaze.styleCanvas(root)
 
-        val topChrome = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val topChrome = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(10), dp(8), dp(10), dp(8))
+        }
         glaze.styleTopChrome(topChrome)
 
         val identityRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(8), 0, dp(2), dp(6))
         }
 
         pageTitle = TextView(this).apply {
             text = "GoreeCloud Browser"
-            textSize = 14f
-            setTextColor(glaze.palette.textPrimary)
+            textSize = 13f
+            setTextColor(glaze.palette.textSecondary)
             maxLines = 1
         }
         identityRow.addView(
             pageTitle,
-            LinearLayout.LayoutParams(0, dp(GlazeContract.GENERAL_TARGET_DP), 1f).apply {
-                gravity = Gravity.CENTER_VERTICAL
-            },
+            LinearLayout.LayoutParams(0, dp(32), 1f).apply { gravity = Gravity.CENTER_VERTICAL },
         )
 
-        tabCount = TextView(this).apply {
-            text = "1 tab"
-            gravity = Gravity.CENTER
-            textSize = 12f
-            setTextColor(glaze.palette.textSecondary)
-            minWidth = dp(58)
-            setPadding(dp(10), 0, dp(10), 0)
-            background = android.graphics.drawable.GradientDrawable().apply {
-                cornerRadius = dp(18).toFloat()
-                setColor(glaze.palette.surface)
-                setStroke(dp(1), glaze.palette.outline)
-            }
-            contentDescription = "One open tab"
-            setOnClickListener {
-                Toast.makeText(this@BrowserActivityV2, "Tab switcher is being integrated.", Toast.LENGTH_SHORT).show()
-            }
+        val menuButton = chromeButton(R.drawable.ic_more, "Browser menu") { anchor ->
+            showBrowserMenu(anchor)
         }
-        identityRow.addView(
-            tabCount,
-            LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(38)).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginEnd = dp(6)
-            },
-        )
-
-        val menuButton = chromeButton(R.drawable.ic_more, "Browser menu") {
-            showSimpleMenu()
-        }
-        identityRow.addView(
-            menuButton,
-            LinearLayout.LayoutParams(dp(GlazeContract.GENERAL_TARGET_DP), dp(GlazeContract.GENERAL_TARGET_DP)),
-        )
+        identityRow.addView(menuButton, LinearLayout.LayoutParams(dp(40), dp(40)))
         topChrome.addView(identityRow)
 
-        val omnibox = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        glaze.styleOmniboxCapsule(omnibox)
-
-        schemeBadge = TextView(this).apply {
-            text = "START"
-            contentDescription = "Browser start page"
+        val omnibox = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
         }
-        glaze.styleSchemeBadge(schemeBadge)
-        omnibox.addView(
-            schemeBadge,
-            LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(GlazeContract.GENERAL_TARGET_DP)),
-        )
+        glaze.styleOmniboxCapsule(omnibox)
 
         addressField = EditText(this).apply {
             hint = "Search or enter address"
@@ -181,6 +145,7 @@ class BrowserActivityV2 : Activity() {
             isSingleLine = true
             imeOptions = EditorInfo.IME_ACTION_GO
             inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
+            setPadding(dp(16), 0, dp(8), 0)
             setOnFocusChangeListener { _, focused ->
                 if (focused) {
                     setText(if (currentUrl == INTERNAL_HOME) "" else currentUrl)
@@ -201,19 +166,14 @@ class BrowserActivityV2 : Activity() {
         glaze.styleAddressField(addressField)
         omnibox.addView(
             addressField,
-            LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f).apply {
-                marginStart = dp(2)
-            },
+            LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f),
         )
 
         val goButton = chromeButton(R.drawable.ic_go, "Go") { navigate(addressField.text.toString()) }
-        omnibox.addView(
-            goButton,
-            LinearLayout.LayoutParams(dp(GlazeContract.GENERAL_TARGET_DP), dp(GlazeContract.GENERAL_TARGET_DP)),
-        )
+        omnibox.addView(goButton, LinearLayout.LayoutParams(dp(44), dp(44)))
         topChrome.addView(
             omnibox,
-            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(GlazeContract.OMNIBOX_HEIGHT_DP)),
+            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(52)),
         )
         root.addView(topChrome)
 
@@ -233,12 +193,9 @@ class BrowserActivityV2 : Activity() {
         glaze.styleProgress(progressBar)
         content.addView(
             progressBar,
-            FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, dp(GlazeContract.PROGRESS_HEIGHT_DP), Gravity.TOP),
+            FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, dp(2), Gravity.TOP),
         )
-        root.addView(
-            content,
-            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f),
-        )
+        root.addView(content, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
 
         val bottom = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         glaze.styleBottomToolbar(bottom)
@@ -249,14 +206,12 @@ class BrowserActivityV2 : Activity() {
         reloadButton = chromeButton(R.drawable.ic_reload, "Reload") {
             if (loading) webView.stopLoading() else if (currentUrl == INTERNAL_HOME) showStartPage() else webView.reload()
         }
+        val bottomMenu = chromeButton(R.drawable.ic_more, "Browser menu") { anchor -> showBrowserMenu(anchor) }
 
-        listOf(backButton, forwardButton, homeButton, reloadButton).forEach {
+        listOf(backButton, forwardButton, homeButton, reloadButton, bottomMenu).forEach {
             bottom.addView(it, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
         }
-        root.addView(
-            bottom,
-            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(GlazeContract.BOTTOM_TOOLBAR_HEIGHT_DP)),
-        )
+        root.addView(bottom, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(60)))
 
         setContentView(root)
         updateNavigationButtons()
@@ -286,11 +241,7 @@ class BrowserActivityV2 : Activity() {
 
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                return if (NavigationResolver.isAllowedWebUrl(request.url.toString())) {
-                    false
-                } else {
-                    true
-                }
+                return !NavigationResolver.isAllowedWebUrl(request.url.toString())
             }
 
             override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
@@ -366,9 +317,9 @@ class BrowserActivityV2 : Activity() {
         val html = """
             <!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
             <style>${baseCss()}</style></head><body><main>
-            <div class="mark">G</div><h1>Search is being connected</h1>
-            <p>GoreeCloud Search did not return a usable endpoint, so Browser stopped instead of showing the broken proxy page.</p>
-            <p class="query">$escaped</p><p>Enter a website address above to browse directly.</p>
+            <div class="mark">G</div><h1>Search is temporarily unavailable</h1>
+            <p>The GoreeCloud Search endpoint is not healthy yet. Browser stopped here instead of exposing the proxy error page.</p>
+            <p class="query">$escaped</p><p>You can still enter a complete website address in the address bar.</p>
             </main></body></html>
         """.trimIndent()
         webView.loadDataWithBaseURL(START_BASE_URL, html, "text/html", "UTF-8", null)
@@ -379,29 +330,22 @@ class BrowserActivityV2 : Activity() {
         <!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
         <style>${baseCss()}</style></head><body><main>
         <div class="mark">G</div>
-        <h1>GoreeCloud Browser</h1>
-        <p>Browse directly from the address bar. Third-party cookies are disabled and site permissions are denied by default in this Development build.</p>
-        <section><strong>Private by default</strong><span>Clear browser chrome, local start page, no advertising surface.</span></section>
-        <section><strong>GoreeCloud Search</strong><span>The search service is temporarily held behind a local status page until its endpoint is healthy.</span></section>
+        <h1>Browse the web</h1>
+        <p>Enter a website address above. This Development build blocks third-party cookies and denies site permissions by default.</p>
+        <section><strong>GoreeCloud Search</strong><span>Search remains held behind a local status page until the GoreeCloud endpoint is healthy.</span></section>
         </main></body></html>
     """.trimIndent()
 
     private fun baseCss(): String = """
-        :root{color-scheme:light dark}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f7f9fd;color:#172033}
-        main{min-height:100vh;padding:64px 28px 48px;max-width:720px;margin:auto}.mark{width:64px;height:64px;border-radius:22px;display:grid;place-items:center;background:linear-gradient(145deg,#3b82f6,#174ea6);color:white;font-weight:800;font-size:28px;box-shadow:0 12px 34px #174ea633}
-        h1{font-size:32px;margin:24px 0 10px}p{font-size:17px;line-height:1.55;color:#5b6577}section{margin-top:18px;padding:18px;border:1px solid #dce3ef;border-radius:22px;background:#ffffffcc}section strong,section span{display:block}section span{margin-top:6px;color:#687386;line-height:1.45}.query{font-weight:700;color:#174ea6}
+        :root{color-scheme:light dark}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f5f7fb;color:#172033}
+        main{min-height:100vh;padding:54px 24px 40px;max-width:720px;margin:auto}.mark{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(145deg,#3b82f6,#174ea6);color:white;font-weight:800;font-size:25px;box-shadow:0 12px 34px #174ea633}
+        h1{font-size:30px;margin:22px 0 10px}p{font-size:16px;line-height:1.55;color:#5b6577}section{margin-top:18px;padding:18px;border:1px solid #dce3ef;border-radius:20px;background:#ffffffcc}section strong,section span{display:block}section span{margin-top:6px;color:#687386;line-height:1.45}.query{font-weight:700;color:#174ea6}
         @media(prefers-color-scheme:dark){body{background:#0b0f16;color:#f4f7fb}p,section span{color:#aeb8c7}section{background:#111821;border-color:#253043}}
     """.trimIndent()
 
     private fun refreshChrome() {
         if (!::addressField.isInitialized) return
         val uri = runCatching { Uri.parse(currentUrl) }.getOrNull()
-        schemeBadge.text = when {
-            currentUrl == INTERNAL_HOME -> "START"
-            uri?.scheme.equals("https", true) -> "HTTPS"
-            uri?.scheme.equals("http", true) -> "HTTP"
-            else -> "WEB"
-        }
         pageTitle.text = when {
             currentUrl == INTERNAL_HOME -> "GoreeCloud Browser"
             webView.title.isNullOrBlank() -> uri?.host ?: "GoreeCloud Browser"
@@ -425,15 +369,29 @@ class BrowserActivityV2 : Activity() {
 
     private fun setEnabled(button: ImageButton, enabled: Boolean) {
         button.isEnabled = enabled
-        button.alpha = if (enabled) 1f else 0.36f
+        button.alpha = if (enabled) 1f else 0.34f
     }
 
-    private fun showSimpleMenu() {
-        Toast.makeText(
-            this,
-            "GoreeCloud Browser • Development\nTabs, history and download integration are being expanded.",
-            Toast.LENGTH_LONG,
-        ).show()
+    private fun showBrowserMenu(anchor: View) {
+        PopupMenu(this, anchor).apply {
+            menu.add("Copy page address").setOnMenuItemClickListener {
+                val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Page address", currentUrl))
+                true
+            }
+            menu.add("Share page").setOnMenuItemClickListener {
+                startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, currentUrl)
+                }, "Share page"))
+                true
+            }
+            menu.add("About this development build").setOnMenuItemClickListener {
+                Toast.makeText(this@BrowserActivityV2, "GoreeCloud Browser ${BuildConfig.VERSION_NAME}", Toast.LENGTH_SHORT).show()
+                true
+            }
+            show()
+        }
     }
 
     private fun chromeButton(icon: Int, description: String, action: (View) -> Unit): ImageButton =
