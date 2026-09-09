@@ -60,6 +60,13 @@ class BrowserActivityV2 : Activity() {
 
         if (savedInstanceState != null && webView.restoreState(savedInstanceState) != null) {
             currentUrl = webView.url ?: INTERNAL_HOME
+            BrowserFailureStatePolicy.restorable(
+                savedInstanceState.getString(BrowserFailureStatePolicy.BUNDLE_RETRY_URL_KEY),
+            )?.let { restoredFailure ->
+                failedMainFrameUrl = restoredFailure.retryUrl
+                chromeOverrideTitle = BrowserFailureStatePolicy.PAGE_UNAVAILABLE_TITLE
+                currentUrl = restoredFailure.retryUrl
+            }
             refreshChrome()
         } else {
             val external = intent?.data?.toString().orEmpty()
@@ -76,6 +83,12 @@ class BrowserActivityV2 : Activity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         webView.saveState(outState)
+        BrowserFailureStatePolicy.restorable(failedMainFrameUrl)?.let { failureState ->
+            outState.putString(
+                BrowserFailureStatePolicy.BUNDLE_RETRY_URL_KEY,
+                failureState.retryUrl,
+            )
+        }
         super.onSaveInstanceState(outState)
     }
 
@@ -359,7 +372,7 @@ class BrowserActivityV2 : Activity() {
             ?: currentUrl.takeIf(NavigationResolver::isAllowedWebUrl)
 
         failedMainFrameUrl = retryUrl
-        chromeOverrideTitle = "Page unavailable"
+        chromeOverrideTitle = BrowserFailureStatePolicy.PAGE_UNAVAILABLE_TITLE
         if (retryUrl != null) currentUrl = retryUrl
         loading = false
         progressBar.visibility = View.GONE
