@@ -16,6 +16,7 @@ import android.webkit.CookieManager
 import android.webkit.PermissionRequest
 import android.webkit.SslErrorHandler
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -47,6 +48,8 @@ class BrowserActivityV2 : Activity() {
 
     private var currentUrl: String = INTERNAL_HOME
     private var loading = false
+    private var failedMainFrameUrl: String? = null
+    private var chromeOverrideTitle: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -204,7 +207,12 @@ class BrowserActivityV2 : Activity() {
         forwardButton = chromeButton(R.drawable.ic_forward, "Forward") { if (webView.canGoForward()) webView.goForward() }
         val homeButton = chromeButton(R.drawable.ic_home, "Start page") { showStartPage() }
         reloadButton = chromeButton(R.drawable.ic_reload, "Reload") {
-            if (loading) webView.stopLoading() else if (currentUrl == INTERNAL_HOME) showStartPage() else webView.reload()
+            when {
+                loading -> webView.stopLoading()
+                failedMainFrameUrl != null -> navigate(failedMainFrameUrl.orEmpty())
+                currentUrl == INTERNAL_HOME -> showStartPage()
+                else -> webView.reload()
+            }
         }
         val bottomMenu = chromeButton(R.drawable.ic_more, "Browser menu") { anchor -> showBrowserMenu(anchor) }
 
@@ -245,7 +253,11 @@ class BrowserActivityV2 : Activity() {
             }
 
             override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
-                if (!isInternalStartUrl(url)) currentUrl = url
+                if (!isInternalStartUrl(url)) {
+                    currentUrl = url
+                    failedMainFrameUrl = null
+                    chromeOverrideTitle = null
+                }
                 loading = true
                 progressBar.visibility = View.VISIBLE
                 refreshChrome()
@@ -258,9 +270,18 @@ class BrowserActivityV2 : Activity() {
                 refreshChrome()
             }
 
+            override fun onReceivedError(
+                view: WebView,
+                request: WebResourceRequest,
+                error: WebResourceError,
+            ) {
+                if (!request.isForMainFrame || isInternalStartUrl(request.url.toString())) return
+                showPageUnavailable(request.url.toString())
+            }
+
             override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, error: SslError) {
                 handler.cancel()
-                Toast.makeText(this@BrowserActivityV2, "Blocked: site certificate could not be verified.", Toast.LENGTH_LONG).show()
+                showPageUnavailable(error.url)
             }
         }
 
@@ -295,6 +316,8 @@ class BrowserActivityV2 : Activity() {
             return
         }
 
+        failedMainFrameUrl = null
+        chromeOverrideTitle = null
         currentUrl = target
         addressField.clearFocus()
         hideKeyboard()
@@ -304,6 +327,8 @@ class BrowserActivityV2 : Activity() {
     }
 
     private fun showStartPage() {
+        failedMainFrameUrl = null
+        chromeOverrideTitle = null
         currentUrl = INTERNAL_HOME
         addressField.clearFocus()
         hideKeyboard()
@@ -312,6 +337,8 @@ class BrowserActivityV2 : Activity() {
     }
 
     private fun showSearchUnavailable(query: String) {
+        failedMainFrameUrl = null
+        chromeOverrideTitle = null
         currentUrl = INTERNAL_HOME
         val escaped = android.text.TextUtils.htmlEncode(query)
         val html = """
@@ -323,6 +350,28 @@ class BrowserActivityV2 : Activity() {
             </main></body></html>
         """.trimIndent()
         webView.loadDataWithBaseURL(START_BASE_URL, html, "text/html", "UTF-8", null)
+        refreshChrome()
+    }
+
+    private fun showPageUnavailable(failedUrl: String?) {
+        val retryUrl = failedUrl
+            ?.takeIf(NavigationResolver::isAllowedWebUrl)
+            ?: currentUrl.takeIf(NavigationResolver::isAllowedWebUrl)
+
+        failedMainFrameUrl = retryUrl
+        chromeOverrideTitle = "Page unavailable"
+        if (retryUrl != null) currentUrl = retryUrl
+        loading = false
+        progressBar.visibility = View.GONE
+        addressField.clearFocus()
+        hideKeyboard()
+        webView.loadDataWithBaseURL(
+            START_BASE_URL,
+            BrowserLocalPages.pageUnavailableHtml(baseCss()),
+            "text/html",
+            "UTF-8",
+            null,
+        )
         refreshChrome()
     }
 
@@ -345,7 +394,7 @@ class BrowserActivityV2 : Activity() {
 
     private fun refreshChrome() {
         if (!::addressField.isInitialized) return
-        pageTitle.text = if (currentUrl == INTERNAL_HOME) {
+        pageTitle.text = chromeOverrideTitle ?: if (currentUrl == INTERNAL_HOME) {
             "GoreeCloud Browser"
         } else {
             PageTitlePresentation.display(webView.title, currentUrl)
