@@ -31,6 +31,7 @@ object NavigationResolver {
         val uri = runCatching { URI(url) }.getOrNull() ?: return false
         val scheme = uri.scheme?.lowercase() ?: return false
         if (scheme != "https" && scheme != "http") return false
+        if (uri.rawUserInfo != null) return false
 
         val authority = uri.rawAuthority ?: return false
         return authorityHost(authority) != null
@@ -58,6 +59,10 @@ object NavigationResolver {
      * Extract the host-like portion of a URI authority while validating only the
      * optional port syntax/range needed by Browser routing. Host normalization,
      * DNS resolution, IDN/confusable policy, and trust remain separate gates.
+     *
+     * This helper can still parse user-info-shaped host text for scheme-less host
+     * classification; fully qualified HTTP(S) URLs are rejected earlier when URI
+     * user-info is present and therefore cannot use embedded credentials.
      */
     private fun authorityHost(authority: String): String? {
         val hostPort = authority.substringAfterLast('@')
