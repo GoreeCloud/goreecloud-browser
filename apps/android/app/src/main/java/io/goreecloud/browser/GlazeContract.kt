@@ -1,16 +1,24 @@
 package io.goreecloud.browser
 
 /**
- * Browser-owned Android-native mapping metadata for Glaze UI 2.2.0 Stable.
+ * Browser-owned Android-native mapping metadata for GLAZE UI V1.3 Stable.
  *
- * This records the semantic contract consumed by the Android shell. It is source
- * mapping evidence only; rendered/native-device visual and accessibility
- * acceptance remain separate promotion gates.
+ * V1.3 — Adaptive Resonance extends the V1.2 neutral-glass rendering foundation
+ * with bounded adaptive expression, ergonomic composition, and resilience
+ * requirements. This repository-local mapping is source evidence only; rendered
+ * device, accessibility, workflow, performance, rollback, and production
+ * acceptance remain independent Browser promotion gates.
  */
 object GlazeContract {
-    const val VERSION = "2.2.0"
-    const val STABLE_RELEASE_REVISION = "6731098b28dd0393faa878c70d989a221d714a20"
-    const val ACCEPTED_VISUAL_SOURCE = "0411b0f6dd877aea30e2c5674e1acde0105fd97b"
+    const val VERSION = "1.3.0"
+    const val RELEASE_THEME = "Adaptive Resonance"
+    const val STABLE_RELEASE_REVISION = "fc7cc91d2eace8da2371371c2855c24cbcb326a1"
+    const val OPTICAL_CONTRACT = "tokens/glaze-v1.2-optical-foundation.candidate.json"
+    const val ADAPTIVE_CONTRACT = "contracts/v1.3/adaptive-resonance.plan.json"
+    const val STABLE_WEB_ENTRYPOINT = "css/glaze-v1.3.0.css"
+    const val STABLE_RUNTIME_ENTRYPOINT = "js/glaze-v1.3.0.mjs"
+    const val ROLLBACK_BASELINE_VERSION = "1.2.0"
+    const val MATERIAL_RULE = "neutral-glass-is-material-color-is-accent"
 
     const val GENERAL_TARGET_DP = 48
     const val TOUCH_ASSISTANCE_TARGET_DP = 56
@@ -28,6 +36,9 @@ object GlazeContract {
 
     const val MAX_DOMINANT_GLAZE_PANELS = 1
     const val MAX_SMALL_FLOATING_GLAZE_CONTROLS = 3
+    const val OPTICAL_LIGHT_ORIGIN = "upper-left"
+    const val MATERIAL_PRIMARY = "frost-white"
+    const val ATMOSPHERE_ACCENT = "ice-blue"
 
     enum class MaterialLevel {
         Canvas,
@@ -57,11 +68,20 @@ object GlazeContract {
         Emphasis,
     }
 
-    /**
-     * Glaze UI 2.2 system-level hierarchy. Browser-owned chrome remains within
-     * Application scope; it does not relabel local Browser search/menu surfaces
-     * as Universal Search, Control Center, System Panel, or Critical System UI.
-     */
+    enum class Appearance {
+        Light,
+        Dark,
+        DeepDark,
+    }
+
+    enum class DensityProfile {
+        Comfortable,
+        Standard,
+        Productive,
+        Immersive,
+    }
+
+    /** Browser chrome remains an Application surface, not a system authority. */
     enum class ShellSurface {
         Workspace,
         Application,
@@ -69,6 +89,12 @@ object GlazeContract {
         SystemPanel,
         CriticalSystem,
     }
+
+    data class ResilienceProfile(
+        val clarity: Clarity,
+        val transparencyAllowed: Boolean,
+        val outlineWidthDp: Int,
+    )
 
     enum class InteractionState {
         Rest,
@@ -91,6 +117,8 @@ object GlazeContract {
         val shellSurface: ShellSurface,
         val clarity: Clarity,
         val expression: Expression,
+        val density: DensityProfile,
+        val supportedAppearances: Set<Appearance>,
         val dominantGlazePanels: Int,
         val smallFloatingGlazeControls: Int,
         val declaresUniversalSearch: Boolean,
@@ -102,6 +130,8 @@ object GlazeContract {
         val usesVectorChromeIcons: Boolean,
         val usesPlatformPopupMenu: Boolean,
         val scrollAwareTopChrome: Boolean,
+        val nestedBackdropBlur: Boolean,
+        val environmentalColorSamplingRequired: Boolean,
     )
 
     val ANDROID_BROWSER_MAPPING = AndroidBrowserMapping(
@@ -114,6 +144,8 @@ object GlazeContract {
         shellSurface = ShellSurface.Application,
         clarity = Clarity.Balanced,
         expression = Expression.Calm,
+        density = DensityProfile.Standard,
+        supportedAppearances = setOf(Appearance.Light, Appearance.Dark, Appearance.DeepDark),
         dominantGlazePanels = 1,
         smallFloatingGlazeControls = 1,
         declaresUniversalSearch = false,
@@ -125,6 +157,8 @@ object GlazeContract {
         usesVectorChromeIcons = true,
         usesPlatformPopupMenu = false,
         scrollAwareTopChrome = true,
+        nestedBackdropBlur = false,
+        environmentalColorSamplingRequired = false,
     )
 
     fun targetFloorDp(touchAssistance: Boolean): Int =
@@ -139,7 +173,16 @@ object GlazeContract {
         mapping.dominantGlazePanels in 0..MAX_DOMINANT_GLAZE_PANELS &&
             mapping.smallFloatingGlazeControls in 0..MAX_SMALL_FLOATING_GLAZE_CONTROLS
 
-    /** Higher value means higher Glaze UI 2.2 presentation priority. */
+    fun resilienceProfile(
+        reducedTransparency: Boolean,
+        increasedContrast: Boolean,
+    ): ResilienceProfile = ResilienceProfile(
+        clarity = if (reducedTransparency || increasedContrast) Clarity.Solid else Clarity.Balanced,
+        transparencyAllowed = !reducedTransparency,
+        outlineWidthDp = if (increasedContrast) 2 else 1,
+    )
+
+    /** Higher value means higher preserved semantic presentation priority. */
     fun statePriority(state: InteractionState): Int = when (state) {
         InteractionState.Rest -> 0
         InteractionState.Hover -> 1

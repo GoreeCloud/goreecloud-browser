@@ -8,19 +8,31 @@ import org.junit.Test
 class GlazeContractTest {
     @Test
     fun androidBrowserTargetsCurrentStableGlazeContract() {
-        assertEquals("2.2.0", GlazeContract.VERSION)
+        assertEquals("1.3.0", GlazeContract.VERSION)
+        assertEquals("Adaptive Resonance", GlazeContract.RELEASE_THEME)
         assertEquals(
-            "6731098b28dd0393faa878c70d989a221d714a20",
+            "fc7cc91d2eace8da2371371c2855c24cbcb326a1",
             GlazeContract.STABLE_RELEASE_REVISION,
         )
         assertEquals(
-            "0411b0f6dd877aea30e2c5674e1acde0105fd97b",
-            GlazeContract.ACCEPTED_VISUAL_SOURCE,
+            "tokens/glaze-v1.2-optical-foundation.candidate.json",
+            GlazeContract.OPTICAL_CONTRACT,
+        )
+        assertEquals(
+            "contracts/v1.3/adaptive-resonance.plan.json",
+            GlazeContract.ADAPTIVE_CONTRACT,
+        )
+        assertEquals("css/glaze-v1.3.0.css", GlazeContract.STABLE_WEB_ENTRYPOINT)
+        assertEquals("js/glaze-v1.3.0.mjs", GlazeContract.STABLE_RUNTIME_ENTRYPOINT)
+        assertEquals("1.2.0", GlazeContract.ROLLBACK_BASELINE_VERSION)
+        assertEquals(
+            "neutral-glass-is-material-color-is-accent",
+            GlazeContract.MATERIAL_RULE,
         )
     }
 
     @Test
-    fun touchTargetFloorsMatchGlaze22AccessibilityContract() {
+    fun touchTargetFloorsMatchV13AccessibilityContract() {
         assertEquals(48, GlazeContract.targetFloorDp(touchAssistance = false))
         assertEquals(56, GlazeContract.targetFloorDp(touchAssistance = true))
         assertTrue(GlazeContract.satisfiesGeneralTargetFloor(48))
@@ -42,13 +54,33 @@ class GlazeContractTest {
         assertEquals(GlazeContract.ShellSurface.Application, mapping.shellSurface)
         assertEquals(GlazeContract.Clarity.Balanced, mapping.clarity)
         assertEquals(GlazeContract.Expression.Calm, mapping.expression)
+        assertEquals(GlazeContract.DensityProfile.Standard, mapping.density)
         assertTrue(GlazeContract.satisfiesSystemGlazeBudget(mapping))
         assertFalse(mapping.declaresUniversalSearch)
         assertFalse(mapping.declaresControlCenter)
     }
 
     @Test
-    fun mobileChromeRemovesDevelopmentScaffoldingFromNormalBrowsing() {
+    fun v13MaterialRetainsNeutralFoundationAndBoundedAccent() {
+        val mapping = GlazeContract.ANDROID_BROWSER_MAPPING
+
+        assertEquals("upper-left", GlazeContract.OPTICAL_LIGHT_ORIGIN)
+        assertEquals("frost-white", GlazeContract.MATERIAL_PRIMARY)
+        assertEquals("ice-blue", GlazeContract.ATMOSPHERE_ACCENT)
+        assertEquals(
+            setOf(
+                GlazeContract.Appearance.Light,
+                GlazeContract.Appearance.Dark,
+                GlazeContract.Appearance.DeepDark,
+            ),
+            mapping.supportedAppearances,
+        )
+        assertFalse(mapping.nestedBackdropBlur)
+        assertFalse(mapping.environmentalColorSamplingRequired)
+    }
+
+    @Test
+    fun mobileChromeKeepsProductionInteractionCharacteristics() {
         val mapping = GlazeContract.ANDROID_BROWSER_MAPPING
 
         assertTrue(mapping.noActionBar)
@@ -61,7 +93,7 @@ class GlazeContractTest {
     }
 
     @Test
-    fun interactionPriorityKeepsDisabledAboveErrorAndFocus() {
+    fun semanticPriorityKeepsDisabledAboveErrorAndFocus() {
         assertTrue(
             GlazeContract.statePriority(GlazeContract.InteractionState.Disabled) >
                 GlazeContract.statePriority(GlazeContract.InteractionState.Error),
@@ -89,11 +121,26 @@ class GlazeContractTest {
     }
 
     @Test
+    fun resilienceProfileFailsSolidForReducedTransparencyAndContrast() {
+        val normal = GlazeContract.resilienceProfile(false, false)
+        assertEquals(GlazeContract.Clarity.Balanced, normal.clarity)
+        assertTrue(normal.transparencyAllowed)
+        assertEquals(1, normal.outlineWidthDp)
+
+        val reduced = GlazeContract.resilienceProfile(true, false)
+        assertEquals(GlazeContract.Clarity.Solid, reduced.clarity)
+        assertFalse(reduced.transparencyAllowed)
+
+        val contrast = GlazeContract.resilienceProfile(false, true)
+        assertEquals(GlazeContract.Clarity.Solid, contrast.clarity)
+        assertTrue(contrast.transparencyAllowed)
+        assertEquals(2, contrast.outlineWidthDp)
+    }
+
+    @Test
     fun mobileChromeBudgetsExpandedAndCollapsedViewportStates() {
         assertEquals(128, GlazeContract.fixedChromeHeightDp())
         assertEquals(56, GlazeContract.collapsedChromeHeightDp())
-        assertTrue(
-            GlazeContract.collapsedChromeHeightDp() < GlazeContract.fixedChromeHeightDp(),
-        )
+        assertTrue(GlazeContract.collapsedChromeHeightDp() < GlazeContract.fixedChromeHeightDp())
     }
 }
