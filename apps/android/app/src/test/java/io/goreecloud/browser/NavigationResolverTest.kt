@@ -2,7 +2,6 @@ package io.goreecloud.browser
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -21,8 +20,71 @@ class NavigationResolverTest {
     }
 
     @Test
+    fun directUnicodeHostRemainsIndependentFromSearch() {
+        val address = "https://例え.テスト/path"
+        assertTrue(NavigationResolver.isAllowedWebUrl(address))
+        assertEquals(address, NavigationResolver.resolve(address))
+    }
+
+    @Test
+    fun malformedExplicitHttpNavigationFailsClosedToSearchHome() {
+        val invalid = listOf(
+            "https://",
+            "https://not a url",
+            "https://example.com:bad",
+            "https://example.com:65536",
+            "https://:443/path",
+            "https://user@",
+            "https://example.com/\nnext",
+        )
+        invalid.forEach { address ->
+            assertFalse("expected rejection for $address", NavigationResolver.isAllowedWebUrl(address))
+            assertEquals(NavigationResolver.SEARCH_HOME, NavigationResolver.resolve(address))
+        }
+    }
+
+    @Test
+    fun explicitPortRangeIsValidated() {
+        assertTrue(NavigationResolver.isAllowedWebUrl("https://example.com:0/path"))
+        assertTrue(NavigationResolver.isAllowedWebUrl("https://example.com:65535/path"))
+        assertFalse(NavigationResolver.isAllowedWebUrl("https://example.com:-1/path"))
+        assertFalse(NavigationResolver.isAllowedWebUrl("https://example.com:65536/path"))
+    }
+
+    @Test
+    fun explicitHttpUserinfoRemainsDirectNavigation() {
+        val address = "https://user:pass@example.com/path"
+        assertTrue(NavigationResolver.isAllowedWebUrl(address))
+        assertEquals(address, NavigationResolver.resolve(address))
+    }
+
+    @Test
     fun bareHostUpgradesToHttps() {
         assertEquals("https://example.com", NavigationResolver.resolve("example.com"))
+    }
+
+    @Test
+    fun bareLocalhostWithPortUpgradesToHttps() {
+        assertEquals(
+            "https://localhost:8080/path",
+            NavigationResolver.resolve("localhost:8080/path"),
+        )
+    }
+
+    @Test
+    fun bareBracketedIpv6WithPortUpgradesToHttps() {
+        assertEquals(
+            "https://[::1]:8080/path",
+            NavigationResolver.resolve("[::1]:8080/path"),
+        )
+    }
+
+    @Test
+    fun invalidBarePortIsTreatedAsSearchText() {
+        assertEquals(
+            "https://search.goreecloud.com/search?q=example.com%3Abad",
+            NavigationResolver.resolve("example.com:bad"),
+        )
     }
 
     @Test
@@ -40,31 +102,5 @@ class NavigationResolverTest {
         assertFalse(NavigationResolver.isAllowedWebUrl("file:///sdcard/example.html"))
         assertFalse(NavigationResolver.isAllowedWebUrl("javascript:alert(1)"))
         assertFalse(NavigationResolver.isAllowedWebUrl("intent://example"))
-    }
-
-    @Test
-    fun malformedHttpAddressesAreNotPassedToWebView() {
-        assertFalse(NavigationResolver.isAllowedWebUrl("https://"))
-        assertFalse(NavigationResolver.isAllowedWebUrl("http://?query=missing-host"))
-        assertFalse(NavigationResolver.isAllowedWebUrl("https://:443/path"))
-        assertFalse(NavigationResolver.isAllowedWebUrl("https://user@"))
-        assertFalse(NavigationResolver.isAllowedWebUrl("https://example.com/\nnext"))
-    }
-
-    @Test
-    fun malformedExplicitAddressFallsBackToGoreeCloudSearchResolution() {
-        val resolved = NavigationResolver.resolve("https://")
-        assertNotEquals("https://", resolved)
-        assertEquals(
-            "https://search.goreecloud.com/search?q=https%3A%2F%2F",
-            resolved,
-        )
-    }
-
-    @Test
-    fun validAuthorityFormsRemainAccepted() {
-        assertTrue(NavigationResolver.isAllowedWebUrl("http://localhost:8080/path"))
-        assertTrue(NavigationResolver.isAllowedWebUrl("https://user:pass@example.com/path"))
-        assertTrue(NavigationResolver.isAllowedWebUrl("https://[2001:db8::1]/path"))
     }
 }
