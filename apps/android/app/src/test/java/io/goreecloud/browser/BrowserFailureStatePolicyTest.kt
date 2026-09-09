@@ -18,13 +18,15 @@ class BrowserFailureStatePolicyTest {
     }
 
     @Test
-    fun rejectsMissingMalformedAndNonWebRetryState() {
+    fun rejectsMissingMalformedNonWebAndCredentialBearingRetryState() {
         assertNull(BrowserFailureStatePolicy.restorable(null))
         assertNull(BrowserFailureStatePolicy.restorable(""))
         assertNull(BrowserFailureStatePolicy.restorable("https://"))
         assertNull(BrowserFailureStatePolicy.restorable("https://example.com:70000/"))
         assertNull(BrowserFailureStatePolicy.restorable("goreecloud://start"))
         assertNull(BrowserFailureStatePolicy.restorable("file:///tmp/page.html"))
+        assertNull(BrowserFailureStatePolicy.restorable("https://user:secret@example.com/private"))
+        assertNull(BrowserFailureStatePolicy.restorable("https://user@example.com/private"))
     }
 
     @Test
