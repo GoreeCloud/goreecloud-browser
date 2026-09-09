@@ -1,5 +1,6 @@
 package io.goreecloud.browser
 
+import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -16,13 +17,26 @@ object NavigationResolver {
         val input = rawInput.trim()
         if (input.isEmpty()) return SEARCH_HOME
 
-        if (hasHttpScheme(input)) return input
+        if (isAllowedWebUrl(input)) return input
         if (looksLikeHost(input)) return "https://$input"
 
         return SEARCH_ENDPOINT + encodeQuery(input)
     }
 
-    fun isAllowedWebUrl(url: String): Boolean = hasHttpScheme(url)
+    fun isAllowedWebUrl(url: String): Boolean {
+        val value = url.trim()
+        if (!hasHttpScheme(value)) return false
+        if (value.any { it.isWhitespace() || it.isISOControl() }) return false
+
+        val uri = runCatching { URI(value) }.getOrNull() ?: return false
+        if (uri.scheme?.lowercase() !in setOf("http", "https")) return false
+
+        val authority = uri.rawAuthority?.takeIf { it.isNotBlank() } ?: return false
+        val hostAndPort = authority.substringAfterLast('@')
+        if (hostAndPort.isBlank() || hostAndPort.startsWith(':')) return false
+
+        return true
+    }
 
     private fun hasHttpScheme(value: String): Boolean {
         return value.startsWith("https://", ignoreCase = true) ||
