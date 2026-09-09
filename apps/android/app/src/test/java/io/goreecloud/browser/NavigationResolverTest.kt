@@ -52,10 +52,10 @@ class NavigationResolverTest {
     }
 
     @Test
-    fun explicitHttpUserinfoRemainsDirectNavigation() {
+    fun explicitHttpUserinfoFailsClosedToSearchHome() {
         val address = "https://user:pass@example.com/path"
-        assertTrue(NavigationResolver.isAllowedWebUrl(address))
-        assertEquals(address, NavigationResolver.resolve(address))
+        assertFalse(NavigationResolver.isAllowedWebUrl(address))
+        assertEquals(NavigationResolver.SEARCH_HOME, NavigationResolver.resolve(address))
     }
 
     @Test
