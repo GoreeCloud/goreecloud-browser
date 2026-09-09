@@ -423,14 +423,16 @@ class BrowserActivityV2 : Activity() {
     private fun showBrowserMenu(anchor: View) {
         PopupMenu(this, anchor).apply {
             menu.add("Copy page address").setOnMenuItemClickListener {
+                val externalAddress = AddressDisclosurePolicy.forExternalUse(currentUrl)
                 val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Page address", currentUrl))
+                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Page address", externalAddress))
                 true
             }
             menu.add("Share page").setOnMenuItemClickListener {
+                val externalAddress = AddressDisclosurePolicy.forExternalUse(currentUrl)
                 startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, currentUrl)
+                    putExtra(Intent.EXTRA_TEXT, externalAddress)
                 }, "Share page"))
                 true
             }
