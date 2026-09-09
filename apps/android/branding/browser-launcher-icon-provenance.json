@@ -1,0 +1,25 @@
+{
+  "schema": "goreecloud.android.launcher-icon-provenance/1",
+  "product": "GoreeCloud Browser",
+  "consumer_repository": "GoreeCloud/goreecloud-browser",
+  "canonical_repository": "GoreeCloud/goreecloud-branding-assets",
+  "canonical_path": "products/browser/app-icon.svg",
+  "canonical_revision_observed": "bf537125235a6913047b6afbf152998a4d1c5363",
+  "canonical_blob_sha": "3f502e5a6dae8ff3cb86dfdc3ae5d2eb2e8b54e1",
+  "derivatives": {
+    "background": "app/src/main/res/drawable/ic_launcher_background.xml",
+    "foreground": "app/src/main/res/drawable/ic_launcher_foreground.xml",
+    "monochrome": "app/src/main/res/drawable/ic_launcher_monochrome.xml",
+    "adaptive_api26": "app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+    "adaptive_round_api26": "app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+    "adaptive_api33": "app/src/main/res/mipmap-anydpi-v33/ic_launcher.xml",
+    "adaptive_round_api33": "app/src/main/res/mipmap-anydpi-v33/ic_launcher_round.xml"
+  },
+  "adaptation_notes": [
+    "Android adaptive-icon layers preserve the canonical Browser compass/navigation identity and blue identity palette.",
+    "Foreground geometry is optically scaled into the Android adaptive-icon canvas rather than treated as a separate product identity.",
+    "Android 13+ monochrome artwork preserves the same compass ring and needle silhouette for themed icons.",
+    "The canonical SVG remains the source of truth; these XML files are platform-specific packaged derivatives only."
+  ],
+  "acceptance_boundary": "Source provenance and package-resource validation do not establish GoreeCloud Launcher, Lineage/Trebuchet, representative-device, or production visual acceptance."
+}
