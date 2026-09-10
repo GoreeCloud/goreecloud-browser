@@ -47,6 +47,12 @@ object NavigationResolver {
         if (value.contains("://")) return false
 
         val authority = value.substringBefore('/').substringBefore('?').substringBefore('#')
+        // Scheme-less input is upgraded to HTTPS without another URL-resolution pass. Reject any
+        // user-info delimiter here so `user@host` / `user:secret@host` cannot bypass the explicit
+        // HTTP(S) user-info rejection after Browser prepends the scheme. Email-like input therefore
+        // remains search text rather than being silently converted into credential-bearing navigation.
+        if ('@' in authority) return false
+
         val hostPart = authorityHost(authority) ?: return false
 
         return hostPart.equals("localhost", ignoreCase = true) ||
@@ -60,9 +66,9 @@ object NavigationResolver {
      * optional port syntax/range needed by Browser routing. Host normalization,
      * DNS resolution, IDN/confusable policy, and trust remain separate gates.
      *
-     * This helper can still parse user-info-shaped host text for scheme-less host
-     * classification; fully qualified HTTP(S) URLs are rejected earlier when URI
-     * user-info is present and therefore cannot use embedded credentials.
+     * Callers must reject user-info before invoking this helper for navigation
+     * classification. The helper therefore does not grant credential-bearing
+     * authority merely because a host-like suffix can be extracted.
      */
     private fun authorityHost(authority: String): String? {
         val hostPort = authority.substringAfterLast('@')
