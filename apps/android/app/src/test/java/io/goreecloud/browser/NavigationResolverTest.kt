@@ -59,6 +59,27 @@ class NavigationResolverTest {
     }
 
     @Test
+    fun schemeLessUserinfoFailsClosedWithoutSearchForwarding() {
+        val inputs = listOf(
+            "user@example.com",
+            "user:secret@example.com/private",
+            "example.com@evil.test/path",
+        )
+
+        inputs.forEach { input ->
+            assertEquals(NavigationResolver.SEARCH_HOME, NavigationResolver.resolve(input))
+        }
+    }
+
+    @Test
+    fun ordinaryAtTextWithWhitespaceRemainsSearchText() {
+        assertEquals(
+            "https://search.goreecloud.com/search?q=contact%20user%40example.com",
+            NavigationResolver.resolve("contact user@example.com"),
+        )
+    }
+
+    @Test
     fun bareHostUpgradesToHttps() {
         assertEquals("https://example.com", NavigationResolver.resolve("example.com"))
     }

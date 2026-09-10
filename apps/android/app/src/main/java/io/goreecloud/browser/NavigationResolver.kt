@@ -20,6 +20,10 @@ object NavigationResolver {
         if (hasHttpScheme(input)) {
             return if (isAllowedWebUrl(input)) input else SEARCH_HOME
         }
+        // Scheme-less input that places an `@` in the authority position can become URI user-info
+        // after Browser prepends HTTPS. Fail closed before either navigation or Search forwarding so
+        // credential-shaped text is not copied into history or disclosed as a query.
+        if (hasSchemeLessUserInfo(input)) return SEARCH_HOME
         if (looksLikeHost(input)) return "https://$input"
 
         return SEARCH_ENDPOINT + encodeQuery(input)
@@ -42,11 +46,19 @@ object NavigationResolver {
             value.startsWith("http://", ignoreCase = true)
     }
 
+    private fun hasSchemeLessUserInfo(value: String): Boolean {
+        if (value.any(Char::isWhitespace)) return false
+        if (value.contains("://")) return false
+        val authority = value.substringBefore('/').substringBefore('?').substringBefore('#')
+        return '@' in authority
+    }
+
     private fun looksLikeHost(value: String): Boolean {
         if (value.any(Char::isWhitespace)) return false
         if (value.contains("://")) return false
 
         val authority = value.substringBefore('/').substringBefore('?').substringBefore('#')
+        if ('@' in authority) return false
         val hostPart = authorityHost(authority) ?: return false
 
         return hostPart.equals("localhost", ignoreCase = true) ||
@@ -60,9 +72,9 @@ object NavigationResolver {
      * optional port syntax/range needed by Browser routing. Host normalization,
      * DNS resolution, IDN/confusable policy, and trust remain separate gates.
      *
-     * This helper can still parse user-info-shaped host text for scheme-less host
-     * classification; fully qualified HTTP(S) URLs are rejected earlier when URI
-     * user-info is present and therefore cannot use embedded credentials.
+     * Callers must reject user-info before invoking this helper for navigation
+     * classification. The helper therefore does not grant credential-bearing
+     * authority merely because a host-like suffix can be extracted.
      */
     private fun authorityHost(authority: String): String? {
         val hostPort = authority.substringAfterLast('@')
