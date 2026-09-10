@@ -59,7 +59,7 @@ class NavigationResolverTest {
     }
 
     @Test
-    fun schemeLessUserinfoIsSearchTextRatherThanHttpsNavigation() {
+    fun schemeLessUserinfoFailsClosedWithoutSearchForwarding() {
         val inputs = listOf(
             "user@example.com",
             "user:secret@example.com/private",
@@ -67,13 +67,16 @@ class NavigationResolverTest {
         )
 
         inputs.forEach { input ->
-            assertEquals(
-                "https://search.goreecloud.com/search?q=" +
-                    java.net.URLEncoder.encode(input, java.nio.charset.StandardCharsets.UTF_8.name())
-                        .replace("+", "%20"),
-                NavigationResolver.resolve(input),
-            )
+            assertEquals(NavigationResolver.SEARCH_HOME, NavigationResolver.resolve(input))
         }
+    }
+
+    @Test
+    fun ordinaryAtTextWithWhitespaceRemainsSearchText() {
+        assertEquals(
+            "https://search.goreecloud.com/search?q=contact%20user%40example.com",
+            NavigationResolver.resolve("contact user@example.com"),
+        )
     }
 
     @Test
