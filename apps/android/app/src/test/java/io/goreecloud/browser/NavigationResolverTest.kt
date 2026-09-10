@@ -59,6 +59,24 @@ class NavigationResolverTest {
     }
 
     @Test
+    fun schemeLessUserinfoIsSearchTextRatherThanHttpsNavigation() {
+        val inputs = listOf(
+            "user@example.com",
+            "user:secret@example.com/private",
+            "example.com@evil.test/path",
+        )
+
+        inputs.forEach { input ->
+            assertEquals(
+                "https://search.goreecloud.com/search?q=" +
+                    java.net.URLEncoder.encode(input, java.nio.charset.StandardCharsets.UTF_8.name())
+                        .replace("+", "%20"),
+                NavigationResolver.resolve(input),
+            )
+        }
+    }
+
+    @Test
     fun bareHostUpgradesToHttps() {
         assertEquals("https://example.com", NavigationResolver.resolve("example.com"))
     }
