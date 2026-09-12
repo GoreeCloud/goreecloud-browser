@@ -21,6 +21,22 @@ class AddressPresentationTest {
     }
 
     @Test
+    fun condensedAddressKeepsExplicitPortVisible() {
+        assertEquals(
+            "example.com:8443/path",
+            AddressPresentation.condensed("https://example.com:8443/path"),
+        )
+    }
+
+    @Test
+    fun condensedUnicodeHostUsesCanonicalAsciiALabel() {
+        assertEquals(
+            "xn--r8jz45g.xn--zckzah/path?q=1",
+            AddressPresentation.condensed("https://例え.テスト/path?q=1"),
+        )
+    }
+
+    @Test
     fun rootPathIsNotShown() {
         assertEquals(
             "search.goreecloud.com",
