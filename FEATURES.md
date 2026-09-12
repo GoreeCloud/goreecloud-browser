@@ -22,7 +22,7 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 
 - Installable debug-signed APK target.
 - Package `io.goreecloud.browser.beta`.
-- Current migration-candidate identity `0.1.0-beta.1+android.5` / versionCode `10005`.
+- Current migration-candidate identity `0.1.0-beta.1+android.7` / versionCode `10007`.
 - Android API 26 minimum and API 35 target.
 - Android System WebView/Chromium rendering dependency behind GoreeCloud-owned product behavior.
 - Back, Forward, Reload, Go, unified address/search field, progress state, and web-content region.
@@ -40,24 +40,27 @@ The session-recovery core is not yet a user-ready recovery implementation. Durab
 - Unit tests for Browser-owned navigation resolution.
 - CI unit test, Android lint, APK build, signature/package verification, SHA-256, and artifact upload.
 
-## Android beta — Glaze UI 2.2 source mapping candidate
+## Android beta — GLAZE UI V1.2 source mapping candidate
 
-- Current Stable Glaze UI version `2.2.0` and Stable release revision `6731098b28dd0393faa878c70d989a221d714a20` recorded in source.
-- Accepted Glaze UI visual source `0411b0f6dd877aea30e2c5674e1acde0105fd97b` recorded as central design-system provenance, not Browser acceptance.
-- Canvas/Surface/Soft Glaze/Glaze semantic material mapping preserved from the successful 2.x Browser shell.
+- Current Stable GLAZE UI version `1.2.0` and Stable promotion merge revision `f285b9145e27e6e7027b075c37299d101945c272` recorded in source.
+- V1.2 source-qualification anchor `b0eadf9a60f73d45caffb62ffc7e9e0334cddc97` recorded as design-system provenance, not Browser acceptance.
+- V1.2 optical foundation `tokens/glaze-v1.2-optical-foundation.candidate.json` plus Stable web/runtime entrypoints recorded in the Android mapping; the Candidate filename is preserved upstream source lineage rather than current lifecycle status.
+- Governing rule **Neutral glass is the material. Color is an accent.** recorded in source.
+- Core solid/near-solid reading and consequential-decision boundary preserved while transient Browser-owned interaction chrome uses bounded neutral glaze.
 - Browser-owned chrome explicitly remains in Application scope rather than claiming Universal Search, Control Center, System Panel, or Critical System authority.
-- Ordinary System Glaze budget represented as at most one dominant Glaze panel and up to three small floating Glaze controls.
+- Inherited Glaze budget represented as at most one dominant Glaze panel and up to three small floating Glaze controls.
 - Native Android controls retained for platform semantics.
 - 48dp minimum general touch-oriented interaction target.
-- 56dp Touch Assistance/far-view target floor recorded where applicable; complete Android runtime mapping remains pending.
-- Light/dark appearance adaptation.
-- Visible pressed/focus state mapping.
-- Glaze UI 2.2 semantic state-priority contract with disabled state above error, pressed, focus, selected, hover, and rest.
-- Calm expression and Balanced clarity for the current browser shell.
-- Effects-free fallback that does not require blur/transparency.
-- Contract tests for current Stable provenance, 48dp/56dp target floors, Application authority, System Glaze budget, non-claim of Universal Search/Control Center, and state priority.
+- 56dp Touch Assistance target floor recorded where applicable; complete Android runtime mapping remains pending.
+- Light, Dark, and Deep Dark structural appearance targets recorded.
+- Upper-left optical light direction, Frost White neutral material reference, and bounded Ice Blue atmospheric accent recorded without restoring chromatic substrate tinting.
+- Nested backdrop blur remains disabled.
+- Environmental Color Memory is not required and this mapping does not introduce environmental-content sampling or remote color derivation.
+- Calm expression and Balanced clarity retained for the current Browser shell.
+- Effects-free fallback remains first class and does not require blur/transparency.
+- Contract tests cover current Stable provenance, target floors, Application authority, Glaze budget, V1.2 neutral-material/appearance bounds, no nested blur, no required environmental sampling, and preserved semantic-state priority.
 
-This section is source-level migration evidence only. A successful build does not automatically establish Browser-specific Glaze UI 2.2 visual, native-device, accessibility, Human Visual Excellence, performance, or production acceptance.
+This section is repository-local source migration evidence only. A successful build does not establish Browser-specific V1.2 rendered/native-device visual, accessibility, Human Visual Excellence, performance, or production acceptance.
 
 ## Planned / incomplete Android capabilities
 
@@ -72,7 +75,7 @@ This section is source-level migration evidence only. A successful build does no
 - GoreeCloud Sync runtime integration.
 - GoreeCloud DNS and GoreeCloud Network runtime adapters.
 - GoreeCloud Mesh capability coordination.
-- Complete Touch Assistance / far-view Android runtime mapping and native acceptance where supported.
+- Complete Touch Assistance Android runtime mapping and native acceptance where supported.
 - Bookmarks, history, library, settings, downloads UI, Reader Mode, and Wayfinder mobile surfaces.
 - Controlled beta/production signing, managed updates, rollback, and migration.
 - Store packaging and publication.
